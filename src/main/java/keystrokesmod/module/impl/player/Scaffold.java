@@ -5,6 +5,8 @@ import keystrokesmod.event.PreMotionEvent;
 import keystrokesmod.event.PreUpdateEvent;
 import keystrokesmod.event.ReceivePacketEvent;
 import keystrokesmod.event.SendPacketEvent;
+import keystrokesmod.mixins.impl.entity.IAccessorEntityPlayerSP;
+import keystrokesmod.mixins.impl.entity.MixinEntityPlayerSP;
 import keystrokesmod.mixins.interfaces.IMixinItemRenderer;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
@@ -240,12 +242,8 @@ public class Scaffold extends Module {
 
                     if (rotation.getInput() == 2) {
                         e.setYaw(offsetRotation());
-                        if (modifyPitch) {
-                            //e.setPitch(e.getPitch() + 5);
-                            //Utils.print("Modifying pitch");
-                        }
-                        if (e.getPitch() >= 60 && !ModuleManager.tower.canTower() && mc.thePlayer.motionY <= 0.42F) {
-                            e.setPitch(e.getPitch() + 9);
+                        if (e.getPitch() >= 50 && !ModuleManager.tower.canTower() && mc.thePlayer.motionY <= 0.42F) {
+                            e.setPitch(e.getPitch() + 7);
                         }
                     }
 
@@ -295,62 +293,50 @@ public class Scaffold extends Module {
         float yawBackwards = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - hardcodedYaw();
         float motionYaw = getMotionYaw();
         float main = MathHelper.wrapAngleTo180_float(motionYaw - yaw);
-        if (blockRotations != null) {
-            mainOffset = MathHelper.wrapAngleTo180_float(yawBackwards - lastBlockYaw);
-            lastBlockYaw = MathHelper.wrapAngleTo180_float(blockRotations[0]);
 
+        if (blockRotations != null) {
+            lastBlockYaw = blockRotations[0];
+            mainOffset = MathHelper.wrapAngleTo180_float(yawBackwards - lastBlockYaw);
+            float minOffset = 25;
+            float minEdge = 15;
             if (main >= 0) {
-                if (mainOffset >= 10) {
-                    modifyPitch = true;
-                }
-                else modifyPitch = false;
                 //Utils.print("Main1");
-                if (mainOffset >= 0) mainOffset = 0;
-                if (mainOffset <= -30) mainOffset = -30;
+                if (!Utils.scaffoldDiagonal(false)) {
+                    if (mainOffset >= 0) mainOffset = 0;
+                    if (mainOffset <= -minOffset) mainOffset = -minOffset;
+                }
+                else {
+                    if (mainOffset >= 0) mainOffset = 0;
+                    if (mainOffset <= -minEdge) mainOffset = -minEdge;
+                }
             }
             if (main <= -0) {
-                if (mainOffset <= -10) {
-                    modifyPitch = true;
-                }
-                else modifyPitch = false;
                 //Utils.print("Main2");
-                if (mainOffset <= -0) mainOffset = -0;
-                if (mainOffset >= 30) mainOffset = 30;
+                if (!Utils.scaffoldDiagonal(false)) {
+                    if (mainOffset <= -0) mainOffset = -0;
+                    if (mainOffset >= minOffset) mainOffset = minOffset;
+                }
+                else {
+                    if (mainOffset <= -0) mainOffset = -0;
+                    if (mainOffset >= minEdge) mainOffset = minEdge;
+                }
             }
-
-            //Utils.print("" + mainOffset);
-
-            //Utils.print("" + difference);
         }
         else {
-            lastBlockYaw = yaw;
-            if (main >= 0) {
-                if (mainOffset >= 0) mainOffset = -10;
-            }
-            if (main <= -0) {
-                if (mainOffset <= -0) mainOffset = 10;
-            }
-            //Utils.print("No offset");
-            difference = 0;
+            lastBlockYaw = ((IAccessorEntityPlayerSP) mc.thePlayer).getLastReportedYaw();
         }
-        newYaw = motionYaw - (!Utils.scaffoldDiagonal(false) ? 122.625F : 142.625F) * Math.signum(
-                main
+
+        if (!Utils.isMoving() || Utils.getHorizontalSpeed(mc.thePlayer) == 0.0D) {
+            return yaw;
+        }
+
+        float lastYaw = lastBlockYaw;
+        float newYaw = getMotionYaw() - (!Utils.scaffoldDiagonal(false) ? 124.625F : 142.625F) * Math.signum(
+                MathHelper.wrapAngleTo180_float(getMotionYaw() - yaw)
         );
-        yaw = applyGcd(MathHelper.wrapAngleTo180_float(newYaw) - mainOffset);
-
-        //yaw += 180 = opposite yaw
-
-        /*double min = 25;
-        if (lastNigger > min) {
-            yaw += 180;
-            Utils.print("(Positive) Yaw switched " + lastNigger);
-        }
-        else if (lastNigger < -min) {
-            yaw -= 180;
-            Utils.print("(Negative) Yaw switched " + lastNigger);
-        }*/
-
-        lastNigger = MathHelper.wrapAngleTo180_float(lastBlockYaw - yawBackwards);
+        yaw = applyGcd(
+                lastYaw + MathHelper.wrapAngleTo180_float(newYaw - lastYaw) - mainOffset
+        );
         return yaw;
     }
 
