@@ -66,7 +66,7 @@ public class Bhop extends Module {
                 final int speedAmplifier = Utils.getSpeedAmplifier();
                 switch (speedAmplifier) {
                     case 1:
-                        speedModifier = 0.5152;
+                        speedModifier = 0.515200;
                         break;
                     case 2:
                         speedModifier = 0.587;
