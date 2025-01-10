@@ -460,6 +460,7 @@ public class KillAura extends Module {
     public void onWorldJoin(EntityJoinWorldEvent e) {
         if (e.entity == mc.thePlayer) {
             hitMap.clear();
+            golems.clear();
         }
     }
 
