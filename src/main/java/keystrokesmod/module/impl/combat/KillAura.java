@@ -414,8 +414,8 @@ public class KillAura extends Module {
                             }
                         }
                     }
-                    //Reflection.setItemInUse(blockingClient = true);
-                    //sendBlockPacket();
+                    Reflection.setItemInUse(blockingClient = true);
+                    sendBlockPacket();
                     // cancel
                 }
                 else {
@@ -469,6 +469,10 @@ public class KillAura extends Module {
             if (blockingClient) {
                 Reflection.setItemInUse(blockingClient = false);
                 sendUnBlock = true;
+            }
+            if (blinking.get() || lag) {
+                resetBlinkState(true);
+                //Utils.print("2");
             }
             partialTicks = 0;
             interactTicks = 0;

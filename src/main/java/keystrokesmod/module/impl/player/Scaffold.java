@@ -81,6 +81,8 @@ public class Scaffold extends Module {
     private int blockSlot = -1;
     private int inAirTicks;
     private boolean modifyPitch;
+    private boolean flipRotation;
+    private long lastSwap;
 
     private boolean floatJumped;
     private boolean floatStarted;
@@ -242,9 +244,33 @@ public class Scaffold extends Module {
 
                     if (rotation.getInput() == 2) {
                         e.setYaw(offsetRotation());
-                        if (e.getPitch() >= 50 && !ModuleManager.tower.canTower() && mc.thePlayer.motionY <= 0.42F) {
-                            e.setPitch(e.getPitch() + 7);
+
+                        float main = MathHelper.wrapAngleTo180_float(getMotionYaw() - yaw);
+                        if (main >= 0) {
+                            if (flipRotation) e.setYaw(offsetRotation() + (!Utils.scaffoldDiagonal(false) ? 230.625F : 274.625F));
+                            Utils.print("1 " + mainOffset);
                         }
+                        else if (main <= -0) {
+                            if (flipRotation) e.setYaw(offsetRotation() - (!Utils.scaffoldDiagonal(false) ? 230.625F : 274.625F));
+                            Utils.print("2 " + mainOffset);
+                        }
+                        if (System.currentTimeMillis() - lastSwap > 250) {
+                            if (main >= 0 && mainOffset >= 0 && mainOffset <= 20 || main <= -0 && mainOffset <= -0 && mainOffset >= -20) {
+                                flipRotation = true;
+                            }
+                            else {
+                                flipRotation = false;
+                            }
+                            lastSwap = System.currentTimeMillis();
+                            Utils.print("flip " + mainOffset);
+                        }
+
+                        /*if (e.getPitch() >= 50 && !ModuleManager.tower.canTower() && mc.thePlayer.motionY <= 0.42F) {
+                            e.setPitch(e.getPitch() + 8);
+                        }
+                        else {
+                            e.setPitch(e.getPitch() + 5);
+                        }*/
                     }
 
                     if (rotation.getInput() == 1) {
@@ -254,7 +280,7 @@ public class Scaffold extends Module {
                     if (e.getPitch() > 89) {
                         e.setPitch(89);
                     }
-                    lastYaw = e.getYaw();
+                    lastYaw = MathHelper.wrapAngleTo180_float(e.getYaw());
                     lastPitch = e.getPitch();
                     if (lastPlaceTime > 0 && (System.currentTimeMillis() - lastPlaceTime) > rotationTimeout) blockRotations = null;
                 }
@@ -286,8 +312,7 @@ public class Scaffold extends Module {
     float newYaw;
     float mainOffset;
 
-    float lastNigger = 0;
-    int difference = 0;
+    boolean hasEdged;
 
     private float offsetRotation() {
         float yawBackwards = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - hardcodedYaw();
@@ -297,34 +322,26 @@ public class Scaffold extends Module {
         if (blockRotations != null) {
             lastBlockYaw = blockRotations[0];
             mainOffset = MathHelper.wrapAngleTo180_float(yawBackwards - lastBlockYaw);
-            float minOffset = 25;
-            float minEdge = 15;
+            float minOffset = 28;
             if (main >= 0) {
                 //Utils.print("Main1");
-                if (!Utils.scaffoldDiagonal(false)) {
-                    if (mainOffset >= 0) mainOffset = 0;
-                    if (mainOffset <= -minOffset) mainOffset = -minOffset;
-                }
-                else {
-                    if (mainOffset >= 0) mainOffset = 0;
-                    if (mainOffset <= -minEdge) mainOffset = -minEdge;
-                }
+                if (mainOffset >= 0) mainOffset = 0;
+                if (mainOffset <= -minOffset) mainOffset = -minOffset;
             }
             if (main <= -0) {
                 //Utils.print("Main2");
-                if (!Utils.scaffoldDiagonal(false)) {
-                    if (mainOffset <= -0) mainOffset = -0;
-                    if (mainOffset >= minOffset) mainOffset = minOffset;
-                }
-                else {
-                    if (mainOffset <= -0) mainOffset = -0;
-                    if (mainOffset >= minEdge) mainOffset = minEdge;
-                }
+                if (mainOffset <= -0) mainOffset = -0;
+                if (mainOffset >= minOffset) mainOffset = minOffset;
             }
         }
         else {
             lastBlockYaw = ((IAccessorEntityPlayerSP) mc.thePlayer).getLastReportedYaw();
-            mainOffset = 15;
+            if (main >= 0) {
+                mainOffset = -25;
+            }
+            else if (main <= -0) {
+                mainOffset = 25;
+            }
         }
 
         if (!Utils.isMoving() || Utils.getHorizontalSpeed(mc.thePlayer) == 0.0D) {
@@ -332,7 +349,7 @@ public class Scaffold extends Module {
         }
 
         float lastYaw = lastBlockYaw;
-        float newYaw = getMotionYaw() - (!Utils.scaffoldDiagonal(false) ? 126.625F : 142.625F) * Math.signum(
+        float newYaw = getMotionYaw() - (!Utils.scaffoldDiagonal(false) ? 126.625F : 138.625F) * Math.signum(
                 MathHelper.wrapAngleTo180_float(getMotionYaw() - yaw)
         );
         yaw = applyGcd(

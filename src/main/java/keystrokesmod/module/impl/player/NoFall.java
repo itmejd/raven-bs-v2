@@ -26,6 +26,7 @@ public class NoFall extends Module {
 
     private double initialY;
     private double dynamic;
+    private boolean isFalling;
     private String edging = new String("");
 
     public NoFall() {
@@ -45,8 +46,14 @@ public class NoFall extends Module {
         if (reset()) {
             Utils.resetTimer();
             initialY = mc.thePlayer.posY;
+            isFalling = false;
             return;
         }
+        else if (((double) mc.thePlayer.fallDistance >= minFallDistance.getInput())) {
+           isFalling = true;
+        }
+
+
         double predictedY = mc.thePlayer.posY + mc.thePlayer.motionY;
         double distanceFallen = initialY - predictedY;
         edging = "";
@@ -62,7 +69,7 @@ public class NoFall extends Module {
         if (mc.thePlayer.motionY < -2.4) {
             dynamic = 4.5;
         }
-        if (((double) mc.thePlayer.fallDistance >= 0.5) || mode.getInput() == 2) {
+        if (isFalling || mode.getInput() == 2) {
             switch ((int) mode.getInput()) {
                 case 0:
                     e.setOnGround(true);
