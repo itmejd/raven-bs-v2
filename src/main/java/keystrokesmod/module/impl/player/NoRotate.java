@@ -43,7 +43,7 @@ public class NoRotate extends Module {
     @SubscribeEvent
     public void onSendPacket(SendPacketEvent e) {
         if (s08PacketData != null && mc.thePlayer != null && e.getPacket() instanceof C03PacketPlayer.C06PacketPlayerPosLook) {
-            if (Utils.timeBetween(mc.thePlayer.ticksExisted, receivedTick) >= 2) {
+            if (Utils.timeBetween(mc.thePlayer.ticksExisted, receivedTick) >= 1) {
                 s08PacketData = null;
                 return;
             }

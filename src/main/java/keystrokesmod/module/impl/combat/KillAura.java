@@ -414,8 +414,8 @@ public class KillAura extends Module {
                             }
                         }
                     }
-                    Reflection.setItemInUse(blockingClient = true);
-                    sendBlockPacket();
+                    //Reflection.setItemInUse(blockingClient = true);
+                    //sendBlockPacket();
                     // cancel
                 }
                 else {
