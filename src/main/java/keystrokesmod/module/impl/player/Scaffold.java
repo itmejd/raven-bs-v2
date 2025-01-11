@@ -324,6 +324,7 @@ public class Scaffold extends Module {
         }
         else {
             lastBlockYaw = ((IAccessorEntityPlayerSP) mc.thePlayer).getLastReportedYaw();
+            mainOffset = 15;
         }
 
         if (!Utils.isMoving() || Utils.getHorizontalSpeed(mc.thePlayer) == 0.0D) {
@@ -331,7 +332,7 @@ public class Scaffold extends Module {
         }
 
         float lastYaw = lastBlockYaw;
-        float newYaw = getMotionYaw() - (!Utils.scaffoldDiagonal(false) ? 124.625F : 142.625F) * Math.signum(
+        float newYaw = getMotionYaw() - (!Utils.scaffoldDiagonal(false) ? 126.625F : 142.625F) * Math.signum(
                 MathHelper.wrapAngleTo180_float(getMotionYaw() - yaw)
         );
         yaw = applyGcd(
