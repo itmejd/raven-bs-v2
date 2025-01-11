@@ -8,6 +8,7 @@ import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.DescriptionSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
 import keystrokesmod.utility.BlockUtils;
+import keystrokesmod.utility.ModuleUtils;
 import keystrokesmod.utility.Reflection;
 import keystrokesmod.utility.Utils;
 import net.minecraft.item.*;
@@ -79,7 +80,7 @@ public class NoSlow extends Module {
                     if (mc.thePlayer.onGround) {
                         mc.thePlayer.jump();
                         break;
-                    } else {
+                    } else if (ModuleUtils.inAirTicks >= 2) {
                         mc.playerController.sendUseItem(mc.thePlayer, mc.theWorld, mc.thePlayer.getHeldItem());
                         canFloat = true;
                         reSendConsume = false;

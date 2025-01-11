@@ -42,6 +42,7 @@ public class ModuleUtils {
     private int isBreakingTick;
     public static long MAX_EXPLOSION_DIST_SQ = 9;
     private long FIREBALL_TIMEOUT = 750L, fireballTime = 0;
+    public static int inAirTicks;
 
     @SubscribeEvent
     public void onSendPacket(SendPacketEvent e) {
@@ -59,6 +60,8 @@ public class ModuleUtils {
 
     @SubscribeEvent
     public void onPreUpdate(PreUpdateEvent e) {
+
+        inAirTicks = mc.thePlayer.onGround ? 0 : ++inAirTicks;
 
         if (LongJump.slotReset && ++LongJump.slotResetTicks >= 2) {
             LongJump.stopKillAura = false;

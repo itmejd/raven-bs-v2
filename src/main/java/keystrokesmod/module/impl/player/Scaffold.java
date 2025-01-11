@@ -79,7 +79,6 @@ public class Scaffold extends Module {
     private boolean lowhop;
     private int rotationDelay;
     private int blockSlot = -1;
-    private int inAirTicks;
     private boolean modifyPitch;
     private boolean flipRotation;
     private long lastSwap;
@@ -151,7 +150,6 @@ public class Scaffold extends Module {
 
     @SubscribeEvent
     public void onPreMotion(PreMotionEvent e) {
-        inAirTicks = mc.thePlayer.onGround ? 0 : ++inAirTicks;
         onGroundTicks = !mc.thePlayer.onGround ? 0 : ++onGroundTicks;
         if (!isEnabled || !holdingBlocks()) {
             return;
@@ -195,7 +193,7 @@ public class Scaffold extends Module {
         }
 
         //Float
-        if (sprint.getInput() == 2 && !usingFastScaffold() && !ModuleManager.tower.canTower() && !ModuleManager.LongJump.isEnabled()) {
+        if (sprint.getInput() == 2 && mc.thePlayer.motionY <= -0.0784 && !usingFastScaffold() && !ModuleManager.bhop.isEnabled() && !ModuleManager.tower.canTower() && !ModuleManager.LongJump.isEnabled()) {
             floatWasEnabled = true;
             if (!floatStarted) {
                 if (onGroundTicks > 8 && mc.thePlayer.onGround) {
@@ -214,7 +212,7 @@ public class Scaffold extends Module {
             if (floatStarted && mc.thePlayer.onGround) {
                 floatKeepY = false;
                 startYPos = -1;
-                if (moduleEnabled) e.setPosY(e.getPosY() + 1E-10);
+                if (moduleEnabled && !Utils.jumpDown()) e.setPosY(e.getPosY() + 1E-14);
                 if (Utils.isMoving()) Utils.setSpeed(getFloatSpeed(getSpeedLevel()));
             }
         } else if (floatWasEnabled) {
@@ -232,7 +230,7 @@ public class Scaffold extends Module {
         }
 
         getPitch = 82;
-        if (inAirTicks >= 2) {
+        if (ModuleUtils.inAirTicks >= 2) {
             rotateForward = false;
         }
         if (rotation.getInput() > 0 && (!rotateForward || !jumpFacingForward.isToggled())) {
@@ -247,12 +245,12 @@ public class Scaffold extends Module {
 
                         float main = MathHelper.wrapAngleTo180_float(getMotionYaw() - yaw);
                         if (main >= 0) {
-                            if (flipRotation) e.setYaw(offsetRotation() + (!Utils.scaffoldDiagonal(false) ? 230.625F : 274.625F));
-                            Utils.print("1 " + mainOffset);
+                            if (flipRotation) e.setYaw(offsetRotation() + (!Utils.scaffoldDiagonal(false) ? 244.625F : 274.625F));
+                            //Utils.print("1 " + mainOffset);
                         }
                         else if (main <= -0) {
-                            if (flipRotation) e.setYaw(offsetRotation() - (!Utils.scaffoldDiagonal(false) ? 230.625F : 274.625F));
-                            Utils.print("2 " + mainOffset);
+                            if (flipRotation) e.setYaw(offsetRotation() - (!Utils.scaffoldDiagonal(false) ? 244.625F : 274.625F));
+                            //Utils.print("2 " + mainOffset);
                         }
                         if (System.currentTimeMillis() - lastSwap > 250) {
                             if (main >= 0 && mainOffset >= 0 && mainOffset <= 20 || main <= -0 && mainOffset <= -0 && mainOffset >= -20) {
@@ -262,7 +260,7 @@ public class Scaffold extends Module {
                                 flipRotation = false;
                             }
                             lastSwap = System.currentTimeMillis();
-                            Utils.print("flip " + mainOffset);
+                            //Utils.print("flip " + mainOffset);
                         }
 
                         /*if (e.getPitch() >= 50 && !ModuleManager.tower.canTower() && mc.thePlayer.motionY <= 0.42F) {
@@ -342,6 +340,7 @@ public class Scaffold extends Module {
             else if (main <= -0) {
                 mainOffset = 25;
             }
+            lastSwap = System.currentTimeMillis();
         }
 
         if (!Utils.isMoving() || Utils.getHorizontalSpeed(mc.thePlayer) == 0.0D) {
@@ -349,7 +348,7 @@ public class Scaffold extends Module {
         }
 
         float lastYaw = lastBlockYaw;
-        float newYaw = getMotionYaw() - (!Utils.scaffoldDiagonal(false) ? 126.625F : 138.625F) * Math.signum(
+        float newYaw = getMotionYaw() - (!Utils.scaffoldDiagonal(false) ? 128.625F : 138.625F) * Math.signum(
                 MathHelper.wrapAngleTo180_float(getMotionYaw() - yaw)
         );
         yaw = applyGcd(
@@ -449,7 +448,7 @@ public class Scaffold extends Module {
                 blockRotations = null;
                 startYPos = -1;
                 fastScaffoldKeepY = firstKeepYPlace = rotateForward = rotatingForward = lowhop = floatStarted = floatJumped = floatWasEnabled = false;
-                inAirTicks = keepYDelay = rotationDelay = keepYTicks = keepYPlaceTicks = 0;
+                keepYDelay = rotationDelay = keepYTicks = keepYPlaceTicks = 0;
                 startYPos = -1;
                 lookVec = null;
             }
@@ -730,22 +729,22 @@ public class Scaffold extends Module {
 
     /*private boolean allowedFaces(EnumFacing enumFacing) {
         if (yaw >= 0 && yaw < 90) {
-            Utils.print("1");
+            //Utils.print("1");
             //west south
             return enumFacing == EnumFacing.DOWN || enumFacing == EnumFacing.WEST || enumFacing == EnumFacing.SOUTH;
         }
         else if (yaw >= 90 && yaw < 180) {
-            Utils.print("2");
+            //Utils.print("2");
             //north west
             return enumFacing == EnumFacing.DOWN || enumFacing == EnumFacing.NORTH || enumFacing == EnumFacing.WEST;
         }
         else if (yaw == 180 || yaw >= -180 && yaw < -90) {
-            Utils.print("3");
+            //Utils.print("3");
             //north east
             return enumFacing == EnumFacing.DOWN || enumFacing == EnumFacing.NORTH || enumFacing == EnumFacing.EAST;
         }
         else if (yaw >= -90 && yaw <= 0) {
-            Utils.print("4");
+            //Utils.print("4");
             //east south
             return enumFacing == EnumFacing.DOWN || enumFacing == EnumFacing.EAST || enumFacing == EnumFacing.SOUTH;
         }
