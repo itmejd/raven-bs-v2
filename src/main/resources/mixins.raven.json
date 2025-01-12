@@ -23,6 +23,7 @@
     "client.MixinWorld",
     "render.MixinGuiChat",
     "render.MixinGuiScreen",
-    "entity.IAccessorEntityPlayerSP"
+    "entity.IAccessorEntityPlayerSP",
+    "network.MixinNetHandlerPlayClient"
   ]
 }

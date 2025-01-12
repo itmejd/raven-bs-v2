@@ -81,25 +81,6 @@ public class ModuleUtils {
             isBreakingTick = 0;
         }
 
-        if (ModuleManager.killAura.fixStates) {
-            if (!ModuleManager.killAura.isTargeting && ModuleManager.killAura.lag && !ModuleManager.scaffold.isEnabled) {
-                if (!Utils.holdingSword() && ModuleManager.killAura.swapped) {
-                    PacketUtils.sendPacketNoEvent(new C09PacketHeldItemChange(mc.thePlayer.inventory.currentItem));
-                    ModuleManager.killAura.swapped = false;
-                } else {
-                    if (Utils.holdingSword()) {
-                        PacketUtils.sendPacketNoEvent(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, DOWN));
-                        ModuleManager.killAura.swapped = false;
-                    }
-                }
-            }
-            else {
-                ModuleManager.killAura.swapped = false;
-            }
-            ModuleManager.killAura.fixStates = false;
-            ModuleManager.killAura.lag = false;
-        }
-
         if (ModuleManager.killAura.justUnTargeted) {
             if (++ModuleManager.killAura.unTargetTicks >= 2) {
                 ModuleManager.killAura.unTargetTicks = 0;
@@ -146,7 +127,7 @@ public class ModuleUtils {
         }
         if (ModuleManager.bhop.rotateYawOption.isToggled()) {
             if (ModuleManager.bhop.setRotation) {
-                if (!ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow()) {
+                if (!ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !ModuleManager.scaffold.isEnabled) {
                     float playerYaw = mc.thePlayer.rotationYaw;
                     e.setYaw(playerYaw -= 55);
                 }

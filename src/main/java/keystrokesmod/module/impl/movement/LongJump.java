@@ -6,6 +6,7 @@ import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.DescriptionSetting;
+import keystrokesmod.module.setting.impl.KeySetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
 import keystrokesmod.utility.Reflection;
 import keystrokesmod.utility.Utils;
@@ -16,6 +17,7 @@ import net.minecraft.network.play.server.*;
 import net.minecraft.potion.PotionEffect;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import org.lwjgl.input.Keyboard;
 
 public class LongJump extends Module {
     private SliderSetting boostSetting;
@@ -28,7 +30,7 @@ public class LongJump extends Module {
     private ButtonSetting stopMovement;
     private ButtonSetting hideExplosion;
 
-    private SliderSetting temporaryFlightKey;
+    private KeySetting temporaryFlightKey;
     private SliderSetting pitchVal;
 
     private float yaw;
@@ -56,7 +58,7 @@ public class LongJump extends Module {
     private String[] modes = new String[]{"Fireball", "Fireball Auto"};
     public LongJump() {
         super("Long Jump", category.movement);
-        this.registerSetting(boostSetting = new SliderSetting("Horizontal boost", 1.7, 0.0, 2.0, 0.1));
+        this.registerSetting(boostSetting = new SliderSetting("Horizontal boost", 1.7, 0.0, 2.0, 0.05));
         this.registerSetting(verticalMotion = new SliderSetting("Vertical motion", 0, 0.4, 0.9, 0.01));
         this.registerSetting(motionDecay = new SliderSetting("Motion decay", 17, 1, 40, 1));
         this.registerSetting(allowStrafe = new ButtonSetting("Allow strafe", false));
@@ -64,23 +66,11 @@ public class LongJump extends Module {
         this.registerSetting(stopMovement = new ButtonSetting("Stop movement", false));
         this.registerSetting(hideExplosion = new ButtonSetting("Hide explosion", false));
 
-        this.registerSetting(temporaryFlightKey = new SliderSetting("Vertical key", 91, keyNames));
+        this.registerSetting(temporaryFlightKey = new KeySetting("Vertical key", Keyboard.KEY_SPACE));
 
         //this.registerSetting(new DescriptionSetting("Dev:"));
         //this.registerSetting(pitchVal = new SliderSetting("Stop movement Pitch", 55, 55, 80, 0.1));
     }
-
-    String[] keyNames = {
-            "LMB", "RMB", "MMB",
-            "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
-            "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P",
-            "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
-            "BACK", "CAPITAL", "COMMA", "DELETE", "DOWN", "END", "ESCAPE", "F1", "F2", "F3", "F4", "F5",
-            "F6", "F7", "HOME", "INSERT", "LBRACKET", "LCONTROL", "LMENU", "LMETA", "LSHIFT", "MINUS",
-            "NUMPAD0", "NUMPAD1", "NUMPAD2", "NUMPAD3", "NUMPAD4", "NUMPAD5", "NUMPAD6", "NUMPAD7",
-            "NUMPAD8", "NUMPAD9", "PERIOD", "RETURN", "RCONTROL", "RSHIFT", "RBRACKET", "SEMICOLON",
-            "SLASH", "SPACE", "TAB", "GRAVE"
-    };
 
     public void onEnable() {
         slotReset = false;
@@ -338,11 +328,7 @@ public class LongJump extends Module {
 
     private boolean temporaryFlightKey() {
         if (notMoving) return true;
-        if (temporaryFlightKey.getInput() > 2) {
-            return Utils.keybinds.isKeyDown(getKeyCode(keyNames[(int) temporaryFlightKey.getInput()]));
-        } else {
-            return Utils.keybinds.isMouseDown((int) temporaryFlightKey.getInput());
-        }
+        return temporaryFlightKey.isPressed();
     }
 
     private int getKeyCode(String keyName) {

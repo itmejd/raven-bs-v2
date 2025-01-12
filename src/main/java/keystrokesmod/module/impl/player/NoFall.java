@@ -1,6 +1,7 @@
 package keystrokesmod.module.impl.player;
 
 import keystrokesmod.event.PreMotionEvent;
+import keystrokesmod.event.PreUpdateEvent;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
@@ -41,8 +42,8 @@ public class NoFall extends Module {
         Utils.resetTimer();
     }
 
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public void onPreMotion(PreMotionEvent e) {
+    @SubscribeEvent
+    public void onPreUpdate(PreUpdateEvent e) {
         if (reset()) {
             Utils.resetTimer();
             initialY = mc.thePlayer.posY;
@@ -57,13 +58,13 @@ public class NoFall extends Module {
         double predictedY = mc.thePlayer.posY + mc.thePlayer.motionY;
         double distanceFallen = initialY - predictedY;
         edging = "";
-        if (mc.thePlayer.motionY >= -0.9) {
+        if (mc.thePlayer.motionY >= -1.1) {
             dynamic = 3;
         }
-        if (mc.thePlayer.motionY < -0.9) {
+        if (mc.thePlayer.motionY < -1.1) {
             dynamic = 3.5;
         }
-        if (mc.thePlayer.motionY < -1.7) {
+        if (mc.thePlayer.motionY < -1.8) {
             dynamic = 4;
         }
         if (mc.thePlayer.motionY < -2.4) {
@@ -71,24 +72,30 @@ public class NoFall extends Module {
         }
         if (isFalling || mode.getInput() == 2) {
             switch ((int) mode.getInput()) {
-                case 0:
-                    e.setOnGround(true);
-                    break;
                 case 1:
                     if (distanceFallen >= dynamic) {
                         Utils.getTimer().timerSpeed = (float) 0.72;
-                        PacketUtils.sendPacketNoEvent(new C03PacketPlayer(true));
+                        mc.getNetHandler().addToSendQueue(new C03PacketPlayer(true));
                         initialY = mc.thePlayer.posY;
                         edging = "nofall packet";
                     }
-                    break;
-                case 2:
-                    e.setOnGround(false);
                     break;
             }
         }
         edging += " " + dynamic;
         //Utils.print("" + mc.thePlayer.ticksExisted + " " + mc.thePlayer.motionY + " " + edging);
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public void onPreMotion(PreMotionEvent e) {
+        switch ((int) mode.getInput()) {
+            case 0:
+                e.setOnGround(true);
+                break;
+            case 2:
+                e.setOnGround(false);
+                break;
+        }
     }
 
     @Override

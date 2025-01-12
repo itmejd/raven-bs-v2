@@ -155,10 +155,8 @@ public class Tower extends Module {
                 }
                 slowTicks = 0;
             }
-            if (towerMove.getInput() == 2) {
-                hasTowered = tower = firstJump = startedTowerInAir = setLowMotion = speed = false;
-                cMotionTicks = placeTicks = 0;
-            }
+            hasTowered = tower = firstJump = startedTowerInAir = setLowMotion = speed = false;
+            cMotionTicks = placeTicks = 0;
             reset();
         }
         if (canTower() && !Utils.keysDown()) {

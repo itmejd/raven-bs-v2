@@ -46,7 +46,7 @@ public class Nametags extends Module {
 
     public Nametags() {
         super("Nametags", category.render, 0);
-        this.registerSetting(scale = new SliderSetting("Scale", 1.0, 0.5, 5.0, 0.1));
+        this.registerSetting(scale = new SliderSetting("Scale", 1.0, 0.1, 5.0, 0.1));
         this.registerSetting(autoScale = new ButtonSetting("Auto-scale", true));
         this.registerSetting(drawBackground = new ButtonSetting("Draw background", true));
         this.registerSetting(onlyRenderName = new ButtonSetting("Only render name", false));

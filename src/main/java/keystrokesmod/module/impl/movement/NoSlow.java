@@ -7,10 +7,7 @@ import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.DescriptionSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
-import keystrokesmod.utility.BlockUtils;
-import keystrokesmod.utility.ModuleUtils;
-import keystrokesmod.utility.Reflection;
-import keystrokesmod.utility.Utils;
+import keystrokesmod.utility.*;
 import net.minecraft.item.*;
 import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
 import net.minecraft.util.BlockPos;
@@ -80,7 +77,8 @@ public class NoSlow extends Module {
                     if (mc.thePlayer.onGround) {
                         mc.thePlayer.jump();
                         break;
-                    } else if (ModuleUtils.inAirTicks >= 2) {
+                    }
+                    else {
                         mc.playerController.sendUseItem(mc.thePlayer, mc.theWorld, mc.thePlayer.getHeldItem());
                         canFloat = true;
                         reSendConsume = false;
@@ -150,20 +148,20 @@ public class NoSlow extends Module {
 
     @SubscribeEvent
     public void onPacketSend(SendPacketEvent e) {
-        if (e.getPacket() instanceof C08PacketPlayerBlockPlacement && mode.getInput() == 4 && getSlowed() != 0.2f && holdingConsumable(((C08PacketPlayerBlockPlacement) e.getPacket()).getStack()) && !BlockUtils.isInteractable(mc.objectMouseOver) && holdingEdible(((C08PacketPlayerBlockPlacement) e.getPacket()).getStack())) {
-            if (ModuleManager.skyWars.isEnabled() && Utils.getSkyWarsStatus() == 1) {
+        if (e.getPacket() instanceof C08PacketPlayerBlockPlacement && mode.getInput() == 4 && getSlowed() != 0.2f && holdingConsumable(((C08PacketPlayerBlockPlacement) e.getPacket()).getStack()) && !BlockUtils.isInteractable(mc.objectMouseOver) && Utils.holdingEdible(((C08PacketPlayerBlockPlacement) e.getPacket()).getStack())) {
+            if (ModuleManager.skyWars.isEnabled() && Utils.getSkyWarsStatus() == 1 || canFloat) {
                 return;
             }
-            if (!canFloat) {
-                if (!mc.thePlayer.onGround) {
-                    canFloat = true;
-                } else {
-                    if (mc.thePlayer.onGround) {
-                        mc.thePlayer.jump();
-                    }
-                    reSendConsume = true;
-                    e.setCanceled(true);
+            if (!mc.thePlayer.onGround) {
+                canFloat = true;
+            }
+            else {
+                if (mc.thePlayer.onGround) {
+                    mc.thePlayer.jump();
                 }
+                reSendConsume = true;
+                canFloat = false;
+                e.setCanceled(true);
             }
         }
     }

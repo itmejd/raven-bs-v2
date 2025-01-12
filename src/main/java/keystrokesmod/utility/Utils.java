@@ -61,6 +61,22 @@ public class Utils {
         return false;
     }
 
+    public static boolean holdingEdible(ItemStack stack) {
+        if (stack.getItem() instanceof ItemFood && mc.thePlayer.getFoodStats().getFoodLevel() == 20) {
+            ItemFood food = (ItemFood) stack.getItem();
+            boolean alwaysEdible = false;
+            try {
+                alwaysEdible = Reflection.alwaysEdible.getBoolean(food);
+            }
+            catch (Exception e) {
+                Utils.sendMessage("&cError checking food edibility, check logs.");
+                e.printStackTrace();
+            }
+            return alwaysEdible;
+        }
+        return true;
+    }
+
     public static boolean removeEnemy(String name) {
         if (enemies.remove(name.toLowerCase())) {
             Utils.sendMessage("&7Removed &cenemy&7: &b" + name);

@@ -6,6 +6,7 @@ import keystrokesmod.module.Module;
 import keystrokesmod.module.setting.Setting;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.DescriptionSetting;
+import keystrokesmod.module.setting.impl.KeySetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
 import keystrokesmod.utility.RenderUtils;
 import keystrokesmod.utility.Timer;
@@ -52,15 +53,23 @@ public class ModuleComponent extends Component {
                     SliderComponent s = new SliderComponent(n, this, y);
                     this.settings.add(s);
                     y += 12;
-                } else if (v instanceof ButtonSetting) {
+                }
+                else if (v instanceof ButtonSetting) {
                     ButtonSetting b = (ButtonSetting) v;
                     ButtonComponent c = new ButtonComponent(mod, b, this, y);
                     this.settings.add(c);
                     y += 12;
-                } else if (v instanceof DescriptionSetting) {
+                }
+                else if (v instanceof DescriptionSetting) {
                     DescriptionSetting d = (DescriptionSetting) v;
                     DescriptionComponent m = new DescriptionComponent(d, this, y);
                     this.settings.add(m);
+                    y += 12;
+                }
+                else if (v instanceof KeySetting) {
+                    KeySetting setting = (KeySetting) v;
+                    BindComponent keyComponent = new BindComponent(this, setting, y);
+                    this.settings.add(keyComponent);
                     y += 12;
                 }
             }
@@ -79,7 +88,8 @@ public class ModuleComponent extends Component {
                 co.updateHeight(y);
                 if (co instanceof SliderComponent) {
                     y += 16;
-                } else if (co instanceof ButtonComponent || co instanceof BindComponent || co instanceof DescriptionComponent) {
+                }
+                else if (co instanceof ButtonComponent || co instanceof BindComponent || co instanceof DescriptionComponent) {
                     y += 12;
                 }
             }

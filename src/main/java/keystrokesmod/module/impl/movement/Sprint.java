@@ -49,7 +49,7 @@ public class Sprint extends Module {
         }
         if (ModuleManager.sprint.isEnabled() && ModuleManager.sprint.omniDirectional.getInput() == 2) {
             if (mc.thePlayer.onGround && mc.thePlayer.moveStrafing == 0 && mc.thePlayer.moveForward <= -0.5 && !Utils.jumpDown()) {
-                if (!ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !ModuleManager.safeWalk.canSafeWalk()) {
+                if (!ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !ModuleManager.safeWalk.canSafeWalk() && !ModuleManager.scaffold.isEnabled && !ModuleManager.bhop.isEnabled()) {
                     float playerYaw = mc.thePlayer.rotationYaw;
                     e.setYaw(playerYaw -= 55);
                 }
