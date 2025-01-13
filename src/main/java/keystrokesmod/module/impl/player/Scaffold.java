@@ -1,18 +1,12 @@
 package keystrokesmod.module.impl.player;
 
-import keystrokesmod.Raven;
 import keystrokesmod.event.PreMotionEvent;
 import keystrokesmod.event.PreUpdateEvent;
 import keystrokesmod.event.ReceivePacketEvent;
-import keystrokesmod.event.SendPacketEvent;
-import keystrokesmod.mixins.impl.entity.IAccessorEntityPlayerSP;
-import keystrokesmod.mixins.impl.entity.MixinEntityPlayerSP;
 import keystrokesmod.mixins.interfaces.IMixinItemRenderer;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.movement.LongJump;
-import keystrokesmod.module.impl.other.ViewPackets;
-import keystrokesmod.module.impl.render.HUD;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
 import keystrokesmod.utility.*;
@@ -22,16 +16,13 @@ import net.minecraft.block.BlockTNT;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
-import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
 import net.minecraft.network.play.client.C0APacketAnimation;
 import net.minecraft.network.play.server.S12PacketEntityVelocity;
 import net.minecraft.network.play.server.S27PacketExplosion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.*;
 import net.minecraftforge.client.event.MouseEvent;
-import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.FMLCommonHandler;
-import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.lwjgl.input.Mouse;
 
@@ -53,6 +44,9 @@ public class Scaffold extends Module {
     public static ButtonSetting showBlockCount;
     private static ButtonSetting silentSwing;
     public static ButtonSetting tower;
+
+    private static SliderSetting yaww2;
+    private static SliderSetting minO;
 
     private static String[] rotationModes = new String[] { "None", "Simple", "Offset", "Precise" };
     private static String[] sprintModes = new String[] { "None", "Vanilla", "Float" };
@@ -98,6 +92,8 @@ public class Scaffold extends Module {
     private float lastPitch = 0.0f;
     private float lastBlockYaw;
 
+    private static float rotOffset;
+
     public boolean moduleEnabled;
     public boolean isEnabled;
     private boolean disabledModule;
@@ -120,6 +116,9 @@ public class Scaffold extends Module {
         this.registerSetting(showBlockCount = new ButtonSetting("Show block count", true));
         this.registerSetting(silentSwing = new ButtonSetting("Silent swing", false));
         this.registerSetting(tower = new ButtonSetting("Tower", false));
+
+        //this.registerSetting(yaww2 = new SliderSetting("yaw offset", "", 138, 110, 160, 1));
+        //this.registerSetting(minO = new SliderSetting("min offset", "", 30, 1, 90, 1));
         this.alwaysOn = true;
     }
 
@@ -230,93 +229,79 @@ public class Scaffold extends Module {
         }
 
         getPitch = 82;
-        if (ModuleUtils.inAirTicks >= 2) {
+        if (ModuleUtils.inAirTicks >= 1) {
             rotateForward = false;
         }
         if (rotation.getInput() > 0 && (!rotateForward || !jumpFacingForward.isToggled())) {
             rotatingForward = false;
             if (rotation.getInput() > 0) {
+                float yawBackwards = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - hardcodedYaw();
+                float main = MathHelper.wrapAngleTo180_float(getMotionYaw() - yaw);
+                float mainOffset = MathHelper.wrapAngleTo180_float(yawBackwards - lastBlockYaw);
+                float mainOffset2 = MathHelper.wrapAngleTo180_float(yawBackwards - lastBlockYaw);
+                rotOffset = (!Utils.scaffoldDiagonal(false)) ? 125F : 142F;
+                float minOffset = 40;
                 if (blockRotations != null) {
                     e.setYaw(blockRotations[0]);
                     e.setPitch(blockRotations[1]);
-
-                    float yawBackwards = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - hardcodedYaw();
-                    float main = MathHelper.wrapAngleTo180_float(getMotionYaw() - yaw);
-                    float mainOffset = MathHelper.wrapAngleTo180_float(yawBackwards - lastBlockYaw);
-                    float mainOffset2 = MathHelper.wrapAngleTo180_float(yawBackwards - lastBlockYaw);
-                    float minOffset = 25;
                     if (rotation.getInput() == 2) {
-                        if (blockRotations != null) {
-                            lastBlockYaw = blockRotations[0];
-                            if (!flipRotation) {
-                                if (main >= 0) {
-                                    //Utils.print("Main1");
-                                    if (mainOffset >= 0) mainOffset = 0;
-                                    if (mainOffset <= -minOffset) mainOffset = -minOffset;
-                                } else if (main <= -0) {
-                                    //Utils.print("Main2");
-                                    if (mainOffset <= -0) mainOffset = -0;
-                                    if (mainOffset >= minOffset) mainOffset = minOffset;
-                                }
-                            }
-                            else {
-                                if (main >= 0) {
-                                    //Utils.print("Main1");
-                                    //Utils.print("1 " + mainOffset);
-                                    if (mainOffset <= -0) mainOffset2 = -0;
-                                    if (mainOffset >= minOffset) mainOffset2 = minOffset;
-                                } else if (main <= -0) {
-                                    //Utils.print("Main2");
-                                    //Utils.print("2 " + mainOffset);
-                                    if (mainOffset >= 0) mainOffset2 = 0;
-                                    if (mainOffset <= -minOffset) mainOffset2 = -minOffset;
-                                }
-                            }
-                        }
-                        else {
-                            lastBlockYaw = ((IAccessorEntityPlayerSP) mc.thePlayer).getLastReportedYaw();
+                        lastBlockYaw = blockRotations[0];
+                        if (!flipRotation) {
                             if (main >= 0) {
-                                mainOffset = -35;
+                                //Utils.print("Main1");
+                                if (mainOffset >= 0) mainOffset = 0;
+                                if (mainOffset <= -minOffset) mainOffset = -minOffset;
+                            } else if (main <= -0) {
+                                //Utils.print("Main2");
+                                if (mainOffset <= -0) mainOffset = -0;
+                                if (mainOffset >= minOffset) mainOffset = minOffset;
                             }
-                            else if (main <= -0) {
-                                mainOffset = 35;
+                        } else {
+                            if (main >= 0) {
+                                //Utils.print("Main1");
+                                //Utils.print("1 " + mainOffset);
+                                if (mainOffset <= -0) mainOffset2 = -0;
+                                if (mainOffset >= minOffset) mainOffset2 = minOffset;
+                            } else if (main <= -0) {
+                                //Utils.print("Main2");
+                                //Utils.print("2 " + mainOffset);
+                                if (mainOffset >= 0) mainOffset2 = 0;
+                                if (mainOffset <= -minOffset) mainOffset2 = -minOffset;
                             }
                         }
                         e.setYaw(offsetRotation());
                         if (main >= 0) {
                             if (flipRotation) {
-                                e.setYaw(offsetRotation() + (!Utils.scaffoldDiagonal(false) ? straightRot * 2 : diagRot * 2));
+                                e.setYaw(offsetRotation() + rotOffset * 2);
                                 //Utils.print("1 ");
                             }
-                        }
-                        else if (main <= -0) {
+                        } else if (main <= -0) {
                             if (flipRotation) {
-                                e.setYaw(offsetRotation() - (!Utils.scaffoldDiagonal(false) ? straightRot * 2 : diagRot * 2));
+                                e.setYaw(offsetRotation() - rotOffset * 2);
                                 //Utils.print("2 ");
                             }
                         }
-                    }
 
-                    if (System.currentTimeMillis() - lastSwap > 300) {
-                        if (main >= 0 && mainOffset >= 0 || main <= -0 && mainOffset <= -0) {
-                            flipRotation = true;
-                        } else {
-                            flipRotation = false;
+                        if (System.currentTimeMillis() - lastSwap > 300) {
+                            if (main >= 0 && mainOffset >= 0 || main <= -0 && mainOffset <= -0) {
+                                flipRotation = true;
+                            } else {
+                                flipRotation = false;
+                            }
+                            lastSwap = System.currentTimeMillis();
+                            //Utils.print("flip " + mainOffset);
                         }
-                        lastSwap = System.currentTimeMillis();
-                        //Utils.print("flip " + mainOffset);
-                    }
 
-                    if (!flipRotation) {
-                        e.setYaw(e.getYaw() - mainOffset);
-                    }
-                    else {
-                        /*if (main >= 0) {
+                        if (!flipRotation) {
+                            e.setYaw(e.getYaw() - mainOffset);
+                        } else {
+                            /*if (main >= 0) {
+                                e.setYaw(e.getYaw() - mainOffset2);
+                            } else if (main <= -0) {
+                                e.setYaw(e.getYaw() + mainOffset2);
+                            }*/
                             e.setYaw(e.getYaw() - mainOffset2);
-                        } else if (main <= -0) {
-                            e.setYaw(e.getYaw() + mainOffset2);
-                        }*/
-                        e.setYaw(e.getYaw() - mainOffset2);
+                        }
                     }
 
                     if (rotation.getInput() == 1) {
@@ -331,8 +316,10 @@ public class Scaffold extends Module {
                     if (lastPlaceTime > 0 && (System.currentTimeMillis() - lastPlaceTime) > rotationTimeout) blockRotations = null;
                 }
                 else {
+                    lastBlockYaw = lastYaw;
                     if (rotation.getInput() == 2) {
-                        e.setYaw(offsetRotation());
+                        //e.setYaw(offsetRotation() - mainOffset);
+                        e.setYaw(MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - hardcodedYaw() - 165);
                     }
                     else {
                         e.setYaw(MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - hardcodedYaw());
@@ -356,16 +343,9 @@ public class Scaffold extends Module {
 
     private float yaw;
 
-    float straightRot = 130.625F;
-    float diagRot = 136.625F;
-
     private float offsetRotation() {
 
-        if (!Utils.isMoving() || Utils.getHorizontalSpeed(mc.thePlayer) == 0.0D) {
-            return yaw;
-        }
-
-        float newYaw = getMotionYaw() - (!Utils.scaffoldDiagonal(false) ? straightRot : diagRot) * Math.signum(
+        float newYaw = getMotionYaw() - rotOffset * Math.signum(
                 MathHelper.wrapAngleTo180_float(getMotionYaw() - yaw)
         );
         yaw = applyGcd(
@@ -492,7 +472,14 @@ public class Scaffold extends Module {
 
     @Override
     public String getInfo() {
-        return fastScaffoldModes[handleFastScaffolds()];
+        String info;
+        if (fastOnRMB.isToggled()) {
+            info = Mouse.isButtonDown(1) && Utils.tabbedIn() ? fastScaffoldModes[(int) fastScaffold.getInput()] : sprintModes[(int) sprint.getInput()];
+        }
+        else {
+            info = fastScaffoldModes[(int) fastScaffold.getInput()];
+        }
+        return info;
     }
 
     public boolean stopFastPlace() {
