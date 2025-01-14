@@ -77,19 +77,24 @@ public class ScriptManager {
             }
         }
         else {
-            Iterator<Map.Entry<Script, Module>> iterator = scripts.entrySet().iterator();
-            while (iterator.hasNext()) {
-                Map.Entry<Script, Module> entry = iterator.next();
-                String fileName = entry.getKey().file.getName();
-                String hash = calculateHash(entry.getKey().file);
+            if (!this.scripts.isEmpty()) {
+                Iterator<Map.Entry<Script, Module>> iterator = scripts.entrySet().iterator();
+                while (iterator.hasNext()) {
+                    Map.Entry<Script, Module> entry = iterator.next();
+                    String fileName = entry.getKey().file.getName();
+                    String hash = calculateHash(entry.getKey().file);
 
-                String cachedHash = loadedHashes.get(fileName);
-                if (cachedHash != null && cachedHash.equals(hash) && !entry.getKey().error) {
-                    continue; // No changes detected, skip reloading
+                    String cachedHash = loadedHashes.get(fileName);
+                    if (cachedHash != null && cachedHash.equals(hash) && !entry.getKey().error) {
+                        continue; // no changes detected, skip loading
+                    }
+                    entry.getKey().delete();
+                    iterator.remove();
+                    loadedHashes.remove(fileName);
                 }
-                entry.getKey().delete();
-                iterator.remove();
-                loadedHashes.remove(fileName, hash);
+            }
+            else {
+                loadedHashes.clear();
             }
         }
 

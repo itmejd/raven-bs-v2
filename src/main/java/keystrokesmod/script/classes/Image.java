@@ -51,6 +51,10 @@ public class Image {
         return this.bufferedImage != null;
     }
 
+    public static void clearCache() {
+        imageCache.clear();
+    }
+
     @Override
     public String toString() {
         return "Image(" + this.height + "," + this.width + "," + this.url + ")";

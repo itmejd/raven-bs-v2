@@ -17,9 +17,12 @@ import net.minecraft.network.play.server.*;
 import net.minecraft.potion.PotionEffect;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.input.Keyboard;
 
 public class LongJump extends Module {
+    private SliderSetting mode;
+
     private SliderSetting boostSetting;
     private SliderSetting motionTicks;
     private SliderSetting verticalMotion;
@@ -32,6 +35,8 @@ public class LongJump extends Module {
 
     private KeySetting temporaryFlightKey;
     private SliderSetting pitchVal;
+
+    public String[] modes = new String[]{"Floyd", "Boost"};
 
     private float yaw;
     private float pitch;
@@ -55,10 +60,12 @@ public class LongJump extends Module {
     public static boolean slotReset;
     public static int slotResetTicks;
 
-    private String[] modes = new String[]{"Fireball", "Fireball Auto"};
     public LongJump() {
         super("Long Jump", category.movement);
+        this.registerSetting(mode = new SliderSetting("Mode", 0, modes));
+
         this.registerSetting(boostSetting = new SliderSetting("Horizontal boost", 1.7, 0.0, 2.0, 0.05));
+
         this.registerSetting(verticalMotion = new SliderSetting("Vertical motion", 0, 0.4, 0.9, 0.01));
         this.registerSetting(motionDecay = new SliderSetting("Motion decay", 17, 1, 40, 1));
         this.registerSetting(allowStrafe = new ButtonSetting("Allow strafe", false));
@@ -67,9 +74,10 @@ public class LongJump extends Module {
         this.registerSetting(hideExplosion = new ButtonSetting("Hide explosion", false));
 
         this.registerSetting(temporaryFlightKey = new KeySetting("Vertical key", Keyboard.KEY_SPACE));
+    }
 
-        //this.registerSetting(new DescriptionSetting("Dev:"));
-        //this.registerSetting(pitchVal = new SliderSetting("Stop movement Pitch", 55, 55, 80, 0.1));
+    public void guiUpdate() {
+        //temporaryFlightKey.isVisible = mode.getInput() == 0;
     }
 
     public void onEnable() {
@@ -136,12 +144,14 @@ public class LongJump extends Module {
             disable();
             return;
         }
-        if (boostTicks > 0) {
-            modifyVertical(); // has to be onPreUpdate
-            //Utils.print("Modifying vertical");
-            if (allowStrafe.isToggled()) {
-                Utils.setSpeed(Utils.getHorizontalSpeed(mc.thePlayer));
-                //Utils.print("Speed");
+        if (mode.getInput() == 0) {
+            if (boostTicks > 0) {
+                modifyVertical(); // has to be onPreUpdate
+                //Utils.print("Modifying vertical");
+                if (allowStrafe.isToggled()) {
+                    Utils.setSpeed(Utils.getHorizontalSpeed(mc.thePlayer));
+                    //Utils.print("Speed");
+                }
             }
         }
 
@@ -190,6 +200,8 @@ public class LongJump extends Module {
                 mc.thePlayer.inventory.currentItem = fireballSlot; // we are probably already on the slot but make sure
                 fireballTime = System.currentTimeMillis();
                 Reflection.rightClick();
+                mc.thePlayer.swingItem();
+                mc.getItemRenderer().resetEquippedProgress();
                 stopVelocity = true;
                 //Utils.print("Right click");
             }

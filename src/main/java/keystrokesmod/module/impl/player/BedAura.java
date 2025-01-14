@@ -175,7 +175,7 @@ public class BedAura extends Module {
         aiming = false;
         if ((rotate || breakProgress >= 1 || breakProgress == 0) && (currentBlock != null || rotateLastBlock != null)) {
             float[] rotations = RotationUtils.getRotations(currentBlock == null ? rotateLastBlock : currentBlock, e.getYaw(), e.getPitch());
-            if (currentBlock != null && !RotationUtils.inRange(currentBlock, range.getInput())) {
+            if (currentBlock == null || !RotationUtils.inRange(currentBlock, range.getInput())) {
                 return;
             }
             e.setYaw(RotationUtils.applyVanilla(rotations[0]));
@@ -338,6 +338,7 @@ public class BedAura extends Module {
         stopAutoblock = false;
         noAutoBlockTicks = 0;
         rotateLastBlock = null;
+        previousBlockBroken = null;
     }
 
     public void setPacketSlot(int slot) {
@@ -352,6 +353,7 @@ public class BedAura extends Module {
             Utils.sendModuleMessage(this, "sending c07 &astart &7break &7(&b" + mc.thePlayer.ticksExisted + "&7)");
         }
         mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.START_DESTROY_BLOCK, blockPos, EnumFacing.UP));
+        stopAutoblock = true;
     }
 
     private void stopBreak(BlockPos blockPos) {
@@ -359,6 +361,7 @@ public class BedAura extends Module {
             Utils.sendModuleMessage(this, "sending c07 &cstop &7break &7(&b" + mc.thePlayer.ticksExisted + "&7)");
         }
         mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.STOP_DESTROY_BLOCK, blockPos, EnumFacing.UP));
+        stopAutoblock = false;
     }
 
     private void swing() {
@@ -425,7 +428,6 @@ public class BedAura extends Module {
                 if (!disableBreakEffects.isToggled()) {
                     mc.playerController.onPlayerDestroyBlock(blockPos, EnumFacing.UP);
                 }
-                rotate = true;
                 rotateLastBlock = previousBlockBroken;
                 return;
             }
@@ -448,7 +450,7 @@ public class BedAura extends Module {
                     stopAutoblock = true; // if blocking then return and stop autoblocking
                 }
                 if (breakProgress >= lastProgress) {
-                    rotate = true;
+
                 }
             }
             breakProgress += progress;

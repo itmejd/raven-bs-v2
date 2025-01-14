@@ -289,7 +289,7 @@ public abstract class MixinEntityPlayerSP extends AbstractClientPlayer {
             this.setSprinting(true);
         }
 
-        if (this.isSprinting() && (!ModuleManager.sprint.omniSprint() && !NoSlow.groundSpeed() && (this.movementInput.moveForward < f || !flag3)) || this.isCollidedHorizontally || this.mc.gameSettings.keyBindSneak.isKeyDown() || (ModuleManager.scaffold != null && ModuleManager.scaffold.isEnabled && (!ModuleManager.scaffold.sprint() || ModuleManager.tower.canTower())) || (ModuleManager.wTap.isEnabled() && WTap.stopSprint)) {
+        if (this.isSprinting() && (!ModuleManager.sprint.omniSprint() && !NoSlow.groundSpeed() && (this.movementInput.moveForward < f || !flag3)) || this.isCollidedHorizontally || ModuleManager.sprint.disableBack || this.mc.gameSettings.keyBindSneak.isKeyDown() || (ModuleManager.scaffold != null && ModuleManager.scaffold.isEnabled && (!ModuleManager.scaffold.sprint() || ModuleManager.tower.canTower())) || (ModuleManager.wTap.isEnabled() && WTap.stopSprint)) {
             this.setSprinting(false);
             WTap.stopSprint = false;
         }

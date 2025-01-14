@@ -18,15 +18,15 @@ public class S3E extends SPacket {
 
     public S3E(S3EPacketTeams packet) {
         super(packet);
-        this.name = packet.func_149312_c();
-        this.displayName = packet.func_149306_d();
-        this.prefix = packet.func_149311_e();
-        this.suffix = packet.func_149309_f();
-        this.nametagVisibility = packet.func_179814_i();
-        this.playerList = packet.func_149310_g();
-        this.action = packet.func_149307_h();
-        this.friendlyFlags = packet.func_149308_i();
-        this.color = packet.func_179813_h();
+        this.name = packet.getName();
+        this.displayName = packet.getDisplayName();
+        this.prefix = packet.getPrefix();
+        this.suffix = packet.getSuffix();
+        this.nametagVisibility = packet.getNameTagVisibility();
+        this.playerList = packet.getPlayers();
+        this.action = packet.getAction();
+        this.friendlyFlags = packet.getFriendlyFlags();
+        this.color = packet.getColor();
     }
 
     public S3E(Packet packet, String name, String displayName, String prefix, String suffix, String nametagVisibility, Collection<String> playerList, int action, int friendlyFlags, int color) {

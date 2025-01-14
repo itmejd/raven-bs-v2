@@ -277,7 +277,7 @@ public class Tower extends Module {
     }
 
     private boolean modulesEnabled() {
-        return (ModuleManager.scaffold.moduleEnabled && ModuleManager.scaffold.holdingBlocks() && ModuleManager.scaffold.tower.isToggled() && ModuleManager.scaffold.hasSwapped && !ModuleManager.LongJump.isEnabled());
+        return (ModuleManager.scaffold.moduleEnabled && ModuleManager.scaffold.holdingBlocks() && ModuleManager.scaffold.hasSwapped && !ModuleManager.LongJump.isEnabled());
     }
 
     private int getSpeedLevel() {

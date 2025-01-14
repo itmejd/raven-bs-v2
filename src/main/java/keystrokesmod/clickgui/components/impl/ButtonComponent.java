@@ -29,6 +29,9 @@ public class ButtonComponent extends Component {
     }
 
     public void render() {
+        if (!isVisible()) {
+            this.o = this.o - 12;
+        }
         GL11.glPushMatrix();
         GL11.glScaled(0.5D, 0.5D, 0.5D);
         Minecraft.getMinecraft().fontRendererObj.drawString((this.buttonSetting.isMethodButton ? "[=]  " : (this.buttonSetting.isToggled() ? "[+]  " : "[-]  ")) + this.buttonSetting.getName(), (float) ((this.p.categoryComponent.getX() + 4) * 2), (float) ((this.p.categoryComponent.getY() + this.o + 4) * 2), this.buttonSetting.isToggled() ? this.c : -1, false);
@@ -62,4 +65,10 @@ public class ButtonComponent extends Component {
     public boolean i(int x, int y) {
         return x > this.x && x < this.x + this.p.categoryComponent.getWidth() && y > this.y && y < this.y + 11;
     }
+
+    @Override
+    public boolean isVisible() {
+        return buttonSetting == null || buttonSetting.isVisible;
+    }
+
 }

@@ -3,6 +3,9 @@ package keystrokesmod.module.setting;
 import com.google.gson.JsonObject;
 
 public abstract class Setting {
+
+    public boolean isVisible = true;
+
     public String n;
 
     public Setting(String n) {

@@ -39,6 +39,9 @@ public class BindComponent extends Component {
     }
 
     public void render() {
+        if (!isVisible()) {
+            this.o = this.o - 12;
+        }
         GL11.glPushMatrix();
         GL11.glScaled(0.5D, 0.5D, 0.5D);
         if (keySetting == null) {
@@ -136,4 +139,10 @@ public class BindComponent extends Component {
     public void onGuiClosed() {
         this.isBinding = false;
     }
+
+    @Override
+    public boolean isVisible() {
+        return keySetting == null || keySetting.isVisible;
+    }
+
 }

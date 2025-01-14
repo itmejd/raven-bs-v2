@@ -23,7 +23,7 @@ public class NoFall extends Module {
     private SliderSetting minFallDistance;
     private ButtonSetting disableAdventure;
     private ButtonSetting ignoreVoid;
-    private String[] modes = new String[]{"Spoof", "Packet", "NoGround"};
+    private String[] modes = new String[]{"Spoof", "NoGround", "Packet A", "Packet B"};
 
     private double initialY;
     private double dynamic;
@@ -32,7 +32,7 @@ public class NoFall extends Module {
 
     public NoFall() {
         super("NoFall", category.player);
-        this.registerSetting(mode = new SliderSetting("Mode", 0, modes));
+        this.registerSetting(mode = new SliderSetting("Mode", 2, modes));
         this.registerSetting(disableAdventure = new ButtonSetting("Disable adventure", false));
         this.registerSetting(minFallDistance = new SliderSetting("Minimum fall distance", 3, 0, 10, 0.1));
         this.registerSetting(ignoreVoid = new ButtonSetting("Ignore void", true));
@@ -70,16 +70,21 @@ public class NoFall extends Module {
         if (mc.thePlayer.motionY < -2.4) {
             dynamic = 4.5;
         }
-        if (isFalling || mode.getInput() == 2) {
-            switch ((int) mode.getInput()) {
-                case 1:
-                    if (distanceFallen >= dynamic) {
-                        Utils.getTimer().timerSpeed = (float) 0.72;
-                        mc.getNetHandler().addToSendQueue(new C03PacketPlayer(true));
-                        initialY = mc.thePlayer.posY;
-                        edging = "nofall packet";
-                    }
-                    break;
+        if (isFalling && mode.getInput() == 2) {
+            if (distanceFallen >= dynamic) {
+                Utils.getTimer().timerSpeed = (float) 0.72;
+                mc.getNetHandler().addToSendQueue(new C03PacketPlayer(true));
+                initialY = mc.thePlayer.posY;
+                edging = "nofall packet";
+            }
+        }
+        if (isFalling && mode.getInput() == 3) {
+            Utils.getTimer().timerSpeed = (float) 1;
+            if (distanceFallen >= 3) {
+                Utils.getTimer().timerSpeed = (float) 0.5;
+                mc.getNetHandler().addToSendQueue(new C03PacketPlayer(true));
+                initialY = mc.thePlayer.posY;
+                edging = "nofall packet";
             }
         }
         edging += " " + dynamic;
@@ -92,7 +97,7 @@ public class NoFall extends Module {
             case 0:
                 e.setOnGround(true);
                 break;
-            case 2:
+            case 1:
                 e.setOnGround(false);
                 break;
         }

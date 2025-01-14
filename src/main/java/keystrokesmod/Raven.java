@@ -9,6 +9,8 @@ import keystrokesmod.keystroke.keystrokeCommand;
 import keystrokesmod.module.Module;
 import keystrokesmod.clickgui.ClickGui;
 import keystrokesmod.module.ModuleManager;
+import keystrokesmod.script.classes.Entity;
+import keystrokesmod.script.classes.NetworkPlayer;
 import keystrokesmod.utility.ModuleUtils;
 import keystrokesmod.script.ScriptManager;
 import keystrokesmod.utility.*;
@@ -84,6 +86,10 @@ public class Raven {
     public void onTick(ClientTickEvent e) {
         if (e.phase == Phase.END) {
             if (Utils.nullCheck()) {
+                if (mc.thePlayer.ticksExisted % 6000 == 0) { // reset cache every 5 minutes
+                    Entity.clearCache();
+                    NetworkPlayer.clearCache();
+                }
                 if (Reflection.sendMessage) {
                     Utils.sendMessage("&cThere was an error, relaunch the game.");
                     Reflection.sendMessage = false;
@@ -119,9 +125,13 @@ public class Raven {
 
     @SubscribeEvent
     public void onEntityJoinWorld(EntityJoinWorldEvent e) {
-        if (e.entity == mc.thePlayer && !firstLoad) {
-            firstLoad = true;
-            scriptManager.loadScripts();
+        if (e.entity == mc.thePlayer) {
+            if (!firstLoad) {
+                firstLoad = true;
+                scriptManager.loadScripts();
+            }
+            Entity.clearCache();
+            NetworkPlayer.clearCache();
         }
     }
 

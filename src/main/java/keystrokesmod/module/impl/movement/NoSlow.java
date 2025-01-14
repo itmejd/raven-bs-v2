@@ -8,6 +8,7 @@ import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.DescriptionSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
 import keystrokesmod.utility.*;
+import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.item.*;
 import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
 import net.minecraft.util.BlockPos;
@@ -73,17 +74,7 @@ public class NoSlow extends Module {
                 }
                 break;
             case 4:
-                if (reSendConsume) {
-                    if (mc.thePlayer.onGround) {
-                        mc.thePlayer.jump();
-                        break;
-                    }
-                    else {
-                        mc.playerController.sendUseItem(mc.thePlayer, mc.theWorld, mc.thePlayer.getHeldItem());
-                        canFloat = true;
-                        reSendConsume = false;
-                    }
-                }
+                //
                 break;
         }
     }
@@ -101,8 +92,9 @@ public class NoSlow extends Module {
     @SubscribeEvent
     public void onPostPlayerInput(PostPlayerInputEvent e) {
         if ((canFloat && mc.thePlayer.onGround)) {
-            if (groundSpeedOption.isToggled() && !Utils.jumpDown() && !ModuleManager.bhop.isEnabled() && Utils.isMoving() && !Utils.bowBackwards()) {
+            if (groundSpeedOption.isToggled() && !Utils.jumpDown() && !ModuleManager.bhop.isEnabled() && Utils.keysDown() && !Utils.bowBackwards()) {
                 Utils.setSpeed(getSpeedModifier());
+                //Utils.print("ground speed");
             }
         }
     }
@@ -114,20 +106,26 @@ public class NoSlow extends Module {
             return;
         }
         postPlace = false;
-        if (!Mouse.isButtonDown(1)) {
+        if (!Mouse.isButtonDown(1) || (mc.thePlayer.getHeldItem() == null || !holdingConsumable(mc.thePlayer.getHeldItem()))) {
             resetFloat();
             noSlowing = false;
             //Utils.print("!Noslowing");
             return;
         }
+        if (reSendConsume) {
+            if (!mc.thePlayer.onGround) {
+                if (ModuleUtils.inAirTicks > 1) {
+                    mc.playerController.sendUseItem(mc.thePlayer, mc.theWorld, mc.thePlayer.getHeldItem());
+                    canFloat = true;
+                    reSendConsume = false;
+                }
+            }
+        }
         if (!canFloat) {
             return;
         }
-        if (canFloat) {
-            e.setPosY(e.getPosY() + 1E-14);
-            noSlowing = true;
-            //Utils.print("Noslowing");
-        }
+        e.setPosY(e.getPosY() + 1E-11);
+        noSlowing = true;
         if (mc.thePlayer.onGround) {
             if (mc.thePlayer.moveStrafing == 0 && mc.thePlayer.moveForward <= 0 && Utils.isMoving()) {
                 setRotation = true;
@@ -138,7 +136,7 @@ public class NoSlow extends Module {
         if (Utils.noSlowingBackWithBow()) setRotation = false;
         if (groundSpeedOption.isToggled()) {
             if (setRotation) {
-                if (!ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow()) {
+                if (!ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !Utils.jumpDown()) {
                     float playerYaw = mc.thePlayer.rotationYaw;
                     e.setYaw(playerYaw -= 55);
                 }
@@ -149,14 +147,14 @@ public class NoSlow extends Module {
     @SubscribeEvent
     public void onPacketSend(SendPacketEvent e) {
         if (e.getPacket() instanceof C08PacketPlayerBlockPlacement && mode.getInput() == 4 && getSlowed() != 0.2f && holdingConsumable(((C08PacketPlayerBlockPlacement) e.getPacket()).getStack()) && !BlockUtils.isInteractable(mc.objectMouseOver) && Utils.holdingEdible(((C08PacketPlayerBlockPlacement) e.getPacket()).getStack())) {
-            if (ModuleManager.skyWars.isEnabled() && Utils.getSkyWarsStatus() == 1 || canFloat) {
+            if (ModuleManager.skyWars.isEnabled() && Utils.getSkyWarsStatus() == 1 || canFloat || reSendConsume) {
                 return;
             }
             if (!mc.thePlayer.onGround) {
                 canFloat = true;
             }
             else {
-                if (mc.thePlayer.onGround) {
+                if (!Utils.jumpDown()) {
                     mc.thePlayer.jump();
                 }
                 reSendConsume = true;
@@ -193,7 +191,7 @@ public class NoSlow extends Module {
     }
 
     public static boolean groundSpeed() {
-        return groundSpeedOption.isToggled() && noSlowing;
+        return groundSpeedOption.isToggled() && noSlowing && Utils.isMoving() && !Utils.jumpDown();
     }
 
     @Override

@@ -589,7 +589,7 @@ public class Utils {
 
     public static String getTitle() {
         try {
-            return (String) Reflection.title.get(mc.ingameGUI);
+            return (String) Reflection.displayedTitle.get(mc.ingameGUI);
         } catch (IllegalAccessException ex) {
             ex.printStackTrace();
         }
@@ -1194,10 +1194,14 @@ public class Utils {
     }
 
     public static boolean holdingWeapon() {
-        if (mc.thePlayer.getHeldItem() == null) {
+        return holdingWeapon(mc.thePlayer);
+    }
+
+    public static boolean holdingWeapon(EntityLivingBase entityLivingBase) {
+        if (entityLivingBase.getHeldItem() == null) {
             return false;
         }
-        Item getItem = mc.thePlayer.getHeldItem().getItem();
+        Item getItem = entityLivingBase.getHeldItem().getItem();
         return getItem instanceof ItemSword || (Settings.weaponAxe.isToggled() && getItem instanceof ItemAxe) || (Settings.weaponRod.isToggled() && getItem instanceof ItemFishingRod) || (Settings.weaponStick.isToggled() && getItem == Items.stick);
     }
 
@@ -1340,26 +1344,6 @@ public class Utils {
             return new int[] { Mouse.getX(), Mouse.getY() };
         }
 
-        public static boolean isPressed(String key) {
-            for (Map.Entry<KeyBinding, String> map : Reflection.keyBindings.entrySet()) {
-                if (map.getValue().equals(key)) {
-                    return map.getKey().isKeyDown();
-                }
-            }
-            return false;
-        }
-
-        public static void setPressed(String key, boolean pressed) {
-            for (Map.Entry<KeyBinding, String> map : Reflection.keyBindings.entrySet()) {
-                if (map.getValue().equals(key)) {
-                    KeyBinding.setKeyBindState(map.getKey().getKeyCode(), pressed);
-                    if (pressed) {
-                        KeyBinding.onTick(map.getKey().getKeyCode());
-                    }
-                }
-            }
-        }
-
         public static int getKeyCode(String key) {
             return Keyboard.getKeyIndex(key);
         }
@@ -1392,6 +1376,10 @@ public class Utils {
             }
         }
         return false;
+    }
+
+    public static String asWholeNum(double input) {
+        return isWholeNumber(input) ? (int) input + "" : String.valueOf(input);
     }
 
     public static boolean isBedwarsPractice() {

@@ -1,6 +1,14 @@
 package keystrokesmod.clickgui.components;
 
 public class Component {
+
+    public boolean isVisible = true;
+
+    public boolean isVisible() {
+
+        return isVisible;
+    }
+
     public void render() {
     }
 

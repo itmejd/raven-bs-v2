@@ -21,16 +21,18 @@ public class TileEntity {
     }
 
     public Object[] getSkullData() {
-        if (!(this.tileEntity instanceof TileEntitySkull)) {
-            return null;
+        if (this.tileEntity instanceof TileEntitySkull) {
+            final TileEntitySkull skull = (TileEntitySkull)this.tileEntity;
+            final Object[] skullData = { skull.getSkullType(), skull.getSkullRotation(), null, null, null };
+            if (skull.getPlayerProfile() == null) {
+                skullData[2] = (skullData[3] = null);
+            }
+            else {
+                skullData[2] = skull.getPlayerProfile().getName();
+                skullData[3] = skull.getPlayerProfile().getId();
+            }
+            return skullData;
         }
-        TileEntitySkull skull = (TileEntitySkull) this.tileEntity;
-        String name = "";
-        String uuid = "";
-        if (skull.getPlayerProfile() != null) {
-            name = skull.getPlayerProfile().getName();
-            uuid = skull.getPlayerProfile().getId().toString();
-        }
-        return new Object[] { skull.getSkullType(), skull.getSkullRotation(), name, uuid };
+        return null;
     }
 }

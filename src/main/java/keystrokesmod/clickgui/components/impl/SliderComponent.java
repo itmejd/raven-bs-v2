@@ -33,6 +33,9 @@ public class SliderComponent extends Component {
     }
 
     public void render() {
+        if (!isVisible()) {
+            this.o = this.o - 12;
+        }
         RenderUtils.drawRoundedRectangle(this.moduleComponent.categoryComponent.getX() + 4, this.moduleComponent.categoryComponent.getY() + this.o + 11, this.moduleComponent.categoryComponent.getX() + 4 + this.moduleComponent.categoryComponent.getWidth() - 8, this.moduleComponent.categoryComponent.getY() + this.o + 15, 4, -12302777);
         int l = this.moduleComponent.categoryComponent.getX() + 4;
         int r = this.moduleComponent.categoryComponent.getX() + 4 + (int) this.w;
@@ -129,4 +132,10 @@ public class SliderComponent extends Component {
     public void onGuiClosed() {
         this.heldDown = false;
     }
+
+    @Override
+    public boolean isVisible() {
+        return sliderSetting == null || sliderSetting.isVisible;
+    }
+
 }

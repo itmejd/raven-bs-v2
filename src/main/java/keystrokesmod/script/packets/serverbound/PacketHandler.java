@@ -101,6 +101,12 @@ public class PacketHandler {
             else if (packet instanceof S3APacketTabComplete) {
                 sPacket = new S3A((S3APacketTabComplete) packet, (byte) 0);
             }
+            else if (packet instanceof S02PacketChat) {
+                sPacket = new S02((S02PacketChat) packet);
+            }
+            else if (packet instanceof S45PacketTitle) {
+                sPacket = new S45((S45PacketTitle) packet);
+            }
             else {
                 sPacket = new SPacket(packet);
             }

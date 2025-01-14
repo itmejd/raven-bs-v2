@@ -4,6 +4,8 @@ import keystrokesmod.Raven;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.script.classes.Entity;
+import keystrokesmod.script.classes.Image;
+import keystrokesmod.script.classes.NetworkPlayer;
 import keystrokesmod.utility.Utils;
 import keystrokesmod.utility.profile.ProfileModule;
 import org.lwjgl.Sys;
@@ -32,9 +34,11 @@ public class Manager extends Module {
                     }
                     else {
                         double timeTaken = Utils.round((System.currentTimeMillis() - currentTimeMillis) / 1000.0, 1);
-                        Utils.sendMessage("&7Loaded &b" + Raven.scriptManager.scripts.size() + " &7script" + ((Raven.scriptManager.scripts.size() == 1) ? "" : "s") + " in &b" + (Utils.isWholeNumber(timeTaken) ? (int) timeTaken + "" : timeTaken) + "&7s.");
+                        Utils.sendMessage("&7Loaded &b" + Raven.scriptManager.scripts.size() + " &7script" + ((Raven.scriptManager.scripts.size() == 1) ? "" : "s") + " in &b" + Utils.asWholeNum(timeTaken) + "&7s.");
                     }
                     Entity.clearCache();
+                    NetworkPlayer.clearCache();
+                    Image.clearCache();
                     if (Raven.currentProfile != null && Raven.currentProfile.getModule() != null) {
                         ((ProfileModule) Raven.currentProfile.getModule()).saved = false;
                     }

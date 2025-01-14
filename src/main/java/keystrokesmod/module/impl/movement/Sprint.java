@@ -1,6 +1,8 @@
 package keystrokesmod.module.impl.movement;
 
 import keystrokesmod.event.PreMotionEvent;
+import keystrokesmod.event.PreUpdateEvent;
+import keystrokesmod.mixins.impl.entity.IAccessorEntityPlayerSP;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.setting.impl.ButtonSetting;
@@ -12,6 +14,7 @@ import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.util.MathHelper;
 import net.minecraftforge.fml.client.config.GuiButtonExt;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -22,9 +25,12 @@ public class Sprint extends Module {
     private ButtonSetting displayText;
     private ButtonSetting rainbow;
     public SliderSetting omniDirectional;
+    public ButtonSetting disableBackwards;
     public String text = "[Sprint (Toggled)]";
     public float posX = 5;
     public float posY = 5;
+    private float limit;
+    public boolean disableBack;
 
     private String[] omniDirectionalModes = new String[] { "Disabled", "Vanilla", "Hypixel" };
 
@@ -37,23 +43,46 @@ public class Sprint extends Module {
         this.registerSetting(displayText = new ButtonSetting("Display text", false));
         this.registerSetting(rainbow = new ButtonSetting("Rainbow", false));
         this.registerSetting(omniDirectional = new SliderSetting("Omni-Directional", 0, omniDirectionalModes));
+        this.registerSetting(disableBackwards = new ButtonSetting("Disable backwards", false));
         this.closetModule = true;
     }
 
     @SubscribeEvent
     public void onPreMotion(PreMotionEvent e) {
-
         if (Utils.noSlowingBackWithBow()) {
             ModuleManager.bhop.setRotation = false;
             return;
         }
         if (ModuleManager.sprint.isEnabled() && ModuleManager.sprint.omniDirectional.getInput() == 2) {
             if (mc.thePlayer.onGround && mc.thePlayer.moveStrafing == 0 && mc.thePlayer.moveForward <= -0.5 && !Utils.jumpDown()) {
-                if (!ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !ModuleManager.safeWalk.canSafeWalk() && !ModuleManager.scaffold.isEnabled && !ModuleManager.bhop.isEnabled()) {
+                if (!ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !ModuleManager.safeWalk.canSafeWalk() && !ModuleManager.scaffold.isEnabled && !ModuleManager.bhop.isEnabled() && !mc.thePlayer.isCollidedHorizontally) {
                     float playerYaw = mc.thePlayer.rotationYaw;
                     e.setYaw(playerYaw -= 55);
                 }
             }
+        }
+    }
+
+    @SubscribeEvent
+    public void onPreUpdate(PreUpdateEvent e) {
+        limit = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw - ((IAccessorEntityPlayerSP) mc.thePlayer).getLastReportedYaw() );
+        //Utils.print("" + limit);
+
+        double limitVal = 135;
+        if (!disableBackwards.isToggled()) {
+            disableBack = false;
+            return;
+        }
+        if (exceptions()) {
+            disableBack = false;
+            return;
+        }
+        if ((limit <= -limitVal || limit >= limitVal) || omniSprint() && ModuleManager.killAura.isTargeting && mc.thePlayer.moveForward <= 0.5) {
+            disableBack = true;
+            //Utils.print("Disable sprint");
+        }
+        else {
+            disableBack = false;
         }
     }
 
@@ -85,6 +114,10 @@ public class Sprint extends Module {
             return true;
         }
         return false;
+    }
+
+    private boolean exceptions() {
+        return ModuleManager.scaffold.isEnabled || mc.thePlayer.hurtTime > 0;
     }
 
     static class EditScreen extends GuiScreen {

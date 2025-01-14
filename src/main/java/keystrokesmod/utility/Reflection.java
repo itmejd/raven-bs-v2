@@ -3,6 +3,7 @@ package keystrokesmod.utility;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiEnchantment;
 import net.minecraft.client.gui.GuiIngame;
+import net.minecraft.client.gui.GuiPlayerTabOverlay;
 import net.minecraft.client.gui.GuiScreenBook;
 import net.minecraft.client.gui.inventory.GuiBrewingStand;
 import net.minecraft.client.gui.inventory.GuiDispenser;
@@ -20,7 +21,6 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.projectile.EntityArrow;
 import net.minecraft.inventory.*;
 import net.minecraft.item.ItemFood;
-import net.minecraft.network.Packet;
 import net.minecraft.network.play.client.C01PacketChatMessage;
 import net.minecraft.network.play.client.C02PacketUseEntity;
 import net.minecraft.network.play.server.S08PacketPlayerPosLook;
@@ -37,7 +37,6 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 public class Reflection {
-    public static Field title;
     public static Field button;
     public static Field buttonstate;
     public static Field buttons;
@@ -56,23 +55,24 @@ public class Reflection {
     public static Field inGround;
     public static Method getFOVModifier;
     public static Field itemInUseCount;
+    public static Field displayedTitle;
+    public static Field displayedSubTitle;
     public static Field S08PacketPlayerPosLookYaw;
     public static Field S08PacketPlayerPosLookPitch;
     public static Field C02PacketUseEntityEntityId;
+    public static Field recordPlaying;
     public static Field bookContents;
-    public static Field classTarget;
     public static Field fallDistance;
+    public static Field tabHeader;
+    public static Field tabFooter;
     public static Field thirdPersonDistance;
     public static Field alwaysEdible;
     public static Field mcGuiInGame;
-    public static Field targetEntity;
-    public static Field targetTasks;
-    public static Field executingTaskEntries;
     public static Field C01PacketChatMessageMessage;
     public static HashMap<Class, Field> containerInventoryPlayer = new HashMap<>();
     private static List<Class> containerClasses = Arrays.asList(GuiFurnace.class, GuiBrewingStand.class, GuiEnchantment.class, ContainerHopper.class, GuiDispenser.class, ContainerWorkbench.class, ContainerMerchant.class, ContainerHorseInventory.class);
     public static boolean sendMessage = false;
-    public static Map<KeyBinding, String> keyBindings = new HashMap<>();
+    public static Map<String, KeyBinding> keybinds = new HashMap<>();
 
     public static void getFields() {
         try {
@@ -84,12 +84,6 @@ public class Reflection {
 
             if (leftClickCounter != null) {
                 leftClickCounter.setAccessible(true);
-            }
-
-            title = ReflectionHelper.findField(GuiIngame.class, "field_175201_x", "screenTitle");
-
-            if (title != null) {
-                title.setAccessible(true);
             }
 
             jumpTicks = ReflectionHelper.findField(EntityLivingBase.class, "field_70773_bE", "jumpTicks");
@@ -104,10 +98,37 @@ public class Reflection {
                 rightClickDelayTimerField.setAccessible(true);
             }
 
+            displayedTitle = ReflectionHelper.findField(GuiIngame.class, "field_175201_x", "displayedTitle");
+
+            if (displayedTitle != null) {
+                displayedTitle.setAccessible(true);
+            }
+
+            displayedSubTitle = ReflectionHelper.findField(GuiIngame.class, "field_175200_y", "displayedSubTitle");
+
+            if (displayedSubTitle != null) {
+                displayedSubTitle.setAccessible(true);
+            }
+
+            tabHeader = ReflectionHelper.findField(GuiPlayerTabOverlay.class, "header", "field_175256_i");
+            if (tabHeader != null) {
+                tabHeader.setAccessible(true);
+            }
+
+            tabFooter = ReflectionHelper.findField(GuiPlayerTabOverlay.class, "footer", "field_175255_h");
+            if (tabFooter != null) {
+                tabFooter.setAccessible(true);
+            }
+
             C01PacketChatMessageMessage = ReflectionHelper.findField(C01PacketChatMessage.class, "field_149440_a", "message");
 
             if (C01PacketChatMessageMessage != null) {
                 C01PacketChatMessageMessage.setAccessible(true);
+            }
+
+            recordPlaying = ReflectionHelper.findField(GuiIngame.class, "recordPlaying", "field_73838_g");
+            if (recordPlaying != null) {
+                recordPlaying.setAccessible(true);
             }
 
             curBlockDamageMP = ReflectionHelper.findField(PlayerControllerMP.class, "field_78770_f", "curBlockDamageMP"); // fastmine and mining related stuff
@@ -115,24 +136,9 @@ public class Reflection {
                 curBlockDamageMP.setAccessible(true);
             }
 
-            classTarget = ReflectionHelper.findField(EntityAIAttackOnCollide.class, "field_75444_h", "classTarget");
-            if (classTarget != null) {
-                classTarget.setAccessible(true);
-            }
-
             blockHitDelay = ReflectionHelper.findField(PlayerControllerMP.class, "field_78781_i", "blockHitDelay");
             if (blockHitDelay != null) {
                 blockHitDelay.setAccessible(true);
-            }
-
-            targetEntity = ReflectionHelper.findField(EntityAINearestAttackableTarget.class, "targetEntity", "field_75309_a");
-            if (targetEntity != null) {
-                targetEntity.setAccessible(true);
-            }
-
-            targetTasks = ReflectionHelper.findField(EntityLiving.class, "targetTasks", "field_70715_bh");
-            if (targetTasks != null) {
-                targetTasks.setAccessible(true);
             }
 
             fallDistance = ReflectionHelper.findField(Entity.class, "fallDistance", "field_70143_R");
@@ -143,11 +149,6 @@ public class Reflection {
             mcGuiInGame = ReflectionHelper.findField(GuiIngame.class, "mc", "field_73839_d");
             if (mcGuiInGame != null) {
                 mcGuiInGame.setAccessible(true);
-            }
-
-            executingTaskEntries = ReflectionHelper.findField(EntityAITasks.class, "executingTaskEntries", "field_75780_b");
-            if (executingTaskEntries != null) {
-                executingTaskEntries.setAccessible(true);
             }
 
             shaderResourceLocations = ReflectionHelper.findField(EntityRenderer.class, "shaderResourceLocations", "field_147712_ad");
@@ -219,8 +220,9 @@ public class Reflection {
     }
 
     public static void setKeyBindings() {
-        for (KeyBinding keyBinding : Minecraft.getMinecraft().gameSettings.keyBindings) {
-            keyBindings.put(keyBinding, keyBinding.getKeyDescription().substring(4));
+        for (KeyBinding keyBind : Minecraft.getMinecraft().gameSettings.keyBindings) {
+            String keyName = keyBind.getKeyDescription().replaceFirst("key\\.", "");
+            keybinds.put(keyName, keyBind);
         }
     }
 
@@ -338,6 +340,15 @@ public class Reflection {
         return blocking;
     }
 
+    public static void setItemInUseCount(int count) {
+        try {
+            itemInUseCount.set(Minecraft.getMinecraft().thePlayer, count);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public static boolean setupCameraTransform(EntityRenderer entityRenderer, float partialTicks, int eyeIndex) {
         try {
             if (setupCameraTransform == null) {
@@ -350,18 +361,5 @@ public class Reflection {
             e.printStackTrace();
         }
         return false;
-    }
-
-    public static Entity getClassTarget(EntityAIAttackOnCollide task) {
-        try {
-            if (classTarget != null) {
-                Entity targetEntity = (Entity) classTarget.get(task);
-                return targetEntity;
-            }
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
     }
 }

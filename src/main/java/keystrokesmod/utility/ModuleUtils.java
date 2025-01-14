@@ -61,8 +61,6 @@ public class ModuleUtils {
     @SubscribeEvent
     public void onPreUpdate(PreUpdateEvent e) {
 
-        inAirTicks = mc.thePlayer.onGround ? 0 : ++inAirTicks;
-
         if (LongJump.slotReset && ++LongJump.slotResetTicks >= 2) {
             LongJump.stopKillAura = false;
             LongJump.stopScaffold = false;
@@ -93,6 +91,8 @@ public class ModuleUtils {
 
     @SubscribeEvent
     public void onPreMotion(PreMotionEvent e) {
+
+        inAirTicks = mc.thePlayer.onGround ? 0 : ++inAirTicks;
 
         // 7 tick needs to always finish the motion or itll lag back
         if (!ModuleManager.bhop.isEnabled() && ModuleManager.bhop.mode.getInput() == 3 && ModuleManager.bhop.didMove) {
@@ -127,7 +127,7 @@ public class ModuleUtils {
         }
         if (ModuleManager.bhop.rotateYawOption.isToggled()) {
             if (ModuleManager.bhop.setRotation) {
-                if (!ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !ModuleManager.scaffold.isEnabled) {
+                if (!ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !ModuleManager.scaffold.isEnabled && !mc.thePlayer.isCollidedHorizontally) {
                     float playerYaw = mc.thePlayer.rotationYaw;
                     e.setYaw(playerYaw -= 55);
                 }

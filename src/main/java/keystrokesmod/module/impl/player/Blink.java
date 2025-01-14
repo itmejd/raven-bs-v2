@@ -91,7 +91,7 @@ public class Blink extends Module {
         if (packet.getClass().getSimpleName().startsWith("S")) {
             return;
         }
-        if (packet instanceof C00PacketLoginStart || packet instanceof C00Handshake) {
+        if (packet instanceof C00PacketKeepAlive || packet instanceof C00PacketLoginStart || packet instanceof C00Handshake) {
             return;
         }
         started = true;

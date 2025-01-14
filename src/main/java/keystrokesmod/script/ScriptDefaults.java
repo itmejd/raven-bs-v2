@@ -28,7 +28,6 @@ import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.resources.I18n;
-import net.minecraft.client.resources.IResourcePack;
 import net.minecraft.client.resources.ResourcePackRepository;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.creativetab.CreativeTabs;
@@ -45,17 +44,19 @@ import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.glu.GLU;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 public class ScriptDefaults {
+    private static ExecutorService cachedExecutor;
     private static final Minecraft mc = Minecraft.getMinecraft();
     public static final Bridge bridge = new Bridge();
-    private static final ScheduledExecutorService executor = Executors.newScheduledThreadPool(2);
 
     public static class client {
         public static boolean allowFlying() {
@@ -85,8 +86,11 @@ public class ScriptDefaults {
             Utils.addFriend(username);
         }
 
-        public static void async(Runnable method) {
-            executor.execute(method);
+        public static void async(final Runnable method) {
+            if (cachedExecutor == null) {
+                cachedExecutor = Executors.newCachedThreadPool();
+            }
+            cachedExecutor.execute(method);
         }
 
         public static int getFPS() {
@@ -110,10 +114,6 @@ public class ScriptDefaults {
             return Utils.isDiagonal(false);
         }
 
-        public static boolean isHoldingWeapon() {
-            return Utils.holdingWeapon();
-        }
-
         public static void setTimer(float timer) {
             Utils.getTimer().timerSpeed = timer;
         }
@@ -128,6 +128,30 @@ public class ScriptDefaults {
 
         public static void processPacketNoEvent(SPacket packet) {
             PacketUtils.receivePacketNoEvent(packet.packet);
+        }
+
+        public static String getTitle() {
+            try {
+                return (String) Reflection.displayedTitle.get(mc.ingameGUI);
+            }
+            catch (IllegalAccessException ignored) {}
+            return "";
+        }
+
+        public static String getSubTitle() {
+            try {
+                return (String) Reflection.displayedSubTitle.get(mc.ingameGUI);
+            }
+            catch (IllegalAccessException ignored) {}
+            return "";
+        }
+
+        public static String getRecordPlaying() {
+            try {
+                return (String) Reflection.recordPlaying.get(mc.ingameGUI);
+            }
+            catch (IllegalAccessException ignored) {}
+            return "";
         }
 
         public static boolean isFlying() {
@@ -212,16 +236,20 @@ public class ScriptDefaults {
             return mc.thePlayer.capabilities.allowEdit;
         }
 
+        public static void setItemInUseCount(int count) {
+            Reflection.setItemInUseCount(count);
+        }
+
+        public static int getItemInUseCount() {
+            return mc.thePlayer.getItemInUseCount();
+        }
+
+        public static int getItemInUseDuration() {
+            return mc.thePlayer.getItemInUseDuration();
+        }
+
         public static void log(String message) {
             System.out.println(message);
-        }
-
-        public static boolean isMouseDown(int button) {
-            return Mouse.isButtonDown(button);
-        }
-
-        public static boolean isKeyDown(int key) {
-            return Keyboard.isKeyDown(key);
         }
 
         public static void setSneaking(boolean sneak) {
@@ -263,8 +291,7 @@ public class ScriptDefaults {
             try {
                 Thread.sleep(ms);
             }
-            catch (InterruptedException e) {
-            }
+            catch (InterruptedException ignored) {}
         }
 
         public static void ping() {
@@ -294,6 +321,23 @@ public class ScriptDefaults {
             catch (Exception e) {
                 e.printStackTrace();
             }
+        }
+
+        public static String getTabHeader() {
+            try {
+                return (String) Reflection.tabHeader.get(mc.ingameGUI.getTabList());
+            }
+            catch (IllegalAccessException ignored) {}
+            return "";
+        }
+
+        public static String getTabFooter() {
+            try {
+                return (String) Reflection.tabFooter.get(mc.ingameGUI.getTabList());
+            }
+            catch (IllegalAccessException ignored) {
+            }
+            return "";
         }
 
         public static float getForward() {
@@ -366,11 +410,15 @@ public class ScriptDefaults {
             return new int[]{scaledResolution.getScaledWidth(), scaledResolution.getScaledHeight(), scaledResolution.getScaleFactor()};
         }
 
-        public float getServerDirection(PlayerState state) {
+        public static float getServerDirection(PlayerState state) {
             return state.yaw;
         }
 
         public static Object[] raycastBlock(double distance) {
+            return raycastBlock(distance, mc.thePlayer.rotationYaw, mc.thePlayer.rotationPitch, true);
+        }
+
+        public static Object[] raycastBlock(double distance, float yaw, float pitch) {
             return raycastBlock(distance, mc.thePlayer.rotationYaw, mc.thePlayer.rotationPitch, true);
         }
 
@@ -469,7 +517,7 @@ public class ScriptDefaults {
         public static List<NetworkPlayer> getNetworkPlayers() {
             List<NetworkPlayer> entities = new ArrayList<>();
             for (NetworkPlayerInfo networkPlayerInfo : Utils.getTablist(false)) {
-                entities.add(new NetworkPlayer(networkPlayerInfo));
+                entities.add(NetworkPlayer.convert(networkPlayerInfo));
             }
             return entities;
         }
@@ -517,18 +565,16 @@ public class ScriptDefaults {
         public modules(String superName) {
             this.superName = superName;
         }
+
         private Module getModule(String moduleName) {
-            boolean found = false;
             for (Module module : Raven.getModuleManager().getModules()) {
                 if (module.getName().equals(moduleName)) {
                     return module;
                 }
             }
-            if (!found) {
-                for (Module module : Raven.scriptManager.scripts.values()) {
-                    if (module.getName().equals(moduleName)) {
-                        return module;
-                    }
+            for (Module module : Raven.scriptManager.scripts.values()) {
+                if (module.getName().equals(moduleName)) {
+                    return module;
                 }
             }
             return null;
@@ -618,14 +664,6 @@ public class ScriptDefaults {
                 return null;
             }
             return new Vec3(blockPos.getX(), blockPos.getY(), blockPos.getZ());
-        }
-
-        public boolean isScaffolding() {
-            return ModuleManager.scaffold.isEnabled && ModuleManager.scaffold.tower.isToggled();
-        }
-
-        public boolean isTowering() {
-            return ModuleManager.tower.canTower();
         }
 
         public boolean isHidden(String moduleName) {
@@ -852,12 +890,73 @@ public class ScriptDefaults {
         }
     }
 
+    public static class config {
+        private static String CONFIG_DIR = mc.mcDataDir + File.separator + "keystrokes" + File.separator + "script_config.txt";
+        private static String SEPARATOR = ":";
+        private static String SEPARATOR_FULL = config.SEPARATOR + " ";
+
+        private static void ensureConfigFileExists() throws IOException {
+            final Path configPath = Paths.get(config.CONFIG_DIR);
+            if (Files.notExists(configPath)) {
+                Files.createDirectories(configPath.getParent());
+                Files.createFile(configPath);
+            }
+        }
+
+        public static boolean set(String key, final String value) {
+            if (key == null || key.isEmpty()) {
+                return false;
+            }
+            key = key.replace(config.SEPARATOR, "");
+            final String entry = key + config.SEPARATOR_FULL + value;
+            try {
+                ensureConfigFileExists();
+                final Path configPath = new File(config.CONFIG_DIR).toPath();
+                final List<String> lines = new ArrayList<>(Files.readAllLines(configPath));
+                boolean keyExists = false;
+                for (int i = 0; i < lines.size(); ++i) {
+                    final String line = lines.get(i);
+                    if (line.startsWith(key + config.SEPARATOR_FULL)) {
+                        lines.set(i, entry);
+                        keyExists = true;
+                        break;
+                    }
+                }
+                if (!keyExists) {
+                    lines.add(entry);
+                }
+                Files.write(configPath, lines);
+                return true;
+            }
+            catch (IOException ex) {
+                return false;
+            }
+        }
+
+        public static String get(final String key) {
+            if (key == null || key.isEmpty()) {
+                return null;
+            }
+            try {
+                ensureConfigFileExists();
+                final Path configPath = new File(config.CONFIG_DIR).toPath();
+                final List<String> lines = Files.readAllLines(configPath);
+                for (final String line : lines) {
+                    if (line.startsWith(key + config.SEPARATOR_FULL)) {
+                        return line.substring((key + config.SEPARATOR_FULL).length());
+                    }
+                }
+            }
+            catch (IOException ex) {}
+            return null;
+        }
+    }
+
     public static class render {
         private static final IntBuffer VIEWPORT = GLAllocation.createDirectIntBuffer(16);
         private static final FloatBuffer MODELVIEW = GLAllocation.createDirectFloatBuffer(16);
         private static final FloatBuffer PROJECTION = GLAllocation.createDirectFloatBuffer(16);
         private static final FloatBuffer SCREEN_COORDS = GLAllocation.createDirectFloatBuffer(3);
-
 
         public static void block(Vec3 position, int color, boolean outline, boolean shade) {
             RenderUtils.renderBlock(new BlockPos(position.x, position.y, position.z), color, outline, shade);
@@ -906,10 +1005,6 @@ public class ScriptDefaults {
             GL11.glPushMatrix();
             GuiInventory.drawEntityOnScreen(x, y, scale, mouseX, mouseY, (EntityLivingBase) en.entity);
             GL11.glPopMatrix();
-        }
-
-        public static void text(String text, float x, float y, int color, boolean shadow) {
-            mc.fontRendererObj.drawString(text, x, y, color, shadow);
         }
 
         public static void resetEquippedProgress() {
@@ -985,6 +1080,14 @@ public class ScriptDefaults {
             RoundedUtils.drawRoundedRectRise(startX, startY, Math.abs(startX - endX), Math.abs(startY - endY), radius, color);
         }
 
+        public static void gradientRect(float startX, float startY, float endX, float endY, int leftColor, int rightColor) {
+            gradientRect(startX, startY, endX, endY, leftColor, leftColor, rightColor, rightColor);
+        }
+
+        public static void gradientRect(float startX, float startY, float endX, float endY, int topLeftColor, int bottomLeftColor, int topRightColor, int bottomRightColor) {
+            RenderUtils.drawRoundedGradientRect(startX, startY, endX, endY, 0, topLeftColor, bottomLeftColor, topRightColor, bottomRightColor);
+        }
+
         public static double[] getRotations() {
             return new double[] { mc.getRenderManager().playerViewY, mc.getRenderManager().playerViewX };
         }
@@ -1006,7 +1109,7 @@ public class ScriptDefaults {
             return new Vec3(position);
         }
 
-        public static void text(String text, float x, float y, float scale, int color, boolean shadow) {
+        public static void text2d(String text, float x, float y, float scale, int color, boolean shadow) {
             if (scale != 1.0f) {
                 GlStateManager.pushMatrix();
                 GlStateManager.scale(scale, scale, scale);
@@ -1021,8 +1124,54 @@ public class ScriptDefaults {
             }
         }
 
-        public static void rect(float startX, float startY, float endX, float endY, int color) {
-            RenderUtils.drawRectangleGL(startX, startY, endX, endY, color);
+        public static void text3d(String text, float x, float y, float scale, int color, boolean shadow) {
+            GlStateManager.pushMatrix();
+            Reflection.setupCameraTransform(mc.entityRenderer, Utils.getTimer().renderPartialTicks, 0);
+            mc.entityRenderer.setupOverlayRendering();
+            if (scale != 1.0f) {
+                GlStateManager.scale(scale, scale, scale);
+            }
+            GlStateManager.enableBlend();
+            GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
+            mc.fontRendererObj.drawString(text, x, y, color, shadow);
+            GlStateManager.disableBlend();
+            if (scale != 1.0f) {
+                GlStateManager.scale(1.0f, 1.0f, 1.0f);
+            }
+            GlStateManager.popMatrix();
+        }
+
+        public static void rect(float startX, float startY, float endX, float endY, final int color) {
+            if (startX < endX) {
+                final float i = startX;
+                startX = endX;
+                endX = i;
+            }
+            if (startY < endY) {
+                final float j = startY;
+                startY = endY;
+                endY = j;
+            }
+            final float f3 = (color >> 24 & 0xFF) / 255.0f;
+            final float f4 = (color >> 16 & 0xFF) / 255.0f;
+            final float f5 = (color >> 8 & 0xFF) / 255.0f;
+            final float f6 = (color & 0xFF) / 255.0f;
+            final Tessellator tessellator = Tessellator.getInstance();
+            final WorldRenderer worldrenderer = tessellator.getWorldRenderer();
+            GL11.glPushMatrix();
+            GlStateManager.enableBlend();
+            GlStateManager.disableTexture2D();
+            GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
+            GlStateManager.color(f4, f5, f6, f3);
+            worldrenderer.begin(7, DefaultVertexFormats.POSITION);
+            worldrenderer.pos((double)startX, (double)endY, 0.0).endVertex();
+            worldrenderer.pos((double)endX, (double)endY, 0.0).endVertex();
+            worldrenderer.pos((double)endX, (double)startY, 0.0).endVertex();
+            worldrenderer.pos((double)startX, (double)startY, 0.0).endVertex();
+            tessellator.draw();
+            GlStateManager.enableTexture2D();
+            GlStateManager.disableBlend();
+            GL11.glPopMatrix();
         }
 
         public static void line2D(double startX, double startY, double endX, double endY, float lineWidth, int color) {
@@ -1219,27 +1368,30 @@ public class ScriptDefaults {
             return new int[] { Mouse.getX(), Mouse.getY() };
         }
 
-        public static boolean isPressed(String key) {
-            for (Map.Entry<KeyBinding, String> map : Reflection.keyBindings.entrySet()) {
-                if (map.getValue().equals(key)) {
-                    return map.getKey().isKeyDown();
-                }
-            }
-            return false;
+        public static boolean isPressed(final String key) {
+            KeyBinding keyBind = Reflection.keybinds.get(key);
+            return keyBind != null && keyBind.isKeyDown();
         }
 
-        public static void setPressed(String key, boolean pressed) {
-            for (Map.Entry<KeyBinding, String> map : Reflection.keyBindings.entrySet()) {
-                if (map.getValue().equals(key)) {
-                    KeyBinding.setKeyBindState(map.getKey().getKeyCode(), pressed);
-                    if (pressed) {
-                        KeyBinding.onTick(map.getKey().getKeyCode());
-                    }
+        public static void setPressed(final String key, final boolean pressed) {
+            KeyBinding keyBind = Reflection.keybinds.get(key);
+            if (keyBind != null) {
+                KeyBinding.setKeyBindState(keyBind.getKeyCode(), pressed);
+                if (pressed) {
+                    KeyBinding.onTick(keyBind.getKeyCode());
                 }
             }
         }
 
-        public static int getKeyCode(String key) {
+        public static int getKeyCode(final String key) {
+            final KeyBinding keyBind = Reflection.keybinds.get(key);
+            if (keyBind != null) {
+                return keyBind.getKeyCode();
+            }
+            return -1;
+        }
+
+        public static int getKeyIndex(String key) {
             return Keyboard.getKeyIndex(key);
         }
 

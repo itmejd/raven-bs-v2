@@ -13,6 +13,7 @@ import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.client.event.MouseEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
@@ -23,7 +24,7 @@ public class ScriptEvents {
         this.module = module;
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onChat(ClientChatReceivedEvent e) {
         if (e.type == 2 || !Utils.nullCheck()) {
             return;
@@ -37,7 +38,7 @@ public class ScriptEvents {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onSendPacket(SendPacketEvent e) {
         if (e.isCanceled() || e.getPacket() == null) {
             return;
@@ -51,7 +52,7 @@ public class ScriptEvents {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onReceivePacket(ReceivePacketEvent e) {
         if (e.isCanceled() || e.getPacket() == null) {
             return;
@@ -62,7 +63,7 @@ public class ScriptEvents {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onRenderWorldLast(RenderWorldLastEvent e) {
         if (!Utils.nullCheck()) {
             return;
@@ -70,17 +71,17 @@ public class ScriptEvents {
         Raven.scriptManager.invoke("onRenderWorld", module, e.partialTicks);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onPreUpdate(PreUpdateEvent e) {
         Raven.scriptManager.invoke("onPreUpdate", module);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onPostUpdate(PostUpdateEvent e) {
         Raven.scriptManager.invoke("onPostUpdate", module);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onRenderTick(TickEvent.RenderTickEvent e) {
         if (e.phase != TickEvent.Phase.END || !Utils.nullCheck()) {
             return;
@@ -88,7 +89,7 @@ public class ScriptEvents {
         Raven.scriptManager.invoke("onRenderTick", module, e.renderTickTime);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onGuiUpdate(GuiUpdateEvent e) {
         if (e.guiScreen == null) {
             return;
@@ -96,7 +97,7 @@ public class ScriptEvents {
         Raven.scriptManager.invoke("onGuiUpdate", module, e.guiScreen.getClass().getSimpleName(), e.opened);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onPreMotion(PreMotionEvent e) {
         PlayerState playerState = new PlayerState(e, (byte) 0);
         Raven.scriptManager.invoke("onPreMotion", module, playerState);
@@ -115,7 +116,7 @@ public class ScriptEvents {
         e.setSneaking(playerState.isSneaking);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onWorldJoin(EntityJoinWorldEvent e) {
         if (e.entity == null) {
             return;
@@ -123,17 +124,17 @@ public class ScriptEvents {
         Raven.scriptManager.invoke("onWorldJoin", module, Entity.convert(e.entity));
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onPostInput(PostPlayerInputEvent e) {
         Raven.scriptManager.invoke("onPostPlayerInput", module);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onPostMotion(PostMotionEvent e) {
         Raven.scriptManager.invoke("onPostMotion", module);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onMouse(MouseEvent e) {
         if (Raven.scriptManager.invokeBoolean("onMouse", module, e.button, e.buttonstate) == 0) {
             e.setCanceled(true);

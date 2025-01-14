@@ -30,27 +30,23 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Scaffold extends Module {
-    private static SliderSetting motion;
-    public static SliderSetting rotation;
-    private static SliderSetting sprint;
-    private static SliderSetting fastScaffold;
-    private static SliderSetting multiPlace;
-    public static ButtonSetting autoSwap;
-    private static ButtonSetting cancelKnockBack;
-    private static ButtonSetting fastOnRMB;
-    public static ButtonSetting highlightBlocks;
-    private static ButtonSetting jumpFacingForward;
-    public static ButtonSetting safeWalk;
-    public static ButtonSetting showBlockCount;
-    private static ButtonSetting silentSwing;
-    public static ButtonSetting tower;
+    private SliderSetting motion;
+    public SliderSetting rotation;
+    private SliderSetting sprint;
+    private SliderSetting fastScaffold;
+    private SliderSetting multiPlace;
+    public ButtonSetting autoSwap;
+    private ButtonSetting cancelKnockBack;
+    private ButtonSetting fastOnRMB;
+    public ButtonSetting highlightBlocks;
+    private ButtonSetting jumpFacingForward;
+    public ButtonSetting safeWalk;
+    public ButtonSetting showBlockCount;
+    private ButtonSetting silentSwing;
 
-    private static SliderSetting yaww2;
-    private static SliderSetting minO;
-
-    private static String[] rotationModes = new String[] { "None", "Simple", "Offset", "Precise" };
-    private static String[] sprintModes = new String[] { "None", "Vanilla", "Float" };
-    private static String[] fastScaffoldModes = new String[] { "None", "Jump B", "Jump B Low", "Jump E", "Keep-Y", "Keep-Y Low" };
+    private String[] rotationModes = new String[] { "None", "Simple", "Offset", "Precise" };
+    private String[] sprintModes = new String[] { "None", "Vanilla", "Float" };
+    private String[] fastScaffoldModes = new String[] { "None", "Jump B", "Jump B Low", "Jump E", "Keep-Y", "Keep-Y Low" };
     private String[] multiPlaceModes = new String[] { "Disabled", "1 extra", "2 extra" };
 
     public Map<BlockPos, Timer> highlight = new HashMap<>();
@@ -115,7 +111,6 @@ public class Scaffold extends Module {
         this.registerSetting(safeWalk = new ButtonSetting("Safewalk", true));
         this.registerSetting(showBlockCount = new ButtonSetting("Show block count", true));
         this.registerSetting(silentSwing = new ButtonSetting("Silent swing", false));
-        this.registerSetting(tower = new ButtonSetting("Tower", false));
 
         //this.registerSetting(yaww2 = new SliderSetting("yaw offset", "", 138, 110, 160, 1));
         //this.registerSetting(minO = new SliderSetting("min offset", "", 30, 1, 90, 1));
@@ -211,7 +206,7 @@ public class Scaffold extends Module {
             if (floatStarted && mc.thePlayer.onGround) {
                 floatKeepY = false;
                 startYPos = -1;
-                if (moduleEnabled && !Utils.jumpDown()) e.setPosY(e.getPosY() + 1E-14);
+                if (moduleEnabled && !Utils.jumpDown()) e.setPosY(e.getPosY() + 1E-11);
                 if (Utils.isMoving()) Utils.setSpeed(getFloatSpeed(getSpeedLevel()));
             }
         } else if (floatWasEnabled) {
@@ -239,8 +234,8 @@ public class Scaffold extends Module {
                 float main = MathHelper.wrapAngleTo180_float(getMotionYaw() - yaw);
                 float mainOffset = MathHelper.wrapAngleTo180_float(yawBackwards - lastBlockYaw);
                 float mainOffset2 = MathHelper.wrapAngleTo180_float(yawBackwards - lastBlockYaw);
-                rotOffset = (!Utils.scaffoldDiagonal(false)) ? 125F : 142F;
-                float minOffset = 40;
+                rotOffset = (!Utils.scaffoldDiagonal(false)) ? 132F : 140F;
+                float minOffset = (!Utils.scaffoldDiagonal(false)) ? 40 : 15;
                 if (blockRotations != null) {
                     e.setYaw(blockRotations[0]);
                     e.setPitch(blockRotations[1]);
@@ -304,10 +299,6 @@ public class Scaffold extends Module {
                         }
                     }
 
-                    if (rotation.getInput() == 1) {
-                        e.setYaw(MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - hardcodedYaw());
-                    }
-
                     if (e.getPitch() > 89) {
                         e.setPitch(89);
                     }
@@ -318,13 +309,21 @@ public class Scaffold extends Module {
                 else {
                     lastBlockYaw = lastYaw;
                     if (rotation.getInput() == 2) {
-                        //e.setYaw(offsetRotation() - mainOffset);
-                        e.setYaw(MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - hardcodedYaw() - 165);
+                        /*if (main >= 0) {
+                            mainOffset2 = 25;
+                        }
+                        else if (main <= -0) {
+                            mainOffset2 = -25;
+                        }*/
+                        e.setYaw(offsetRotation());
                     }
                     else {
                         e.setYaw(MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - hardcodedYaw());
                     }
                     e.setPitch(getPitch);
+                }
+                if (rotation.getInput() == 1) {
+                    e.setYaw(MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - hardcodedYaw());
                 }
             }
         }
@@ -344,6 +343,9 @@ public class Scaffold extends Module {
     private float yaw;
 
     private float offsetRotation() {
+        if (!Utils.isMoving() || Utils.getHorizontalSpeed() == 0.0D) {
+            return yaw;
+        }
 
         float newYaw = getMotionYaw() - rotOffset * Math.signum(
                 MathHelper.wrapAngleTo180_float(getMotionYaw() - yaw)

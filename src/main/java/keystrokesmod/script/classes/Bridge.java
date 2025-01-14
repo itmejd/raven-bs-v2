@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Bridge {
-    private static final Map<String, Object> map = new HashMap<>();;
+    private static final Map<String, Object> map = new HashMap<>();
 
     public void add(String key, Object value) {
         map.put(key, value);

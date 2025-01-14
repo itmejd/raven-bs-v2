@@ -27,7 +27,7 @@ public class Bhop extends Module {
         this.registerSetting(speedSetting = new SliderSetting("Speed", 2.0, 0.5, 8.0, 0.1));
         this.registerSetting(liquidDisable = new ButtonSetting("Disable in liquid", true));
         this.registerSetting(sneakDisable = new ButtonSetting("Disable while sneaking", true));
-        this.registerSetting(rotateYawOption = new ButtonSetting("Rotate Yaw", false));
+        this.registerSetting(rotateYawOption = new ButtonSetting("Rotate yaw", false));
     }
 
     @Override
@@ -62,17 +62,17 @@ public class Bhop extends Module {
             if (mc.thePlayer.onGround) {
                 mc.thePlayer.jump();
                 double horizontalSpeed = Utils.getHorizontalSpeed();
-                double speedModifier = 0.4847;
+                double speedModifier = 0.48;
                 final int speedAmplifier = Utils.getSpeedAmplifier();
                 switch (speedAmplifier) {
                     case 1:
-                        speedModifier = 0.515200;
+                        speedModifier = 0.5;
                         break;
                     case 2:
-                        speedModifier = 0.587;
+                        speedModifier = 0.52;
                         break;
                     case 3:
-                        speedModifier = 0.6289;
+                        speedModifier = 0.58;
                         break;
                 }
                 double additionalSpeed = speedModifier * ((speedSetting.getInput() - 1.0) / 3.0 + 1.0);

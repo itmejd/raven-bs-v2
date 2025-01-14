@@ -29,7 +29,7 @@ public class BlockUtils {
     }
 
     public static boolean isInteractable(Block block) {
-        return block instanceof BlockFurnace || block instanceof BlockTrapDoor || block instanceof BlockDoor || block instanceof BlockContainer || block instanceof BlockJukebox || block instanceof BlockFenceGate || block instanceof BlockChest || block instanceof BlockEnderChest || block instanceof BlockEnchantmentTable || block instanceof BlockBrewingStand || block instanceof BlockBed || block instanceof BlockDropper || block instanceof BlockDispenser || block instanceof BlockHopper || block instanceof BlockAnvil || block instanceof BlockNote || block instanceof BlockWorkbench;
+        return block instanceof BlockFurnace || block instanceof BlockTrapDoor || block instanceof BlockDoor || block instanceof BlockContainer || block instanceof BlockJukebox || block instanceof BlockFenceGate || block instanceof BlockChest || block instanceof BlockEnderChest || block instanceof BlockEnchantmentTable || block instanceof BlockBrewingStand || block instanceof BlockBed || block instanceof BlockDropper || block instanceof BlockDispenser || block instanceof BlockHopper || block instanceof BlockAnvil || block instanceof BlockNote || block instanceof BlockWorkbench || block instanceof BlockButton;
     }
 
     public static boolean isInteractable(MovingObjectPosition mv) {
@@ -38,8 +38,7 @@ public class BlockUtils {
         }
         IBlockState iblockstate = mc.theWorld.getBlockState(mv.getBlockPos());
         if (!mc.thePlayer.isSneaking() || mc.thePlayer.getHeldItem() == null || mc.thePlayer.getHeldItem().getItem().doesSneakBypassUse(mc.theWorld, mv.getBlockPos(), mc.thePlayer)) {
-            Vec3 hitVec = getHitVec(mv.hitVec, mv.getBlockPos());
-            return iblockstate.getBlock().onBlockActivated(mc.theWorld, mv.getBlockPos(), iblockstate, mc.thePlayer, mv.sideHit, (float) hitVec.xCoord, (float) hitVec.yCoord, (float) hitVec.zCoord);
+            return isInteractable(iblockstate.getBlock());
         }
         return false;
     }

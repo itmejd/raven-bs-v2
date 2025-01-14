@@ -15,7 +15,7 @@ public class NoRotate extends Module {
         if (!this.isEnabled()) {
             return;
         }
-        if (mc.thePlayer == null || (mc.thePlayer.rotationPitch % 1 == 0f && mc.thePlayer.rotationYaw % 1 == 0f)) {
+        if (mc.thePlayer == null || mc.thePlayer.rotationPitch == 0) {
             return;
         }
         prevPitch = mc.thePlayer.rotationPitch % 360;
@@ -26,7 +26,7 @@ public class NoRotate extends Module {
         if (!this.isEnabled()) {
             return;
         }
-        if (packet.getPitch() % 1.0f == 0.0f || mc.thePlayer == null) {
+        if (packet.getPitch() == 0 || mc.thePlayer == null) {
             return;
         }
         mc.thePlayer.prevRotationYaw = prevYaw;

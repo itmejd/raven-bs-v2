@@ -51,24 +51,36 @@ public class ModuleComponent extends Component {
                 if (v instanceof SliderSetting) {
                     SliderSetting n = (SliderSetting) v;
                     SliderComponent s = new SliderComponent(n, this, y);
+                    if (!s.isVisible()) {
+                        continue;
+                    }
                     this.settings.add(s);
                     y += 12;
                 }
                 else if (v instanceof ButtonSetting) {
                     ButtonSetting b = (ButtonSetting) v;
                     ButtonComponent c = new ButtonComponent(mod, b, this, y);
+                    if (!c.isVisible()) {
+                        continue;
+                    }
                     this.settings.add(c);
                     y += 12;
                 }
                 else if (v instanceof DescriptionSetting) {
                     DescriptionSetting d = (DescriptionSetting) v;
                     DescriptionComponent m = new DescriptionComponent(d, this, y);
+                    if (!m.isVisible()) {
+                        continue;
+                    }
                     this.settings.add(m);
                     y += 12;
                 }
                 else if (v instanceof KeySetting) {
                     KeySetting setting = (KeySetting) v;
                     BindComponent keyComponent = new BindComponent(this, setting, y);
+                    if (!keyComponent.isVisible()) {
+                        continue;
+                    }
                     this.settings.add(keyComponent);
                     y += 12;
                 }
@@ -85,6 +97,9 @@ public class ModuleComponent extends Component {
         while (true) {
             while (var3.hasNext()) {
                 Component co = (Component) var3.next();
+                if (!co.isVisible()) {
+                    continue;
+                }
                 co.updateHeight(y);
                 if (co instanceof SliderComponent) {
                     y += 16;
@@ -190,6 +205,9 @@ public class ModuleComponent extends Component {
 
         if (this.isOpened || smoothTimer != null) {
             for (Component settingComponent : this.settings) {
+                if (!settingComponent.isVisible()) {
+                    continue;
+                }
                 settingComponent.render();
             }
         }
@@ -214,6 +232,9 @@ public class ModuleComponent extends Component {
             while (true) {
                 while (var2.hasNext()) {
                     Component c = (Component) var2.next();
+                    if (!c.isVisible()) {
+                        continue;
+                    }
                     if (c instanceof SliderComponent) {
                         h += 16;
                     }
@@ -234,6 +255,9 @@ public class ModuleComponent extends Component {
         while (true) {
             while (var2.hasNext()) {
                 Component c = (Component) var2.next();
+                if (!c.isVisible()) {
+                    continue;
+                }
                 if (c instanceof SliderComponent) {
                     h += 16;
                 }
