@@ -40,7 +40,7 @@ public class ModuleUtils {
     public static boolean isBreaking;
     public static boolean threwFireball;
     private int isBreakingTick;
-    public static long MAX_EXPLOSION_DIST_SQ = 9;
+    public static long MAX_EXPLOSION_DIST_SQ = 10;
     private long FIREBALL_TIMEOUT = 750L, fireballTime = 0;
     public static int inAirTicks;
 
@@ -140,7 +140,7 @@ public class ModuleUtils {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onRenderWorld(RenderWorldLastEvent e) {
-        if (!Utils.nullCheck() || !ModuleManager.scaffold.highlightBlocks.isToggled() || ModuleManager.scaffold.highlight.isEmpty()) {
+        if (!Utils.nullCheck() || !ModuleManager.scaffold.highlightBlocks.isToggled() || ModuleManager.scaffold.highlight.isEmpty() || !ModuleManager.scaffold.isEnabled) {
             return;
         }
         Iterator<Map.Entry<BlockPos, Timer>> iterator = ModuleManager.scaffold.highlight.entrySet().iterator();

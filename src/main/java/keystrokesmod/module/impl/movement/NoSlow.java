@@ -106,6 +106,9 @@ public class NoSlow extends Module {
             return;
         }
         postPlace = false;
+        if (mc.thePlayer.getHeldItem() != null && holdingConsumable(mc.thePlayer.getHeldItem()) && !Mouse.isButtonDown(1)) {
+            KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
+        }
         if (!Mouse.isButtonDown(1) || (mc.thePlayer.getHeldItem() == null || !holdingConsumable(mc.thePlayer.getHeldItem()))) {
             resetFloat();
             noSlowing = false;
@@ -115,7 +118,8 @@ public class NoSlow extends Module {
         if (reSendConsume) {
             if (!mc.thePlayer.onGround) {
                 if (ModuleUtils.inAirTicks > 1) {
-                    mc.playerController.sendUseItem(mc.thePlayer, mc.theWorld, mc.thePlayer.getHeldItem());
+                    //mc.playerController.sendUseItem(mc.thePlayer, mc.theWorld, mc.thePlayer.getHeldItem());
+                    mc.getNetHandler().addToSendQueue(new C08PacketPlayerBlockPlacement(mc.thePlayer.getHeldItem()));
                     canFloat = true;
                     reSendConsume = false;
                 }

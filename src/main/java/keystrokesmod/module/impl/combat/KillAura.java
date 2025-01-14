@@ -184,13 +184,13 @@ public class KillAura extends Module {
 
         if (blinkAutoBlock()) {
             EntityLivingBase g = Utils.raytrace(3);
-            if ((g != null || BlockUtils.isInteractable(mc.objectMouseOver)) && Utils.holdingSword()) {
+            /*if ((g != null || BlockUtils.isInteractable(mc.objectMouseOver)) && Utils.holdingSword()) {
                 canUse = Mouse.isButtonDown(1);
             }
             else if (canUse) {
                 KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
                 canUse = false;
-            }
+            }*/
             if (Utils.holdingSword()) {
                 if (Mouse.isButtonDown(1) && Utils.tabbedIn()) {
                     Reflection.setItemInUse(this.blockingClient = true);
@@ -200,17 +200,16 @@ public class KillAura extends Module {
                     Reflection.setItemInUse(this.blockingClient = false);
                     canBlockServerside = false;
                 }
+                if (g == null && !BlockUtils.isInteractable(mc.objectMouseOver) || target != null) {
+                    KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
+                }
+                usedWhileTargeting = Mouse.isButtonDown(1);
             }
-            if (target == null) {
+            else {
                 if (usedWhileTargeting) {
                     if (!Utils.holdingSword()) KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), Mouse.isButtonDown(1));
                     usedWhileTargeting = false;
                 }
-            }
-            else {
-                KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
-                usedWhileTargeting = Mouse.isButtonDown(1);
-                canBlockServerside = false;
             }
         }
 
@@ -890,9 +889,9 @@ public class KillAura extends Module {
                             break;
                         case 3:
                             ++firstEdge;
-                            if (firstEdge > 1) {
+                            if (firstEdge > 2) {
                                 firstCycle = true;
-                                if (firstEdge > 5) {
+                                if (firstEdge > 6) {
                                     firstEdge = 0;
                                 }
                             }

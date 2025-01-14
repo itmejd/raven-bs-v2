@@ -72,6 +72,7 @@ public class Scaffold extends Module {
     private boolean modifyPitch;
     private boolean flipRotation;
     private long lastSwap, lastSwap2;
+    private boolean didFlip;
 
     private boolean floatJumped;
     private boolean floatStarted;
@@ -233,12 +234,19 @@ public class Scaffold extends Module {
                 float yawBackwards = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - hardcodedYaw();
                 float main = MathHelper.wrapAngleTo180_float(getMotionYaw() - yaw);
                 float mainOffset = MathHelper.wrapAngleTo180_float(yawBackwards - lastBlockYaw);
+                float rawOffset = MathHelper.wrapAngleTo180_float(yawBackwards - lastBlockYaw);
                 float mainOffset2 = MathHelper.wrapAngleTo180_float(yawBackwards - lastBlockYaw);
-                rotOffset = (!Utils.scaffoldDiagonal(false)) ? 132F : 140F;
-                float minOffset = (!Utils.scaffoldDiagonal(false)) ? 40 : 15;
+                rotOffset = (!Utils.scaffoldDiagonal(false)) ? 134.475F : 140.625F;
+                float minOffset = (!Utils.scaffoldDiagonal(false)) ? 35 : 5;
                 if (blockRotations != null) {
                     e.setYaw(blockRotations[0]);
                     e.setPitch(blockRotations[1]);
+
+
+
+
+
+
                     if (rotation.getInput() == 2) {
                         lastBlockYaw = blockRotations[0];
                         if (!flipRotation) {
@@ -277,15 +285,25 @@ public class Scaffold extends Module {
                             }
                         }
 
-                        if (System.currentTimeMillis() - lastSwap > 300) {
-                            if (main >= 0 && mainOffset >= 0 || main <= -0 && mainOffset <= -0) {
-                                flipRotation = true;
-                            } else {
-                                flipRotation = false;
+                        //if (System.currentTimeMillis() - lastSwap >= 0) {
+                            //Utils.print("" + rawOffset);
+                            double minFlip = (!Utils.scaffoldDiagonal(false)) ? 7 : 14;
+                            if (!didFlip) {
+                                if ((main >= 0 && rawOffset >= 0 || main <= -0 && rawOffset <= -0)) {
+                                    didFlip = true;
+                                    flipRotation = true;
+                                }
+                                else {
+                                    didFlip = true;
+                                    flipRotation = false;
+                                }
                             }
-                            lastSwap = System.currentTimeMillis();
+                            else if ((main >= 0 && rawOffset >= minFlip || main >= 0 && rawOffset <= -minFlip || main <= -0 && rawOffset <= -minFlip || main <= -0 && rawOffset >= minFlip)) {
+                                didFlip = false;
+                            }
+                            //lastSwap = System.currentTimeMillis();
                             //Utils.print("flip " + mainOffset);
-                        }
+                        //}
 
                         if (!flipRotation) {
                             e.setYaw(e.getYaw() - mainOffset);
@@ -317,6 +335,11 @@ public class Scaffold extends Module {
                         }*/
                         e.setYaw(offsetRotation());
                     }
+
+
+
+
+
                     else {
                         e.setYaw(MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - hardcodedYaw());
                     }
