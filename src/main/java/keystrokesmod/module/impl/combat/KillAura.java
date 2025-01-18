@@ -276,7 +276,7 @@ public class KillAura extends Module {
                 sendDigPacket();
             }
             sendUnBlock = false;
-            Utils.print("Dig 2");
+            //Utils.print("Dig 2");
             return;
         }
         if (ModuleManager.blink.isEnabled()) {
@@ -463,7 +463,8 @@ public class KillAura extends Module {
                         }
                     }
                     Reflection.setItemInUse(blockingClient = true);
-                    sendBlockPacket();
+                    KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), true);
+                    //sendBlockPacket();
                     // cancel
                 }
                 else {

@@ -157,13 +157,6 @@ public class NoSlow extends Module {
         }
     }
 
-    @SubscribeEvent
-    public void onJump(JumpEvent e) {
-        if (reSendConsume) {
-            e.setSprint(false);
-        }
-    }
-
     public static float getSlowed() {
         if (mc.thePlayer.getHeldItem() == null || ModuleManager.noSlow == null || !ModuleManager.noSlow.isEnabled()) {
             return 0.2f;
