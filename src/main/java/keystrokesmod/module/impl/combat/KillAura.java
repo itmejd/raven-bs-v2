@@ -2,6 +2,7 @@ package keystrokesmod.module.impl.combat;
 
 import keystrokesmod.Raven;
 import keystrokesmod.event.*;
+import keystrokesmod.mixin.impl.accessor.IAccessorMinecraft;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.client.Settings;
@@ -90,7 +91,7 @@ public class KillAura extends Module {
     private int partialTicks;
     private int firstEdge;
     private boolean blocked;
-    private boolean canUse;
+    private int unBlockDelay;
     private boolean canBlockServerside;
 
     // blink related
@@ -178,6 +179,30 @@ public class KillAura extends Module {
         }
     }
 
+    @SubscribeEvent(priority = EventPriority.HIGH)
+    public void onSendPacket(SendPacketEvent e) {
+        if (!Utils.nullCheck()) {
+            return;
+        }
+        Packet packet = e.getPacket();
+        if (packet.getClass().getSimpleName().startsWith("S")) {
+            return;
+        }
+        if (packet instanceof C08PacketPlayerBlockPlacement) {
+            if (delayTicks >= 0) {
+                if (((C08PacketPlayerBlockPlacement) packet).getStack() != null && ((C08PacketPlayerBlockPlacement) packet).getStack().getItem() instanceof ItemSword && ((C08PacketPlayerBlockPlacement) packet).getPlacedBlockDirection() != 255) {
+                    e.setCanceled(true);
+                }
+            }
+        }
+        if (blinking.get() && !e.isCanceled()) { // blink
+            if (packet instanceof C00PacketLoginStart || packet instanceof C00Handshake) {
+                return;
+            }
+            blinkedPackets.add(packet);
+            e.setCanceled(true);
+        }
+    }
 
     @SubscribeEvent
     public void onPreUpdate(PreUpdateEvent e) {
@@ -233,18 +258,27 @@ public class KillAura extends Module {
             }
             lastPressedLeft = pressedLeft;
         }
-        if (sendDig && !isTargeting && !ModuleManager.bedAura.stopAutoblock) {
-            sendDigPacket();
-            sendDig = false;
+        if (sendDig && ++unBlockDelay >= 2) {
+            if (target == null && !ModuleManager.bedAura.stopAutoblock && blocked) {
+                sendDigPacket();
+            }
+            sendDig = blocked = false;
+            unBlockDelay = 0;
         }
-        /*if (sendUnBlock) {
-            Reflection.setItemInUse(blockingClient = false);
-            sendDigPacket();
-            sendUnBlock = false;
-            Utils.print("sendUnBlock");
-            return;
-        }*/
         delayTicks--;
+        if (sendUnBlock) {
+            if (Raven.packetsHandler.C07.get()) {
+                sendUnBlock = false;
+                return;
+            }
+            if (!Utils.keybinds.isMouseDown(1)) {
+                Reflection.setItemInUse(blockingClient = false);
+                sendDigPacket();
+            }
+            sendUnBlock = false;
+            Utils.print("Dig 2");
+            return;
+        }
         if (ModuleManager.blink.isEnabled()) {
             if (blinking.get() || lag) {
                 resetBlinkState(true);
@@ -396,31 +430,6 @@ public class KillAura extends Module {
         }
     }
 
-    @SubscribeEvent(priority = EventPriority.HIGH)
-    public void onSendPacket(SendPacketEvent e) {
-        if (!Utils.nullCheck()) {
-            return;
-        }
-        Packet packet = e.getPacket();
-        if (packet.getClass().getSimpleName().startsWith("S")) {
-            return;
-        }
-        if (packet instanceof C08PacketPlayerBlockPlacement) {
-            if (delayTicks >= 0) {
-                if (((C08PacketPlayerBlockPlacement) packet).getStack() != null && ((C08PacketPlayerBlockPlacement) packet).getStack().getItem() instanceof ItemSword && ((C08PacketPlayerBlockPlacement) packet).getPlacedBlockDirection() != 255) {
-                    e.setCanceled(true);
-                }
-            }
-        }
-        if (blinking.get() && !e.isCanceled()) { // blink
-            if (packet instanceof C00PacketKeepAlive || packet instanceof C00PacketLoginStart || packet instanceof C00Handshake) {
-                return;
-            }
-            blinkedPackets.add(packet);
-            e.setCanceled(true);
-        }
-    }
-
     @SubscribeEvent
     public void onMouse(MouseEvent e) {
         if (e.button == 0 || e.button == 1) {
@@ -507,7 +516,7 @@ public class KillAura extends Module {
         if (entity == null || !(entity instanceof EntityLivingBase)) {
             if (blockingClient) {
                 //Reflection.setItemInUse(blockingClient = false);
-                sendUnBlock = true;
+                //sendUnBlock = true;
             }
             if (blinking.get() || lag) {
                 resetBlinkState(true);
@@ -845,7 +854,7 @@ public class KillAura extends Module {
                 }
                 break;
             case 5: // hypixel a
-                if (interactTicks >= 3) {
+                if (interactTicks >= 4) {
                     interactTicks = 0;
                 }
                 interactTicks++;
@@ -857,7 +866,7 @@ public class KillAura extends Module {
                             blocked = false;
                         }
                         break;
-                    case 2:
+                    case 3:
                         handleInteractAndAttack(distance, true, true, swung);
                         sendBlockPacket();
                         blocked = true;
@@ -871,7 +880,7 @@ public class KillAura extends Module {
                     interactTicks = 0;
                 }
                 interactTicks++;
-                if (!firstCycle) {
+                if (firstCycle) {
                     switch (interactTicks) {
                         case 1:
                             blinking.set(true);
@@ -884,17 +893,10 @@ public class KillAura extends Module {
                             handleInteractAndAttack(distance, true, true, swung);
                             sendBlockPacket();
                             blocked = true;
-                            releasePackets(); // release
+                            releasePackets();
                             lag = true;
-                            break;
-                        case 3:
-                            ++firstEdge;
-                            if (firstEdge > 2) {
-                                firstCycle = true;
-                                if (firstEdge > 6) {
-                                    firstEdge = 0;
-                                }
-                            }
+                            firstEdge = 1;
+                            firstCycle = false;
                             break;
                     }
                 }
@@ -911,10 +913,13 @@ public class KillAura extends Module {
                             handleInteractAndAttack(distance, true, true, swung);
                             sendBlockPacket();
                             blocked = true;
-                            releasePackets(); // release
+                            releasePackets();
                             lag = true;
                             interactTicks = 0;
-                            firstCycle = false;
+                            if (firstEdge == 0) {
+                                firstEdge = 1;
+                            }
+                            firstCycle = true;
                             break;
                     }
                 }
@@ -1064,7 +1069,7 @@ public class KillAura extends Module {
             if (!canHit) {
                 return;
             }
-            MovingObjectPosition mov = RotationUtils.rayTrace(10, Utils.getTimer().renderPartialTicks, RotationUtils.serverRotations, hitThroughBlocks.isToggled() ? attackingEntity : null);
+            MovingObjectPosition mov = RotationUtils.rayTrace(10, ((IAccessorMinecraft) mc).getTimer().renderPartialTicks, RotationUtils.serverRotations, hitThroughBlocks.isToggled() ? attackingEntity : null);
             if (mov != null && mov.typeOfHit == MovingObjectPosition.MovingObjectType.ENTITY && mov.entityHit == attackingEntity) {
                 Vec3 hitVec = mov.hitVec;
                 hitVec = new Vec3(hitVec.xCoord - attackingEntity.posX, hitVec.yCoord - attackingEntity.posY, hitVec.zCoord - attackingEntity.posZ);
@@ -1151,7 +1156,7 @@ public class KillAura extends Module {
         else if (unblock && lag && !ModuleManager.scaffold.isEnabled) {
             sendDig = true;
         }
-        swapped = blocked = false;
+        swapped = false;
         lag = false;
         firstEdge = interactTicks = 0;
         firstCycle = false;

@@ -1,5 +1,6 @@
 package keystrokesmod.module.impl.render;
 
+import keystrokesmod.mixin.impl.accessor.IAccessorPlayerControllerMP;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.setting.impl.ButtonSetting;
@@ -95,16 +96,13 @@ public class BreakProgress extends Module {
             this.resetVariables();
             return;
         }
-        try {
-            this.progress = Reflection.curBlockDamageMP.getFloat(mc.playerController);
-            if (this.progress == 0.0f) {
-                this.resetVariables();
-                return;
-            }
-            this.block = mc.objectMouseOver.getBlockPos();
-            this.setProgress();
-        } catch (IllegalAccessException ex) {
+        this.progress = ((IAccessorPlayerControllerMP) mc.playerController).getCurBlockDamageMP();
+        if (this.progress == 0.0f) {
+            this.resetVariables();
+            return;
         }
+        this.block = mc.objectMouseOver.getBlockPos();
+        this.setProgress();
     }
 
     public void onDisable() {

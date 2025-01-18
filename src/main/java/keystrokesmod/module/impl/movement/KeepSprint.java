@@ -6,7 +6,7 @@ import keystrokesmod.module.impl.combat.KillAura;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.DescriptionSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
-import keystrokesmod.utility.Utils;
+import net.minecraft.entity.Entity;
 import net.minecraft.util.Vec3;
 
 public class KeepSprint extends Module {
@@ -22,7 +22,7 @@ public class KeepSprint extends Module {
         this.registerSetting(reduceReachHits = new ButtonSetting("Only reduce reach hits", false));
     }
 
-    public static double getKeepSprintMotion() {
+    public static void keepSprint(Entity en) {
         boolean vanilla = false;
         if (disableWhileJump.isToggled() && !mc.thePlayer.onGround) {
             vanilla = true;
@@ -31,7 +31,7 @@ public class KeepSprint extends Module {
             double distance = -1.0;
             final Vec3 getPositionEyes = mc.thePlayer.getPositionEyes(1.0f);
             if (ModuleManager.killAura != null && ModuleManager.killAura.isEnabled() && KillAura.target != null) {
-                distance = getPositionEyes.distanceTo(KillAura.target.getPositionEyes(Utils.getTimer().renderPartialTicks));
+                distance = getPositionEyes.distanceTo(KillAura.target.getPositionEyes(1.0f));
             }
             else if (ModuleManager.reach != null && ModuleManager.reach.isEnabled()) {
                 distance = getPositionEyes.distanceTo(mc.objectMouseOver.hitVec);
@@ -41,10 +41,13 @@ public class KeepSprint extends Module {
             }
         }
         if (vanilla) {
-            return 0.6;
+            mc.thePlayer.motionX *= 0.6;
+            mc.thePlayer.motionZ *= 0.6;
         }
         else {
-            return (100.0f - (float) slow.getInput()) / 100.0f;
+            float mult = (100.0f - (float) slow.getInput()) / 100.0f;
+            mc.thePlayer.motionX *= mult;
+            mc.thePlayer.motionZ *= mult;
         }
     }
 }

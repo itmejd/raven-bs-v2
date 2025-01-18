@@ -1,13 +1,14 @@
 package keystrokesmod.module.impl.render;
 
 import keystrokesmod.Raven;
+import keystrokesmod.mixin.impl.accessor.IAccessorEntityRenderer;
+import keystrokesmod.mixin.impl.accessor.IAccessorMinecraft;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.world.AntiBot;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.DescriptionSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
-import keystrokesmod.utility.Reflection;
 import keystrokesmod.utility.RenderUtils;
 import keystrokesmod.utility.Utils;
 import net.minecraft.client.gui.FontRenderer;
@@ -195,9 +196,8 @@ public class PlayerESP extends Module {
         if (!RenderUtils.isInViewFrustum(en)) {
             return;
         }
-        if (!Reflection.setupCameraTransform(mc.entityRenderer, partialTicks, 0)) {
-            return;
-        }
+        ((IAccessorEntityRenderer) mc.entityRenderer).callSetupCameraTransform(((IAccessorMinecraft) mc).getTimer().renderPartialTicks, 0);
+
         ScaledResolution scaledResolution = new ScaledResolution(mc);
 
         double playerX = en.lastTickPosX + (en.posX - en.lastTickPosX) * partialTicks - mc.getRenderManager().viewerPosX;

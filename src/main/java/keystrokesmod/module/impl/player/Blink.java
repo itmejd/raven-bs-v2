@@ -80,7 +80,7 @@ public class Blink extends Module {
             this.disable();
             return;
         }
-        if (ModuleManager.killAura.lag || ModuleManager.killAura.justUnTargeted) {
+        if (ModuleManager.killAura.lag || ModuleManager.killAura.justUnTargeted || ModuleManager.killAura.target != null) {
             return;
         }
         if (disableOnBreak.isToggled() && (Utils.usingBedAura() || ModuleUtils.isBreaking)) {
@@ -88,10 +88,7 @@ public class Blink extends Module {
             return;
         }
         Packet packet = e.getPacket();
-        if (packet.getClass().getSimpleName().startsWith("S")) {
-            return;
-        }
-        if (packet instanceof C00PacketKeepAlive || packet instanceof C00PacketLoginStart || packet instanceof C00Handshake) {
+        if (e.isCanceled() || packet.getClass().getSimpleName().startsWith("S") || packet instanceof C00PacketLoginStart || packet instanceof C00Handshake) {
             return;
         }
         started = true;

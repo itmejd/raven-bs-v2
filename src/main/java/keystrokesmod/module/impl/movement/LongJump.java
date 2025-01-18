@@ -2,6 +2,7 @@ package keystrokesmod.module.impl.movement;
 
 import keystrokesmod.event.PrePlayerInputEvent;
 import keystrokesmod.event.*;
+import keystrokesmod.mixin.impl.accessor.IAccessorMinecraft;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.setting.impl.ButtonSetting;
@@ -199,7 +200,7 @@ public class LongJump extends Module {
             if (fireballSlot != -1) {
                 mc.thePlayer.inventory.currentItem = fireballSlot; // we are probably already on the slot but make sure
                 fireballTime = System.currentTimeMillis();
-                Reflection.rightClick();
+                ((IAccessorMinecraft) mc).callRightClickMouse();
                 mc.thePlayer.swingItem();
                 mc.getItemRenderer().resetEquippedProgress();
                 stopVelocity = true;

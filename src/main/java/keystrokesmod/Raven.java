@@ -1,5 +1,6 @@
 package keystrokesmod;
 
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -19,6 +20,7 @@ import keystrokesmod.utility.profile.Profile;
 import keystrokesmod.utility.profile.ProfileManager;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.ClientCommandHandler;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
@@ -39,7 +41,8 @@ public class Raven {
     public static Minecraft mc = Minecraft.getMinecraft();
     private static KeySrokeRenderer keySrokeRenderer;
     private static boolean isKeyStrokeConfigGuiToggled;
-    private static final ScheduledExecutorService ex = Executors.newScheduledThreadPool(2);
+    private static final ScheduledExecutorService scheduledExecutor = Executors.newScheduledThreadPool(2);
+    private static final ExecutorService cachedExecutor = Executors.newCachedThreadPool();
     public static ModuleManager moduleManager;
     public static ClickGui clickGui;
     public static ProfileManager profileManager;
@@ -55,18 +58,18 @@ public class Raven {
 
     @EventHandler
     public void init(FMLInitializationEvent e) {
-        Runtime.getRuntime().addShutdownHook(new Thread(ex::shutdown));
+        Runtime.getRuntime().addShutdownHook(new Thread(scheduledExecutor::shutdown));
+        Runtime.getRuntime().addShutdownHook(new Thread(cachedExecutor::shutdown));
         ClientCommandHandler.instance.registerCommand(new keystrokeCommand());
-        FMLCommonHandler.instance().bus().register(this);
-        FMLCommonHandler.instance().bus().register(new DebugInfoRenderer());
-        FMLCommonHandler.instance().bus().register(new CPSCalculator());
-        FMLCommonHandler.instance().bus().register(new MovementFix(mc));
-        FMLCommonHandler.instance().bus().register(new KeySrokeRenderer());
-        FMLCommonHandler.instance().bus().register(new Ping());
-        FMLCommonHandler.instance().bus().register(packetsHandler = new PacketsHandler());
-        FMLCommonHandler.instance().bus().register(new ModuleUtils(mc));
+        MinecraftForge.EVENT_BUS.register(this);
+        MinecraftForge.EVENT_BUS.register(new DebugInfoRenderer());
+        MinecraftForge.EVENT_BUS.register(new CPSCalculator());
+        MinecraftForge.EVENT_BUS.register(new MovementFix(mc));
+        MinecraftForge.EVENT_BUS.register(new KeySrokeRenderer());
+        MinecraftForge.EVENT_BUS.register(new Ping());
+        MinecraftForge.EVENT_BUS.register(packetsHandler = new PacketsHandler());
+        MinecraftForge.EVENT_BUS.register(new ModuleUtils(mc));
         Reflection.getFields();
-        Reflection.getMethods();
         moduleManager.register();
         scriptManager = new ScriptManager();
         keySrokeRenderer = new KeySrokeRenderer();
@@ -76,8 +79,8 @@ public class Raven {
         profileManager.loadProfiles();
         profileManager.loadProfile("default");
         Reflection.setKeyBindings();
-        FMLCommonHandler.instance().bus().register(ModuleManager.scaffold);
-        FMLCommonHandler.instance().bus().register(ModuleManager.tower);
+        MinecraftForge.EVENT_BUS.register(ModuleManager.scaffold);
+        MinecraftForge.EVENT_BUS.register(ModuleManager.tower);
         commandManager = new CommandManager();
 
     }
@@ -139,8 +142,12 @@ public class Raven {
         return moduleManager;
     }
 
-    public static ScheduledExecutorService getExecutor() {
-        return ex;
+    public static ScheduledExecutorService getScheduledExecutor() {
+        return scheduledExecutor;
+    }
+
+    public static ExecutorService getCachedExecutor() {
+        return cachedExecutor;
     }
 
     public static KeySrokeRenderer getKeyStrokeRenderer() {

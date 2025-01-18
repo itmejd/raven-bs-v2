@@ -2,6 +2,7 @@ package keystrokesmod.module.impl.movement;
 
 import keystrokesmod.Raven;
 import keystrokesmod.event.*;
+import keystrokesmod.mixin.impl.accessor.IAccessorItemFood;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.setting.impl.ButtonSetting;
@@ -16,7 +17,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.lwjgl.input.Mouse;
 
 public class NoSlow extends Module {
-    public static SliderSetting mode;
+    public SliderSetting mode;
     public static SliderSetting slowed;
     public static ButtonSetting disableBow;
     public static ButtonSetting disablePotions;
@@ -27,7 +28,6 @@ public class NoSlow extends Module {
     private boolean postPlace;
     private boolean canFloat;
     private boolean reSendConsume;
-    private boolean setRotation;
     public static boolean noSlowing;
 
     public NoSlow() {
@@ -116,13 +116,12 @@ public class NoSlow extends Module {
             return;
         }
         if (reSendConsume) {
-            if (!mc.thePlayer.onGround) {
-                if (ModuleUtils.inAirTicks > 1) {
-                    //mc.playerController.sendUseItem(mc.thePlayer, mc.theWorld, mc.thePlayer.getHeldItem());
-                    mc.getNetHandler().addToSendQueue(new C08PacketPlayerBlockPlacement(mc.thePlayer.getHeldItem()));
-                    canFloat = true;
-                    reSendConsume = false;
-                }
+            if (ModuleUtils.inAirTicks > 1) {
+                KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
+                KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), true);
+                mc.playerController.sendUseItem(mc.thePlayer, mc.theWorld, mc.thePlayer.getHeldItem());
+                canFloat = true;
+                reSendConsume = false;
             }
         }
         if (!canFloat) {
@@ -130,20 +129,10 @@ public class NoSlow extends Module {
         }
         e.setPosY(e.getPosY() + 1E-11);
         noSlowing = true;
-        if (mc.thePlayer.onGround) {
-            if (mc.thePlayer.moveStrafing == 0 && mc.thePlayer.moveForward <= 0 && Utils.isMoving()) {
-                setRotation = true;
-            } else {
-                setRotation = false;
-            }
-        }
-        if (Utils.noSlowingBackWithBow()) setRotation = false;
         if (groundSpeedOption.isToggled()) {
-            if (setRotation) {
-                if (!ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !Utils.jumpDown()) {
-                    float playerYaw = mc.thePlayer.rotationYaw;
-                    e.setYaw(playerYaw -= 55);
-                }
+            if (!ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !Utils.jumpDown() && mc.thePlayer.moveForward <= -0.5 && mc.thePlayer.moveStrafing == 0 && Utils.isMoving() && mc.thePlayer.onGround) {
+                float yaw = mc.thePlayer.rotationYaw;
+                e.setYaw(yaw - 55);
             }
         }
     }
@@ -205,7 +194,7 @@ public class NoSlow extends Module {
 
     private void resetFloat() {
         reSendConsume = false;
-        canFloat = setRotation = false;
+        canFloat = false;
     }
 
     private double getSpeedModifier() {
@@ -239,18 +228,11 @@ public class NoSlow extends Module {
         return false;
     }
 
-    private boolean holdingEdible(ItemStack stack) {
+
+    public static boolean holdingEdible(ItemStack stack) {
         if (stack.getItem() instanceof ItemFood && mc.thePlayer.getFoodStats().getFoodLevel() == 20) {
             ItemFood food = (ItemFood) stack.getItem();
-            boolean alwaysEdible = false;
-            try {
-                alwaysEdible = Reflection.alwaysEdible.getBoolean(food);
-            }
-            catch (Exception e) {
-                Utils.sendMessage("&cError checking food edibility, check logs.");
-                e.printStackTrace();
-            }
-            return alwaysEdible;
+            return ((IAccessorItemFood) food).getAlwaysEdible();
         }
         return true;
     }

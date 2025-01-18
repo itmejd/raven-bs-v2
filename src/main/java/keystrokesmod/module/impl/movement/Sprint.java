@@ -2,12 +2,13 @@ package keystrokesmod.module.impl.movement;
 
 import keystrokesmod.event.PreMotionEvent;
 import keystrokesmod.event.PreUpdateEvent;
-import keystrokesmod.mixins.impl.entity.IAccessorEntityPlayerSP;
+import keystrokesmod.mixin.impl.accessor.IAccessorEntityPlayerSP;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.DescriptionSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
+import keystrokesmod.utility.ModuleUtils;
 import keystrokesmod.utility.RenderUtils;
 import keystrokesmod.utility.Utils;
 import net.minecraft.client.gui.GuiButton;
@@ -30,7 +31,6 @@ public class Sprint extends Module {
     public float posX = 5;
     public float posY = 5;
     private float limit;
-    public boolean disableBack;
 
     private String[] omniDirectionalModes = new String[] { "Disabled", "Vanilla", "Hypixel" };
 
@@ -54,36 +54,31 @@ public class Sprint extends Module {
             return;
         }
         if (ModuleManager.sprint.isEnabled() && ModuleManager.sprint.omniDirectional.getInput() == 2) {
-            if (mc.thePlayer.onGround && mc.thePlayer.moveStrafing == 0 && mc.thePlayer.moveForward <= -0.5 && !Utils.jumpDown()) {
+            if (mc.thePlayer.onGround && mc.thePlayer.moveForward <= -0.5 && mc.thePlayer.moveStrafing == 0 && !Utils.jumpDown()) {
                 if (!ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !ModuleManager.safeWalk.canSafeWalk() && !ModuleManager.scaffold.isEnabled && !ModuleManager.bhop.isEnabled() && !mc.thePlayer.isCollidedHorizontally) {
-                    float playerYaw = mc.thePlayer.rotationYaw;
-                    e.setYaw(playerYaw -= 55);
+                    float yaw = mc.thePlayer.rotationYaw;
+                    e.setYaw(yaw - 55);
                 }
             }
         }
     }
 
-    @SubscribeEvent
-    public void onPreUpdate(PreUpdateEvent e) {
-        limit = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw - ((IAccessorEntityPlayerSP) mc.thePlayer).getLastReportedYaw() );
-        //Utils.print("" + limit);
-
+    public boolean disableBackwards() {
+        limit = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw - ((IAccessorEntityPlayerSP) mc.thePlayer).getLastReportedYaw());
         double limitVal = 135;
         if (!disableBackwards.isToggled()) {
-            disableBack = false;
-            return;
+            return false;
         }
         if (exceptions()) {
-            disableBack = false;
-            return;
+            return false;
         }
-        if ((limit <= -limitVal || limit >= limitVal) || omniSprint() && ModuleManager.killAura.isTargeting && mc.thePlayer.moveForward <= 0.5) {
-            disableBack = true;
-            //Utils.print("Disable sprint");
+        if ((limit <= -limitVal || limit >= limitVal)) {
+            return true;
         }
-        else {
-            disableBack = false;
+        if ((omniSprint() || ModuleManager.bhop.isEnabled()) && ModuleManager.killAura.isTargeting && mc.thePlayer.moveForward <= 0.5) {
+            return true;
         }
+        return false;
     }
 
     public void onUpdate() {
@@ -117,7 +112,7 @@ public class Sprint extends Module {
     }
 
     private boolean exceptions() {
-        return ModuleManager.scaffold.isEnabled || mc.thePlayer.hurtTime > 0;
+        return ModuleManager.scaffold.isEnabled || mc.thePlayer.hurtTime > 0 || !mc.thePlayer.onGround;
     }
 
     static class EditScreen extends GuiScreen {

@@ -12,8 +12,8 @@ import keystrokesmod.module.impl.other.*;
 import keystrokesmod.module.impl.player.*;
 import keystrokesmod.module.impl.render.*;
 import keystrokesmod.module.impl.world.*;
-import keystrokesmod.utility.Utils;
 import keystrokesmod.utility.ModuleUtils;
+import keystrokesmod.utility.Utils;
 import keystrokesmod.utility.profile.Manager;
 
 import java.util.ArrayList;
@@ -76,7 +76,7 @@ public class ModuleManager {
         this.addModule(autoClicker = new AutoClicker());
         this.addModule(LongJump = new LongJump());
         this.addModule(new AimAssist());
-        this.addModule(new BurstClicker());
+        this.addModule(new BinskiClicker());
         this.addModule(weather = new Weather());
         this.addModule(chatCommands = new ChatCommands());
         this.addModule(new ClickAssist());
@@ -98,7 +98,6 @@ public class ModuleManager {
         this.addModule(blink = new Blink());
         this.addModule(new AutoRequeue());
         this.addModule(new AntiAFK());
-        this.addModule(new Boost());
         this.addModule(autoTool = new AutoTool());
         this.addModule(noHurtCam = new NoHurtCam());
         this.addModule(new SpeedBuilders());
@@ -113,14 +112,11 @@ public class ModuleManager {
         this.addModule(bedAura = new BedAura());
         this.addModule(noSlow = new NoSlow());
         this.addModule(new Indicators());
-        this.addModule(new Speed());
         this.addModule(new LatencyAlerts());
         this.addModule(noCameraClip = new NoCameraClip());
         this.addModule(sprint = new Sprint());
-        this.addModule(new StopMotion());
         this.addModule(timer = new Timer());
         this.addModule(new VClip());
-        this.addModule(new AutoJump());
         this.addModule(new AutoPlace());
         this.addModule(fastPlace = new FastPlace());
         this.addModule(new Freecam());

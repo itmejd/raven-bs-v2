@@ -68,6 +68,11 @@ public class PreMotionEvent extends Event {
         setRotations = true;
     }
 
+    public void setYawSilent(float yaw) {
+        this.yaw = yaw;
+        setRotations = true;
+    }
+
     public void setPitch(float pitch) {
         this.pitch = pitch;
         setRotations = true;
@@ -81,9 +86,10 @@ public class PreMotionEvent extends Event {
         return setRenderYaw;
     }
 
-    public void setRenderYaw(boolean setRenderYaw) {
-        this.setRenderYaw = setRenderYaw;
+    public static void setRenderYaw(boolean setYaw) {
+        setRenderYaw = setYaw;
     }
+
     public boolean isSprinting() {
         return isSprinting;
     }

@@ -1,26 +1,12 @@
 package keystrokesmod.module.impl.player;
 
-import keystrokesmod.event.PreMotionEvent;
-import keystrokesmod.event.PrePlayerInputEvent;
-import keystrokesmod.event.ReceivePacketEvent;
+import keystrokesmod.event.*;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
-import keystrokesmod.module.impl.movement.LongJump;
 import keystrokesmod.module.setting.impl.ButtonSetting;
-import keystrokesmod.module.setting.impl.SliderSetting;
-import keystrokesmod.script.classes.Block;
-import keystrokesmod.utility.BlockUtils;
-import keystrokesmod.utility.PacketUtils;
-import keystrokesmod.utility.Reflection;
 import keystrokesmod.utility.Utils;
-import net.minecraft.client.settings.KeyBinding;
-import net.minecraft.init.Blocks;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.play.client.C03PacketPlayer;
+import net.minecraft.network.play.client.C0BPacketEntityAction;
 import net.minecraft.network.play.server.S08PacketPlayerPosLook;
-import net.minecraft.network.play.server.S12PacketEntityVelocity;
-import net.minecraft.network.play.server.S27PacketExplosion;
-import net.minecraft.util.BlockPos;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -28,6 +14,8 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import java.util.Objects;
 
 public class Disabler extends Module {
+    public ButtonSetting motion;
+    public ButtonSetting bridging;
 
     private final int defaultSetbacks = 20;
     private final long joinDelay = 200, delay = 0, checkDisabledTime = 4000, timeout = 12000;
@@ -41,12 +29,19 @@ public class Disabler extends Module {
     private boolean noRotateWasEnabled;
     private Class<? extends Module> noRotate;
 
+    private boolean hasSneaked, hasWentInAir;
+    private int lastSneakTicks;
+    private int lastY;
+
     //private String text;
     private int[] disp;
     private int width;
 
     public Disabler() {
         super("Disabler", Module.category.player);
+
+        this.registerSetting(motion = new ButtonSetting("Motion", false));
+        this.registerSetting(bridging = new ButtonSetting("Bridging", false));
     }
 
     private void resetVars() {
@@ -59,7 +54,7 @@ public class Disabler extends Module {
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onPreMotion(PreMotionEvent e) {
-        long now = System.currentTimeMillis();
+        /*long now = System.currentTimeMillis();
 
         if (!awaitGround && !mc.thePlayer.onGround) {
             disablerAirTicks++;
@@ -139,10 +134,53 @@ public class Disabler extends Module {
                     e.setPosZ(zOffset + min_offset);
                 }
             }
+        }*/
+
+        if (bridging.isToggled()) {
+            if (mc.gameSettings.keyBindSneak.isKeyDown() || !Safewalk.canSafeWalk() && !ModuleManager.scaffold.isEnabled) {
+                lastSneakTicks = 0;
+            }
+            if (mc.thePlayer.onGround) { // Switching Y levels doesnt stop flagging
+                if ((int) mc.thePlayer.posY != lastY && hasWentInAir) {
+                    lastSneakTicks = 0;
+                    Utils.print("Dif Y");
+                }
+                lastY = (int) mc.thePlayer.posY;
+                hasWentInAir = false;
+            }
+            else {
+                hasWentInAir = true;
+            }
+            lastSneakTicks++;
         }
 
+    }
 
+    @SubscribeEvent
+    public void onPostPlayerInput(PostPlayerInputEvent e) {
+        if (bridging.isToggled()) {
+            if (hasSneaked) {
+                if (!mc.gameSettings.keyBindSneak.isKeyDown()) {
+                    mc.thePlayer.sendQueue.addToSendQueue(new C0BPacketEntityAction(mc.thePlayer, C0BPacketEntityAction.Action.STOP_SNEAKING));
+                }
+                hasSneaked = false;
+                lastSneakTicks = 0;
+            } else if (lastSneakTicks >= 19) {
+                if (!mc.gameSettings.keyBindSneak.isKeyDown() && (Safewalk.canSafeWalk() || ModuleManager.scaffold.isEnabled) && mc.thePlayer.onGround) {
+                    mc.thePlayer.sendQueue.addToSendQueue(new C0BPacketEntityAction(mc.thePlayer, C0BPacketEntityAction.Action.START_SNEAKING));
+                    hasSneaked = true;
+                    Utils.print("Sneak packet");
+                }
+            }
+        }
+    }
 
+    @SubscribeEvent()
+    public void onMoveInput(PrePlayerInputEvent e) {
+        if (awaitSetback) {
+            e.setForward(0);
+            e.setStrafe(0);
+        }
     }
 
     @SubscribeEvent
@@ -150,14 +188,6 @@ public class Disabler extends Module {
         if (e.getPacket() instanceof S08PacketPlayerPosLook) {
             setbackCount++;
             zOffset = 0;
-        }
-    }
-
-    @SubscribeEvent(priority = EventPriority.LOWEST) // called last in order to apply fix
-    public void onMoveInput(PrePlayerInputEvent e) {
-        if (awaitSetback) {
-            e.setForward(0);
-            e.setStrafe(0);
         }
     }
 

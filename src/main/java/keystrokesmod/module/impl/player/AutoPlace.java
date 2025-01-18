@@ -1,5 +1,6 @@
 package keystrokesmod.module.impl.player;
 
+import keystrokesmod.mixin.impl.accessor.IAccessorMinecraft;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.setting.impl.ButtonSetting;
@@ -55,7 +56,7 @@ public class AutoPlace extends Module {
 
     public void onDisable() {
         if (holdRight.isToggled()) {
-            this.rd(4);
+            this.setRightClickDelay(4);
         }
 
         this.resetVariables();
@@ -71,10 +72,10 @@ public class AutoPlace extends Module {
         }
         if (fastPlaceJump.isToggled() && holdRight.isToggled() && !ModuleManager.fastPlace.isEnabled() && Mouse.isButtonDown(1)) {
             if (mc.thePlayer.motionY > 0.0) {
-                this.rd(1);
+                this.setRightClickDelay(1);
             }
             else if (!pitchCheck.isToggled() || mc.thePlayer.rotationPitch >= 70.0f) {
-                this.rd(1000);
+                this.setRightClickDelay(1000);
             }
         }
     }
@@ -122,13 +123,8 @@ public class AutoPlace extends Module {
         }
     }
 
-    private void rd(int i) {
-        try {
-            if (Reflection.rightClickDelayTimerField != null) {
-                Reflection.rightClickDelayTimerField.set(mc, i);
-            }
-        } catch (IllegalAccessException | IndexOutOfBoundsException var3) {
-        }
+    private void setRightClickDelay(int delay) {
+        ((IAccessorMinecraft) mc).setRightClickDelayTimer(delay);
     }
 
     private void resetVariables() {

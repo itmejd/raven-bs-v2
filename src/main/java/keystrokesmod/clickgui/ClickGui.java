@@ -64,7 +64,7 @@ public class ClickGui extends GuiScreen {
 
     public void initMain() {
         (this.logoSmoothWidth = this.smoothEntity = this.blurSmooth = this.backgroundFade = new Timer(500.0F)).start();
-        this.sf = Raven.getExecutor().schedule(() -> {
+        this.sf = Raven.getScheduledExecutor().schedule(() -> {
             (this.logoSmoothLength = new Timer(650.0F)).start();
         }, 650L, TimeUnit.MILLISECONDS);
     }

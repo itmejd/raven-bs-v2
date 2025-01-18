@@ -48,7 +48,7 @@ public class BedESP extends Module {
             return;
         }
         lastCheck = System.currentTimeMillis();
-        Raven.getExecutor().execute(() -> {
+        Raven.getCachedExecutor().execute(() -> {
             int i;
             priorityLoop:
             for (int n = i = (int) range.getInput(); i >= -n; --i) {

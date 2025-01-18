@@ -7,7 +7,6 @@ import keystrokesmod.module.impl.client.Settings;
 import keystrokesmod.module.impl.minigames.DuelsStats;
 import keystrokesmod.module.impl.movement.Bhop;
 import keystrokesmod.module.impl.movement.Fly;
-import keystrokesmod.module.impl.movement.Speed;
 import keystrokesmod.module.impl.other.FakeChat;
 import keystrokesmod.module.impl.other.NameHider;
 import keystrokesmod.utility.profile.Profile;
@@ -49,7 +48,7 @@ public class Commands {
 
                 print("Setting...", 1);
                 n = args[1];
-                Raven.getExecutor().execute(() -> {
+                Raven.getScheduledExecutor().execute(() -> {
                     if (NetworkUtils.isHypixelKeyValid(n)) {
                         NetworkUtils.API_KEY = n;
                         print("&a" + "success!", 0);
@@ -127,7 +126,7 @@ public class Commands {
 
                 n = args[1];
                 print("Retrieving data...", 1);
-                Raven.getExecutor().execute(() -> {
+                Raven.getScheduledExecutor().execute(() -> {
                     int[] s = ProfileUtils.getHypixelStats(n, ProfileUtils.DM.OVERALL);
                     if (s != null) {
                         if (s[0] == -1) {
@@ -178,9 +177,6 @@ public class Commands {
                         break;
                     case "bhop":
                         Bhop.speedSetting.setValueRaw(value);
-                        break;
-                    case "speed":
-                        Speed.speed.setValueRaw(value);
                         break;
                     default:
                         print(invSyn, 1);

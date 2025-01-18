@@ -3,7 +3,7 @@ package keystrokesmod.module.impl.player;
 import keystrokesmod.event.PreMotionEvent;
 import keystrokesmod.event.PreUpdateEvent;
 import keystrokesmod.event.ReceivePacketEvent;
-import keystrokesmod.mixins.interfaces.IMixinItemRenderer;
+import keystrokesmod.mixin.interfaces.IMixinItemRenderer;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.movement.LongJump;
@@ -74,6 +74,8 @@ public class Scaffold extends Module {
     private long lastSwap, lastSwap2;
     private boolean didFlip;
 
+    public boolean canBlockFade;
+
     private boolean floatJumped;
     private boolean floatStarted;
     private boolean floatWasEnabled;
@@ -90,6 +92,8 @@ public class Scaffold extends Module {
     private float lastBlockYaw;
 
     private static float rotOffset;
+
+    private long firstStroke;
 
     public boolean moduleEnabled;
     public boolean isEnabled;
@@ -126,6 +130,8 @@ public class Scaffold extends Module {
     public void onEnable() {
         isEnabled = true;
         moduleEnabled = true;
+        ModuleUtils.fadeEdge = 0;
+        firstStroke = System.currentTimeMillis();
 
         FMLCommonHandler.instance().bus().register(scaffoldBlockCount = new ScaffoldBlockCount(mc));
         lastSlot.set(-1);
@@ -149,6 +155,7 @@ public class Scaffold extends Module {
         if (!isEnabled || !holdingBlocks()) {
             return;
         }
+        canBlockFade = true;
         int simpleY = (int) Math.round((e.posY % 1) * 10000);
         if (Utils.keysDown() && usingFastScaffold() && fastScaffold.getInput() >= 1 && !ModuleManager.tower.canTower() && !ModuleManager.LongJump.isEnabled()) { // jump mode
             if (mc.thePlayer.onGround && Utils.isMoving()) {
@@ -236,19 +243,21 @@ public class Scaffold extends Module {
                 float mainOffset = MathHelper.wrapAngleTo180_float(yawBackwards - lastBlockYaw);
                 float rawOffset = MathHelper.wrapAngleTo180_float(yawBackwards - lastBlockYaw);
                 float mainOffset2 = MathHelper.wrapAngleTo180_float(yawBackwards - lastBlockYaw);
-                rotOffset = (!Utils.scaffoldDiagonal(false)) ? 134.475F : 140.625F;
-                float minOffset = (!Utils.scaffoldDiagonal(false)) ? 35 : 5;
+                rotOffset = (!Utils.scaffoldDiagonal(false)) ? 135F : 140F;
+                float minOffset = (!Utils.scaffoldDiagonal(false)) ? 30 : 0;
                 if (blockRotations != null) {
                     e.setYaw(blockRotations[0]);
                     e.setPitch(blockRotations[1]);
+                    lastBlockYaw = MathHelper.wrapAngleTo180_float(blockRotations[0]);
+
+                    //Utils.print("" + MathHelper.wrapAngleTo180_float(blockRotations[0]));
 
 
 
 
 
 
-                    if (rotation.getInput() == 2) {
-                        lastBlockYaw = blockRotations[0];
+                    if (rotation.getInput() == 2 && !ModuleManager.tower.isVerticalTowering()) {
                         if (!flipRotation) {
                             if (main >= 0) {
                                 //Utils.print("Main1");
@@ -284,26 +293,21 @@ public class Scaffold extends Module {
                                 //Utils.print("2 ");
                             }
                         }
-
-                        //if (System.currentTimeMillis() - lastSwap >= 0) {
-                            //Utils.print("" + rawOffset);
-                            double minFlip = (!Utils.scaffoldDiagonal(false)) ? 7 : 14;
+                        double minFlip = (!Utils.scaffoldDiagonal(false)) ? 6 : 14;
+                        double minEdge = (!Utils.scaffoldDiagonal(false)) ? 0 : 10;
+                        if (firstStroke > 0 && (System.currentTimeMillis() - firstStroke) > 200) {
                             if (!didFlip) {
-                                if ((main >= 0 && rawOffset >= 0 || main <= -0 && rawOffset <= -0)) {
+                                if ((main >= 0 && rawOffset >= minEdge || main <= -0 && rawOffset <= -minEdge)) {
                                     didFlip = true;
                                     flipRotation = true;
-                                }
-                                else {
+                                } else {
                                     didFlip = true;
                                     flipRotation = false;
                                 }
-                            }
-                            else if ((main >= 0 && rawOffset >= minFlip || main >= 0 && rawOffset <= -minFlip || main <= -0 && rawOffset <= -minFlip || main <= -0 && rawOffset >= minFlip)) {
+                            } else if ((main >= 0 && rawOffset >= minFlip || main >= 0 && rawOffset <= -minFlip || main <= -0 && rawOffset <= -minFlip || main <= -0 && rawOffset >= minFlip)) {
                                 didFlip = false;
                             }
-                            //lastSwap = System.currentTimeMillis();
-                            //Utils.print("flip " + mainOffset);
-                        //}
+                        }
 
                         if (!flipRotation) {
                             e.setYaw(e.getYaw() - mainOffset);
@@ -418,7 +422,7 @@ public class Scaffold extends Module {
                             }
                             break;
                         case 3:
-                            if (!firstKeepYPlace && keepYTicks == 8 || Utils.scaffoldDiagonal(false) && keepYTicks == 11) {
+                            if (!firstKeepYPlace && keepYTicks == 8) {
                                 placeBlock(1, 0);
                                 firstKeepYPlace = true;
                             }

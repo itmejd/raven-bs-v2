@@ -4,6 +4,7 @@ import keystrokesmod.Raven;
 import keystrokesmod.clickgui.ClickGui;
 import keystrokesmod.clickgui.components.impl.CategoryComponent;
 import keystrokesmod.clickgui.components.impl.ModuleComponent;
+import keystrokesmod.mixin.impl.accessor.*;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.combat.KillAura;
@@ -115,7 +116,7 @@ public class ScriptDefaults {
         }
 
         public static void setTimer(float timer) {
-            Utils.getTimer().timerSpeed = timer;
+            ((IAccessorMinecraft) mc).getTimer().timerSpeed = timer;
         }
 
         public static boolean isCreative() {
@@ -131,27 +132,15 @@ public class ScriptDefaults {
         }
 
         public static String getTitle() {
-            try {
-                return (String) Reflection.displayedTitle.get(mc.ingameGUI);
-            }
-            catch (IllegalAccessException ignored) {}
-            return "";
+            return ((IAccessorGuiIngame) mc.ingameGUI).getDisplayedTitle();
         }
 
         public static String getSubTitle() {
-            try {
-                return (String) Reflection.displayedSubTitle.get(mc.ingameGUI);
-            }
-            catch (IllegalAccessException ignored) {}
-            return "";
+            return ((IAccessorGuiIngame) mc.ingameGUI).getDisplayedSubTitle();
         }
 
         public static String getRecordPlaying() {
-            try {
-                return (String) Reflection.recordPlaying.get(mc.ingameGUI);
-            }
-            catch (IllegalAccessException ignored) {}
-            return "";
+            return ((IAccessorGuiIngame) mc.ingameGUI).getRecordPlaying();
         }
 
         public static boolean isFlying() {
@@ -237,7 +226,7 @@ public class ScriptDefaults {
         }
 
         public static void setItemInUseCount(int count) {
-            Reflection.setItemInUseCount(count);
+            ((IAccessorEntityPlayer) mc.thePlayer).setItemInUseCount(count);
         }
 
         public static int getItemInUseCount() {
@@ -324,18 +313,23 @@ public class ScriptDefaults {
         }
 
         public static String getTabHeader() {
-            try {
-                return (String) Reflection.tabHeader.get(mc.ingameGUI.getTabList());
+            if (mc == null || mc.ingameGUI == null || mc.ingameGUI.getTabList() == null) {
+                return "";
             }
-            catch (IllegalAccessException ignored) {}
+            IChatComponent header = ((IAccessorGuiPlayerTabOverlay) mc.ingameGUI.getTabList()).getHeader();
+            if (header != null) {
+                return header.getUnformattedText();
+            }
             return "";
         }
 
         public static String getTabFooter() {
-            try {
-                return (String) Reflection.tabFooter.get(mc.ingameGUI.getTabList());
+            if (mc == null || mc.ingameGUI == null || mc.ingameGUI.getTabList() == null) {
+                return "";
             }
-            catch (IllegalAccessException ignored) {
+            IChatComponent footer = ((IAccessorGuiPlayerTabOverlay) mc.ingameGUI.getTabList()).getFooter();
+            if (footer != null) {
+                return footer.getUnformattedText();
             }
             return "";
         }
@@ -374,6 +368,10 @@ public class ScriptDefaults {
                 return;
             }
             PacketUtils.sendPacketNoEvent(packet1);
+        }
+
+        public static boolean inFocus() {
+            return mc.inGameHasFocus;
         }
 
         public static void dropItem(boolean dropStack) {
@@ -1017,7 +1015,7 @@ public class ScriptDefaults {
 
         public static void item(ItemStack item, float x, float y, float scale) {
             GlStateManager.pushMatrix();
-            Reflection.setupCameraTransform(mc.entityRenderer, Utils.getTimer().renderPartialTicks, 0);
+            ((IAccessorEntityRenderer) mc.entityRenderer).callSetupCameraTransform(((IAccessorMinecraft) mc).getTimer().renderPartialTicks, 0);
             mc.entityRenderer.setupOverlayRendering();
             if (scale != 1.0f) {
                 GlStateManager.scale(scale, scale, scale);
@@ -1064,7 +1062,7 @@ public class ScriptDefaults {
             x -= mc.getRenderManager().viewerPosX;
             y -= mc.getRenderManager().viewerPosY;
             z -= mc.getRenderManager().viewerPosZ;
-            Reflection.setupCameraTransform(mc.entityRenderer, partialTicks, 0);
+            ((IAccessorEntityRenderer) mc.entityRenderer).callSetupCameraTransform(((IAccessorMinecraft) mc).getTimer().renderPartialTicks, 0);
             GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, MODELVIEW);
             GL11.glGetFloat(GL11.GL_PROJECTION_MATRIX, PROJECTION);
             GL11.glGetInteger(GL11.GL_VIEWPORT, VIEWPORT);
@@ -1105,7 +1103,7 @@ public class ScriptDefaults {
         }
 
         public static Vec3 getPosition() {
-            net.minecraft.util.Vec3 position = Utils.getCameraPos(Utils.getTimer().renderPartialTicks);
+            net.minecraft.util.Vec3 position = Utils.getCameraPos(((IAccessorMinecraft) mc).getTimer().renderPartialTicks);
             return new Vec3(position);
         }
 
@@ -1126,7 +1124,7 @@ public class ScriptDefaults {
 
         public static void text3d(String text, float x, float y, float scale, int color, boolean shadow) {
             GlStateManager.pushMatrix();
-            Reflection.setupCameraTransform(mc.entityRenderer, Utils.getTimer().renderPartialTicks, 0);
+            ((IAccessorEntityRenderer) mc.entityRenderer).callSetupCameraTransform(((IAccessorMinecraft) mc).getTimer().renderPartialTicks, 0);
             mc.entityRenderer.setupOverlayRendering();
             if (scale != 1.0f) {
                 GlStateManager.scale(scale, scale, scale);
@@ -1264,20 +1262,14 @@ public class ScriptDefaults {
 
         public static List<String> getBookContents() {
             if (mc.currentScreen instanceof GuiScreenBook) {
-                try {
-                    List<String> contents = new ArrayList<>();
-                    int max = Math.min(128 / mc.fontRendererObj.FONT_HEIGHT, ((List<IChatComponent>) Reflection.bookContents.get(mc.currentScreen)).size());
-                    for (int line = 0; line < max; ++line) {
-                        IChatComponent lineStr = ((List<IChatComponent>) Reflection.bookContents.get(mc.currentScreen)).get(line);
-                        contents.add(lineStr.getUnformattedText());
-                        Utils.sendMessage(lineStr.getUnformattedText());
-                    }
-                    if (!contents.isEmpty()) {
-                        return contents;
-                    }
+                List<String> contents = new ArrayList<>();
+                int max = Math.min(128 / mc.fontRendererObj.FONT_HEIGHT, ((IAccessorGuiScreenBook) mc.currentScreen).getBookContents().size());
+                for (int line = 0; line < max; ++line) {
+                    IChatComponent lineStr = ((IAccessorGuiScreenBook) mc.currentScreen).getBookContents().get(line);
+                    contents.add(lineStr.getUnformattedText());
                 }
-                catch (Exception e) {
-                    e.printStackTrace();
+                if (!contents.isEmpty()) {
+                    return contents;
                 }
             }
             return null;
@@ -1404,11 +1396,11 @@ public class ScriptDefaults {
         }
 
         public static void rightClick() {
-            Reflection.rightClick();
+            ((IAccessorMinecraft) mc).callRightClickMouse();
         }
 
         public static void leftClick() {
-            Reflection.clickMouse();
+            ((IAccessorMinecraft) mc).callClickMouse();
         }
     }
 

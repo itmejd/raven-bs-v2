@@ -7,6 +7,7 @@ import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.client.Settings;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
+import keystrokesmod.utility.ModuleUtils;
 import keystrokesmod.utility.RotationUtils;
 import keystrokesmod.utility.Utils;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -60,6 +61,9 @@ public class Bhop extends Module {
                 collided = false;
             }
             if (mc.thePlayer.onGround) {
+                if (mc.thePlayer.moveForward <= -0.5 && mc.thePlayer.moveStrafing == 0) {
+                    setRotation = true;
+                }
                 mc.thePlayer.jump();
                 double horizontalSpeed = Utils.getHorizontalSpeed();
                 double speedModifier = 0.48;
@@ -79,8 +83,7 @@ public class Bhop extends Module {
                 if (horizontalSpeed < additionalSpeed) {
                     horizontalSpeed = additionalSpeed;
                 }
-                if (Utils.isMoving() && !Utils.noSlowingBackWithBow()) {
-                    mc.thePlayer.setSprinting(true);
+                if (Utils.isMoving() && !Utils.noSlowingBackWithBow() && !ModuleManager.sprint.disableBackwards()) {
                     Utils.setSpeed(horizontalSpeed);
                     didMove = true;
                 }
@@ -141,6 +144,28 @@ public class Bhop extends Module {
                 }
                 break;
         }
+        /*if (rotateYawOption.isToggled()) {
+            if (!ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !ModuleManager.scaffold.isEnabled && !mc.thePlayer.isCollidedHorizontally && mc.thePlayer.onGround) {
+                float yaw = mc.thePlayer.rotationYaw;
+                e.setYaw(yaw - hardcodedYaw());
+            }
+        }*/
+    }
+
+    public float hardcodedYaw() {
+        float simpleYaw = 0F;
+        float f = 0.8F;
+
+        if (mc.thePlayer.moveForward == 0) {
+            if (mc.thePlayer.moveStrafing >= f) simpleYaw += 90;
+            if (mc.thePlayer.moveStrafing <= -f) simpleYaw -= 90;
+        }
+        else if (mc.thePlayer.moveForward <= -f) {
+            simpleYaw -= 180;
+            if (mc.thePlayer.moveStrafing >= f) simpleYaw -= 45;
+            if (mc.thePlayer.moveStrafing <= -f) simpleYaw += 45;
+        }
+        return simpleYaw;
     }
 
     public void onDisable() {

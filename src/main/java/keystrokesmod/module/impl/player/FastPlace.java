@@ -1,6 +1,7 @@
 package keystrokesmod.module.impl.player;
 
 import keystrokesmod.event.SendPacketEvent;
+import keystrokesmod.mixin.impl.accessor.IAccessorMinecraft;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.setting.impl.ButtonSetting;
@@ -32,7 +33,7 @@ public class FastPlace extends Module {
             if (ModuleManager.scaffold.stopFastPlace()) {
                 return;
             }
-            if (Utils.nullCheck() && mc.inGameHasFocus && Reflection.rightClickDelayTimerField != null) {
+            if (Utils.nullCheck() && mc.inGameHasFocus) {
                 if (blocksOnly.isToggled()) {
                     ItemStack item = mc.thePlayer.getHeldItem();
                     if (item == null || !(item.getItem() instanceof ItemBlock)) {
@@ -43,22 +44,18 @@ public class FastPlace extends Module {
                     return;
                 }
 
-                try {
-                    int c = (int) tickDelay.getInput();
-                    if (c == 0) {
-                        Reflection.rightClickDelayTimerField.set(mc, 0);
-                    } else {
-                        if (c == 4) {
-                            return;
-                        }
-
-                        int d = Reflection.rightClickDelayTimerField.getInt(mc);
-                        if (d == 4) {
-                            Reflection.rightClickDelayTimerField.set(mc, c);
-                        }
+                int c = (int) tickDelay.getInput();
+                if (c == 0) {
+                    ((IAccessorMinecraft) mc).setRightClickDelayTimer(0);
+                } else {
+                    if (c == 4) {
+                        return;
                     }
-                } catch (IllegalAccessException var4) {
-                } catch (IndexOutOfBoundsException var5) {
+
+                    int d = ((IAccessorMinecraft) mc).getRightClickDelayTimer();
+                    if (d == 4) {
+                        ((IAccessorMinecraft) mc).setRightClickDelayTimer(c);
+                    }
                 }
             }
         }

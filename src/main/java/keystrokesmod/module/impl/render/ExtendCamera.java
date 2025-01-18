@@ -1,9 +1,9 @@
 package keystrokesmod.module.impl.render;
 
+import keystrokesmod.mixin.impl.accessor.IAccessorEntityRenderer;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.setting.impl.DescriptionSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
-import keystrokesmod.utility.Reflection;
 import keystrokesmod.utility.Utils;
 
 public class ExtendCamera extends Module {
@@ -38,12 +38,6 @@ public class ExtendCamera extends Module {
     }
 
     private void setThirdPersonDistance(float distance) {
-        try {
-            Reflection.thirdPersonDistance.set(mc.entityRenderer, distance);
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            Utils.sendMessage("&cThere was an issue setting third person distance.");
-        }
+        ((IAccessorEntityRenderer) mc.entityRenderer).setThirdPersonDistance(distance);
     }
 }

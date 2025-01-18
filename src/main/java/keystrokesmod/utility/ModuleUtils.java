@@ -1,34 +1,21 @@
 package keystrokesmod.utility;
 
-import keystrokesmod.Raven;
-import keystrokesmod.event.PostPlayerInputEvent;
 import keystrokesmod.event.PreMotionEvent;
 import keystrokesmod.event.PreUpdateEvent;
 import keystrokesmod.event.SendPacketEvent;
 import keystrokesmod.module.impl.movement.LongJump;
 import keystrokesmod.module.impl.render.HUD;
-import keystrokesmod.utility.*;
-import keystrokesmod.utility.Timer;
 import net.minecraft.client.Minecraft;
-import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
-import keystrokesmod.module.impl.client.Settings;
-import keystrokesmod.module.setting.impl.ButtonSetting;
-import keystrokesmod.module.setting.impl.SliderSetting;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.play.client.C07PacketPlayerDigging;
 import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
-import net.minecraft.network.play.client.C09PacketHeldItemChange;
 import net.minecraft.util.BlockPos;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import org.lwjgl.input.Keyboard;
 
 import java.util.Iterator;
 import java.util.Map;
-
-import static net.minecraft.util.EnumFacing.DOWN;
 
 public class ModuleUtils {
     private final Minecraft mc;
@@ -41,8 +28,11 @@ public class ModuleUtils {
     public static boolean threwFireball;
     private int isBreakingTick;
     public static long MAX_EXPLOSION_DIST_SQ = 10;
-    private long FIREBALL_TIMEOUT = 750L, fireballTime = 0;
+    private long FIREBALL_TIMEOUT = 500L, fireballTime = 0;
     public static int inAirTicks;
+    public static int fadeEdge;
+    public static int lastFaceDifference;
+    private int lastFace;
 
     @SubscribeEvent
     public void onSendPacket(SendPacketEvent e) {
@@ -56,6 +46,22 @@ public class ModuleUtils {
                 threwFireball = true;
             }
         }
+
+        if (e.getPacket() instanceof C08PacketPlayerBlockPlacement && Utils.scaffoldDiagonal(false)) {
+            if (((C08PacketPlayerBlockPlacement) e.getPacket()).getPlacedBlockDirection() != 1) {
+                int currentFace = ((C08PacketPlayerBlockPlacement) e.getPacket()).getPlacedBlockDirection();
+
+                if (currentFace == lastFace) {
+                    lastFaceDifference++;
+                }
+                else {
+                   lastFaceDifference = 0;
+                }
+
+                lastFace = currentFace;
+            }
+        }
+
     }
 
     @SubscribeEvent
@@ -117,30 +123,29 @@ public class ModuleUtils {
             }
         }
 
-        //Bhop rotate yaw handling
-        if (mc.thePlayer.onGround) {
-            if (mc.thePlayer.moveStrafing == 0 && mc.thePlayer.moveForward <= 0 && Utils.isMoving() && ModuleManager.bhop.isEnabled()) {
-                ModuleManager.bhop.setRotation = true;
-            } else {
+        if (ModuleManager.bhop.setRotation) {
+            if (!ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !ModuleManager.scaffold.isEnabled && !mc.thePlayer.isCollidedHorizontally) {
+                float yaw = mc.thePlayer.rotationYaw;
+                e.setYaw(yaw - 55);
+            }
+            if (mc.thePlayer.onGround) {
                 ModuleManager.bhop.setRotation = false;
             }
         }
-        if (ModuleManager.bhop.rotateYawOption.isToggled()) {
-            if (ModuleManager.bhop.setRotation) {
-                if (!ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !ModuleManager.scaffold.isEnabled && !mc.thePlayer.isCollidedHorizontally) {
-                    float playerYaw = mc.thePlayer.rotationYaw;
-                    e.setYaw(playerYaw -= 55);
-                }
-            }
+
+        if (ModuleManager.scaffold.canBlockFade && !ModuleManager.scaffold.isEnabled && ++fadeEdge >= 45) {
+            ModuleManager.scaffold.canBlockFade = false;
+            fadeEdge = 0;
+            ModuleManager.scaffold.highlight.clear();
         }
-
-
-
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onRenderWorld(RenderWorldLastEvent e) {
-        if (!Utils.nullCheck() || !ModuleManager.scaffold.highlightBlocks.isToggled() || ModuleManager.scaffold.highlight.isEmpty() || !ModuleManager.scaffold.isEnabled) {
+        if (!ModuleManager.scaffold.canBlockFade) {
+            return;
+        }
+        if (!Utils.nullCheck() || !ModuleManager.scaffold.highlightBlocks.isToggled() || ModuleManager.scaffold.highlight.isEmpty()) {
             return;
         }
         Iterator<Map.Entry<BlockPos, Timer>> iterator = ModuleManager.scaffold.highlight.entrySet().iterator();
@@ -158,6 +163,4 @@ public class ModuleUtils {
             RenderUtils.renderBlock(entry.getKey(), Utils.mergeAlpha(Theme.getGradient((int) HUD.theme.getInput(), 0), alpha), true, false);
         }
     }
-
-
 }

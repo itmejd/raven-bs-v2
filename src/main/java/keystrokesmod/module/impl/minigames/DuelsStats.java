@@ -107,7 +107,7 @@ public class DuelsStats extends Module {
             Utils.sendMessage("&cAPI Key is empty!");
         } else {
             ProfileUtils.DM dm = ProfileUtils.DM.values()[(int) (mode.getInput() - 1.0D)];
-            Raven.getExecutor().execute(() -> {
+            Raven.getScheduledExecutor().execute(() -> {
                 int[] s = ProfileUtils.getHypixelStats(n, dm);
                 if (s != null) {
                     if (s[0] == -1) {

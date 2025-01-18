@@ -58,7 +58,7 @@ public class Xray extends Module {
             return;
         }
         lastCheck = System.currentTimeMillis();
-        Raven.getExecutor().execute(() -> {
+        Raven.getCachedExecutor().execute(() -> {
             synchronized (blocks) {
                 int i;
                 for (int n = i = (int) range.getInput(); i >= -n; --i) {

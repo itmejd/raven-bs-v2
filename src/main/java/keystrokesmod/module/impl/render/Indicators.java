@@ -1,11 +1,13 @@
 package keystrokesmod.module.impl.render;
 
+import keystrokesmod.mixin.impl.accessor.IAccessorEntityArrow;
+import keystrokesmod.mixin.impl.accessor.IAccessorEntityRenderer;
+import keystrokesmod.mixin.impl.accessor.IAccessorMinecraft;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.impl.world.AntiBot;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
 import keystrokesmod.utility.BlockUtils;
-import keystrokesmod.utility.Reflection;
 import keystrokesmod.utility.RenderUtils;
 import keystrokesmod.utility.Utils;
 import net.minecraft.block.Block;
@@ -20,7 +22,6 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.projectile.EntityArrow;
 import net.minecraft.entity.projectile.EntityFireball;
 import net.minecraft.entity.projectile.EntityLargeFireball;
-import net.minecraft.entity.projectile.EntityWitherSkull;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.BlockPos;
@@ -32,7 +33,6 @@ import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -77,15 +77,16 @@ public class Indicators extends Module {
             return;
         }
         try {
-            Iterator<Entity> iterator = threats.iterator();
-            while (iterator.hasNext()) {
-                Entity en = iterator.next();
-                if (en == null || !mc.theWorld.loadedEntityList.contains(en) || !canRender(en) || (en instanceof EntityArrow && Reflection.inGround.getBoolean(en))) {
-                    iterator.remove();
+            for (Entity en : mc.theWorld.loadedEntityList) {
+                if (en == null || en == mc.thePlayer) {
                     continue;
                 }
                 ItemStack itemStack = null;
                 if (en instanceof EntityArrow) {
+                    if (((IAccessorEntityArrow) en).getInGround()) {
+                        threats.remove(en);
+                        continue;
+                    }
                     itemStack = new ItemStack(Items.arrow);
                 }
                 else if (en instanceof EntityFireball) {
@@ -94,7 +95,7 @@ public class Indicators extends Module {
                 else if (en instanceof EntityEnderPearl) {
                     itemStack = new ItemStack(Items.ender_pearl);
                 }
-                if (!mc.theWorld.loadedEntityList.contains(en)) {
+                if (!threats.contains(en) && !(en instanceof EntityPlayer)) {
                     continue;
                 }
                 this.renderIndicatorFor(en, itemStack, event.renderTickTime);
@@ -111,30 +112,23 @@ public class Indicators extends Module {
         if (e.entity == mc.thePlayer) {
             this.threats.clear();
         }
-        else if (canRender(e.entity) && (mc.thePlayer.getDistanceSqToEntity(e.entity) > 36 || !threatsOnly.isToggled() || e.entity instanceof EntityPlayer)) {
+        else if (canRender(e.entity) && (mc.thePlayer.getDistanceSqToEntity(e.entity) > 36 || !threatsOnly.isToggled())) {
             this.threats.add(e.entity);
         }
     }
 
     private boolean canRender(Entity entity) {
-        try {
-            if (entity instanceof EntityArrow && !Reflection.inGround.getBoolean(entity) && renderArrows.isToggled()) {
-                return true;
-            }
-            else if (entity instanceof EntityLargeFireball && renderFireballs.isToggled()) {
-                return true;
-            }
-            else if (entity instanceof EntityEnderPearl && renderPearls.isToggled()) {
-                return true;
-            }
-            else if (entity instanceof EntityPlayer && renderPlayers.isToggled() && AntiBot.isBot(entity)) {
-                return true;
-            }
+        if (entity instanceof EntityArrow && !((IAccessorEntityArrow) entity).getInGround() && renderArrows.isToggled()) {
+            return true;
         }
-        catch (IllegalAccessException e) {
-            Utils.sendMessage("&cIssue checking entity.");
-            e.printStackTrace();
-            return false;
+        else if (entity instanceof EntityLargeFireball && renderFireballs.isToggled()) {
+            return true;
+        }
+        else if (entity instanceof EntityEnderPearl && renderPearls.isToggled()) {
+            return true;
+        }
+        else if (entity instanceof EntityPlayer && renderPlayers.isToggled() && !AntiBot.isBot(entity)) {
+            return true;
         }
         return false;
     }
@@ -153,9 +147,7 @@ public class Indicators extends Module {
         double y = en.lastTickPosY + (en.posY - en.lastTickPosY) * partialTicks - mc.getRenderManager().viewerPosY + en.height / 2;
         double z = en.lastTickPosZ + (en.posZ - en.lastTickPosZ) * partialTicks - mc.getRenderManager().viewerPosZ;
 
-        if (!Reflection.setupCameraTransform(mc.entityRenderer, partialTicks, 0)) {
-            return;
-        }
+        ((IAccessorEntityRenderer) mc.entityRenderer).callSetupCameraTransform(((IAccessorMinecraft) mc).getTimer().renderPartialTicks, 0);
 
         ScaledResolution scaledResolution = new ScaledResolution(mc);
         Vec3 vec = RenderUtils.convertTo2D(scaledResolution.getScaleFactor(), x, y, z);
@@ -270,6 +262,9 @@ public class Indicators extends Module {
     }
 
     private Color getColorForItem(ItemStack itemStack) {
+        if (itemStack == null) {
+            return Color.WHITE;
+        }
         if (itemStack.getItem() == Items.ender_pearl) {
             return new Color(210, 0, 255);
         }

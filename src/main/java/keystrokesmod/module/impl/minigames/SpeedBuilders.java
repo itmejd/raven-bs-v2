@@ -2,6 +2,7 @@ package keystrokesmod.module.impl.minigames;
 
 import keystrokesmod.event.PreUpdateEvent;
 import keystrokesmod.event.ReceivePacketEvent;
+import keystrokesmod.mixin.impl.accessor.IAccessorMinecraft;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.DescriptionSetting;
@@ -137,7 +138,7 @@ public class SpeedBuilders extends Module {
                             if (lastPlaceTick++ < placeDelay.getInput()) {
                                 return;
                             }
-                            Reflection.rightClick();
+                            ((IAccessorMinecraft) mc).callRightClickMouse();
                             lastPlaceTick = 0;
                         }
                     }

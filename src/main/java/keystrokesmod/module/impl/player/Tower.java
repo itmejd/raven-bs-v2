@@ -175,16 +175,16 @@ public class Tower extends Module {
                         if (aligning && (int) mc.thePlayer.posX > firstX) {
                             aligned = true;
                         }
-                        e.setYaw(90F);
+                        //e.setYaw(90F);
                         e.setPitch(85F);
                     }
                     if (aligned) {
                         if (placed) {
-                            e.setYaw(270F);
+                            //e.setYaw(270F);
                             e.setPitch(89.9F);
                         }
                         else {
-                            e.setYaw(90F);
+                            //e.setYaw(90F);
                             e.setPitch(85F);
                         }
                         placeExtraBlock = true;
@@ -201,9 +201,13 @@ public class Tower extends Module {
         }
     }
 
+    public boolean isVerticalTowering() {
+        return canTower() && !Utils.keysDown() && verticalTower.getInput() == 2;
+    }
+
     @SubscribeEvent
     public void onPostPlayerInput(PostPlayerInputEvent e) {
-        if (canTower() && Utils.keysDown() && towerMove.getInput() > 0) {
+        /*if (canTower() && Utils.keysDown() && towerMove.getInput() > 0) {
             mc.thePlayer.movementInput.jump = false;
             if (!firstJump) {
                 if (!mc.thePlayer.onGround) {
@@ -217,7 +221,7 @@ public class Tower extends Module {
                     firstJump = true;
                 }
             }
-        }
+        }*/
         if (canTower() && !Utils.keysDown() && verticalTower.getInput() > 0) {
             mc.thePlayer.movementInput.jump = false;
         }

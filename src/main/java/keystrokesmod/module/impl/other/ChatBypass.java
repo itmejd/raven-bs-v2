@@ -71,7 +71,7 @@ public class ChatBypass extends Module {
             msg = doReplace(msg);
         }
 
-        if (split[0] != null) { // if command existed, re-add
+        if (split[0] != null && split[1] != null) { // if command existed, re-add
             msg = split[0] + " " + msg;
         }
 

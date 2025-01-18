@@ -1,12 +1,13 @@
 package keystrokesmod.module.impl.render;
 
+import keystrokesmod.mixin.impl.accessor.IAccessorEntityRenderer;
+import keystrokesmod.mixin.impl.accessor.IAccessorMinecraft;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.world.AntiBot;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.DescriptionSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
-import keystrokesmod.utility.Reflection;
 import keystrokesmod.utility.RenderUtils;
 import keystrokesmod.utility.Utils;
 import net.minecraft.client.gui.ScaledResolution;
@@ -21,7 +22,6 @@ import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import java.awt.*;
-import java.util.Locale;
 
 public class Nametags extends Module {
     private SliderSetting scale;
@@ -46,7 +46,7 @@ public class Nametags extends Module {
 
     public Nametags() {
         super("Nametags", category.render, 0);
-        this.registerSetting(scale = new SliderSetting("Scale", 1.0, 0.1, 5.0, 0.1));
+        this.registerSetting(scale = new SliderSetting("Scale", 1.0, 0.5, 5.0, 0.1));
         this.registerSetting(autoScale = new ButtonSetting("Auto-scale", true));
         this.registerSetting(drawBackground = new ButtonSetting("Draw background", true));
         this.registerSetting(onlyRenderName = new ButtonSetting("Only render name", false));
@@ -109,20 +109,17 @@ public class Nametags extends Module {
             double renderHeightOffset = (playerY - mc.getRenderManager().viewerPosY) + (!en.isSneaking() ? en.height : en.height - 0.3) + 0.294;
             double heightOffset = playerY + (!en.isSneaking() ? en.height : en.height - 0.3) + 0.294;
 
-            if (!Reflection.setupCameraTransform(mc.entityRenderer, ev.partialTicks, 0)) {
-                continue;
-            }
+            ((IAccessorEntityRenderer) mc.entityRenderer).callSetupCameraTransform(((IAccessorMinecraft) mc).getTimer().renderPartialTicks, 0);
 
             Vec3 screenCords = RenderUtils.convertTo2D(scaledResolution.getScaleFactor(), playerX - mc.getRenderManager().viewerPosX, renderHeightOffset, playerZ - mc.getRenderManager().viewerPosZ);
+            if (screenCords == null) {
+                continue;
+            }
             boolean inFrustum = screenCords.zCoord < 1.0003684;
             if (!inFrustum) {
                 continue;
             }
             mc.entityRenderer.setupOverlayRendering();
-
-            if (screenCords == null) {
-                continue;
-            }
 
             float scaleSetting = (float) scale.getInput();
             float newScale = scaleSetting;
@@ -190,7 +187,7 @@ public class Nametags extends Module {
                 double startTime = ModuleManager.skyWars.strengthPlayers.get(en);
                 double timePassed = (System.currentTimeMillis() - startTime) / 1000;
                 double strengthRemaining = Math.max(0, Utils.round(5.0 - timePassed, 1));
-                String strengthInfo = "§4" + (Utils.isWholeNumber(strengthRemaining) ? (int) strengthRemaining + "" : strengthRemaining) + "s§r ";
+                String strengthInfo = "§4" + Utils.asWholeNum(strengthRemaining) + "s§r ";
                 name = strengthInfo + name;
             }
 

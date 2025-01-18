@@ -4,6 +4,9 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
 import keystrokesmod.Raven;
+import keystrokesmod.mixin.impl.accessor.IAccessorGuiIngame;
+import keystrokesmod.mixin.impl.accessor.IAccessorItemFood;
+import keystrokesmod.mixin.impl.accessor.IAccessorMinecraft;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.client.Settings;
@@ -64,15 +67,7 @@ public class Utils {
     public static boolean holdingEdible(ItemStack stack) {
         if (stack.getItem() instanceof ItemFood && mc.thePlayer.getFoodStats().getFoodLevel() == 20) {
             ItemFood food = (ItemFood) stack.getItem();
-            boolean alwaysEdible = false;
-            try {
-                alwaysEdible = Reflection.alwaysEdible.getBoolean(food);
-            }
-            catch (Exception e) {
-                Utils.sendMessage("&cError checking food edibility, check logs.");
-                e.printStackTrace();
-            }
-            return alwaysEdible;
+            return ((IAccessorItemFood) food).getAlwaysEdible();
         }
         return true;
     }
@@ -588,12 +583,7 @@ public class Utils {
     }
 
     public static String getTitle() {
-        try {
-            return (String) Reflection.displayedTitle.get(mc.ingameGUI);
-        } catch (IllegalAccessException ex) {
-            ex.printStackTrace();
-        }
-        return "";
+        return ((IAccessorGuiIngame) mc.ingameGUI).getDisplayedTitle();
     }
 
     public static int getBedwarsStatus() {
@@ -1357,11 +1347,11 @@ public class Utils {
         }
 
         public static void rightClick() {
-            Reflection.rightClick();
+            ((IAccessorMinecraft) mc).callRightClickMouse();
         }
 
         public static void leftClick() {
-            Reflection.clickMouse();
+            ((IAccessorMinecraft) mc).callClickMouse();
         }
     }
 

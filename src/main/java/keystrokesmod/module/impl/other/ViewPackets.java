@@ -1,5 +1,6 @@
 package keystrokesmod.module.impl.other;
 
+import keystrokesmod.event.NoEventPacketEvent;
 import keystrokesmod.event.ReceivePacketEvent;
 import keystrokesmod.event.SendPacketEvent;
 import keystrokesmod.module.Module;
@@ -61,6 +62,29 @@ public class ViewPackets extends Module {
 
     @SubscribeEvent
     public void onSendPacket(SendPacketEvent e) {
+        if (!sent.isToggled()) {
+            return;
+        }
+        if (singlePlayer.isToggled() && mc.isSingleplayer() && e.getPacket().getClass().getSimpleName().charAt(0) == 'S') {
+            return;
+        }
+        if (e.isCanceled() && !includeCancelled.isToggled()) {
+            return;
+        }
+        if (ignoreC00.isToggled() && e.getPacket() instanceof C00PacketKeepAlive) {
+            return;
+        }
+        if (ignoreC0F.isToggled() && e.getPacket() instanceof C0FPacketConfirmTransaction) {
+            return;
+        }
+        if (e.getPacket() instanceof C03PacketPlayer && (ignoreC03.isToggled() || (compactC03.isToggled() && (packet == null || packet instanceof C03PacketPlayer)))) {
+            return;
+        }
+        sendMessage(packet = e.getPacket(), false);
+    }
+
+    @SubscribeEvent
+    public void onSendPacketNoEvent(NoEventPacketEvent e) {
         if (!sent.isToggled()) {
             return;
         }
