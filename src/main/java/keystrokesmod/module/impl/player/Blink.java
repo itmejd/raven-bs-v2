@@ -88,12 +88,17 @@ public class Blink extends Module {
             return;
         }
         Packet packet = e.getPacket();
-        if (e.isCanceled() || packet.getClass().getSimpleName().startsWith("S") || packet instanceof C00PacketLoginStart || packet instanceof C00Handshake) {
+        if (packet.getClass().getSimpleName().startsWith("S")) {
             return;
         }
-        started = true;
-        blinkedPackets.add(packet);
-        e.setCanceled(true);
+        if (packet instanceof C00PacketLoginStart || packet instanceof C00Handshake) {
+            return;
+        }
+        if (!e.isCanceled()) {
+            started = true;
+            blinkedPackets.add(packet);
+            e.setCanceled(true);
+        }
     }
 
     @Override

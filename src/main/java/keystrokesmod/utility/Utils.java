@@ -4,6 +4,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
 import keystrokesmod.Raven;
+import keystrokesmod.mixin.impl.accessor.IAccessorEntityPlayerSP;
 import keystrokesmod.mixin.impl.accessor.IAccessorGuiIngame;
 import keystrokesmod.mixin.impl.accessor.IAccessorItemFood;
 import keystrokesmod.mixin.impl.accessor.IAccessorMinecraft;
@@ -940,6 +941,10 @@ public class Utils {
 
     public static boolean onEdge(Entity entity) {
         return mc.theWorld.getCollidingBoundingBoxes(entity, entity.getEntityBoundingBox().offset(entity.motionX / 3.0D, -1.0D, entity.motionZ / 3.0D)).isEmpty();
+    }
+
+    public static float getLastReportedYaw() {
+        return ((IAccessorEntityPlayerSP) mc.thePlayer).getLastReportedYaw();
     }
 
     public static boolean lookingAtBlock() {

@@ -58,9 +58,7 @@ public class Scaffold extends Module {
     public boolean hasSwapped;
 
     private boolean rotateForward;
-    private int keepYDelay;
     private int onGroundTicks;
-    private int keepYPlaceTicks;
     private double startYPos = -1;
     public boolean fastScaffoldKeepY;
     private boolean firstKeepYPlace;
@@ -69,10 +67,6 @@ public class Scaffold extends Module {
     private boolean lowhop;
     private int rotationDelay;
     private int blockSlot = -1;
-    private boolean modifyPitch;
-    private boolean flipRotation;
-    private long lastSwap, lastSwap2;
-    private boolean didFlip;
 
     public boolean canBlockFade;
 
@@ -86,20 +80,17 @@ public class Scaffold extends Module {
     private Vec3 blockPos, hitVec, lookVec;
     private float[] blockRotations;
     private long lastPlaceTime, rotationTimeout = 250L;
-    private float getPitch;
     private float lastYaw = 0.0f;
     private float lastPitch = 0.0f;
-    private float lastBlockYaw;
-
-    private static float rotOffset;
-
-    private long firstStroke;
+    private float yaw, pitch, blockYaw;
+    private boolean set2;
 
     public boolean moduleEnabled;
     public boolean isEnabled;
     private boolean disabledModule;
     private boolean dontDisable;
     private int disableTicks;
+    private int scaffoldTicks;
 
     public Scaffold() {
         super("Scaffold", category.player);
@@ -131,7 +122,6 @@ public class Scaffold extends Module {
         isEnabled = true;
         moduleEnabled = true;
         ModuleUtils.fadeEdge = 0;
-        firstStroke = System.currentTimeMillis();
 
         FMLCommonHandler.instance().bus().register(scaffoldBlockCount = new ScaffoldBlockCount(mc));
         lastSlot.set(-1);
@@ -155,12 +145,18 @@ public class Scaffold extends Module {
         if (!isEnabled || !holdingBlocks()) {
             return;
         }
+        if (Utils.isMoving()) {
+            scaffoldTicks++;
+        }
+        else {
+            scaffoldTicks = 0;
+        }
         canBlockFade = true;
         int simpleY = (int) Math.round((e.posY % 1) * 10000);
         if (Utils.keysDown() && usingFastScaffold() && fastScaffold.getInput() >= 1 && !ModuleManager.tower.canTower() && !ModuleManager.LongJump.isEnabled()) { // jump mode
             if (mc.thePlayer.onGround && Utils.isMoving()) {
-                rotateForward = true;
-                if (++keepYDelay >= 2 || keepYPlaceTicks > 0 || onGroundTicks > 1) {
+                if (scaffoldTicks > 1) {
+                    rotateForward = true;
                     mc.thePlayer.jump();
                     Utils.setSpeed(getSpeed(getSpeedLevel()) - Utils.randomizeDouble(0.001, 0.0001));
                     if (fastScaffold.getInput() == 5 || fastScaffold.getInput() == 2 && firstKeepYPlace) {
@@ -177,7 +173,7 @@ public class Scaffold extends Module {
         else if (fastScaffoldKeepY) {
             fastScaffoldKeepY = firstKeepYPlace = false;
             startYPos = -1;
-            keepYDelay = keepYTicks = keepYPlaceTicks = 0;
+            keepYTicks = 0;
         }
         if (lowhop) {
             switch (simpleY) {
@@ -214,10 +210,12 @@ public class Scaffold extends Module {
             if (floatStarted && mc.thePlayer.onGround) {
                 floatKeepY = false;
                 startYPos = -1;
-                if (moduleEnabled && !Utils.jumpDown()) e.setPosY(e.getPosY() + 1E-11);
-                if (Utils.isMoving()) Utils.setSpeed(getFloatSpeed(getSpeedLevel()));
+                if (moduleEnabled) {
+                    e.setPosY(e.getPosY() + 1E-11);
+                    if (Utils.isMoving()) Utils.setSpeed(getFloatSpeed(getSpeedLevel()));
+                }
             }
-        } else if (floatWasEnabled) {
+        } else if (floatWasEnabled && moduleEnabled) {
             if (floatKeepY) {
                 startYPos = -1;
             }
@@ -231,156 +229,136 @@ public class Scaffold extends Module {
             targetBlock = null;
         }
 
-        getPitch = 82;
         if (ModuleUtils.inAirTicks >= 1) {
             rotateForward = false;
         }
-        if (rotation.getInput() > 0 && (!rotateForward || !jumpFacingForward.isToggled())) {
-            rotatingForward = false;
-            if (rotation.getInput() > 0) {
-                float yawBackwards = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - hardcodedYaw();
-                float main = MathHelper.wrapAngleTo180_float(getMotionYaw() - yaw);
-                float mainOffset = MathHelper.wrapAngleTo180_float(yawBackwards - lastBlockYaw);
-                float rawOffset = MathHelper.wrapAngleTo180_float(yawBackwards - lastBlockYaw);
-                float mainOffset2 = MathHelper.wrapAngleTo180_float(yawBackwards - lastBlockYaw);
-                rotOffset = (!Utils.scaffoldDiagonal(false)) ? 135F : 140F;
-                float minOffset = (!Utils.scaffoldDiagonal(false)) ? 30 : 0;
+
+        switch ((int) rotation.getInput()) {
+            case 1:
+                e.setRotations(MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - hardcodedYaw(), 82);
+                break;
+
+
+
+
+
+
+
+            case 2:
                 if (blockRotations != null) {
-                    e.setYaw(blockRotations[0]);
-                    e.setPitch(blockRotations[1]);
-                    lastBlockYaw = MathHelper.wrapAngleTo180_float(blockRotations[0]);
-
-                    //Utils.print("" + MathHelper.wrapAngleTo180_float(blockRotations[0]));
-
-
-
-
-
-
-                    if (rotation.getInput() == 2 && !ModuleManager.tower.isVerticalTowering()) {
-                        if (!flipRotation) {
-                            if (main >= 0) {
-                                //Utils.print("Main1");
-                                if (mainOffset >= 0) mainOffset = 0;
-                                if (mainOffset <= -minOffset) mainOffset = -minOffset;
-                            } else if (main <= -0) {
-                                //Utils.print("Main2");
-                                if (mainOffset <= -0) mainOffset = -0;
-                                if (mainOffset >= minOffset) mainOffset = minOffset;
-                            }
-                        } else {
-                            if (main >= 0) {
-                                //Utils.print("Main1");
-                                //Utils.print("1 " + mainOffset);
-                                if (mainOffset <= -0) mainOffset2 = -0;
-                                if (mainOffset >= minOffset) mainOffset2 = minOffset;
-                            } else if (main <= -0) {
-                                //Utils.print("Main2");
-                                //Utils.print("2 " + mainOffset);
-                                if (mainOffset >= 0) mainOffset2 = 0;
-                                if (mainOffset <= -minOffset) mainOffset2 = -minOffset;
-                            }
-                        }
-                        e.setYaw(offsetRotation());
-                        if (main >= 0) {
-                            if (flipRotation) {
-                                e.setYaw(offsetRotation() + rotOffset * 2);
-                                //Utils.print("1 ");
-                            }
-                        } else if (main <= -0) {
-                            if (flipRotation) {
-                                e.setYaw(offsetRotation() - rotOffset * 2);
-                                //Utils.print("2 ");
-                            }
-                        }
-                        double minFlip = (!Utils.scaffoldDiagonal(false)) ? 6 : 14;
-                        double minEdge = (!Utils.scaffoldDiagonal(false)) ? 0 : 10;
-                        if (firstStroke > 0 && (System.currentTimeMillis() - firstStroke) > 200) {
-                            if (!didFlip) {
-                                if ((main >= 0 && rawOffset >= minEdge || main <= -0 && rawOffset <= -minEdge)) {
-                                    didFlip = true;
-                                    flipRotation = true;
-                                } else {
-                                    didFlip = true;
-                                    flipRotation = false;
-                                }
-                            } else if ((main >= 0 && rawOffset >= minFlip || main >= 0 && rawOffset <= -minFlip || main <= -0 && rawOffset <= -minFlip || main <= -0 && rawOffset >= minFlip)) {
-                                didFlip = false;
-                            }
-                        }
-
-                        if (!flipRotation) {
-                            e.setYaw(e.getYaw() - mainOffset);
-                        } else {
-                            /*if (main >= 0) {
-                                e.setYaw(e.getYaw() - mainOffset2);
-                            } else if (main <= -0) {
-                                e.setYaw(e.getYaw() + mainOffset2);
-                            }*/
-                            e.setYaw(e.getYaw() - mainOffset2);
-                        }
-                    }
-
-                    if (e.getPitch() > 89) {
-                        e.setPitch(89);
-                    }
-                    lastYaw = MathHelper.wrapAngleTo180_float(e.getYaw());
-                    lastPitch = e.getPitch();
-                    if (lastPlaceTime > 0 && (System.currentTimeMillis() - lastPlaceTime) > rotationTimeout) blockRotations = null;
+                    blockYaw = blockRotations[0];
+                    pitch = blockRotations[1];
                 }
                 else {
-                    lastBlockYaw = lastYaw;
-                    if (rotation.getInput() == 2) {
-                        /*if (main >= 0) {
-                            mainOffset2 = 25;
+                    blockYaw = 0;
+                    pitch = 82F;
+                }
+                float side = MathHelper.wrapAngleTo180_float(getMotionYaw() - yaw);
+                float offset = 137.625F;
+                float minOffset = (!Utils.scaffoldDiagonal(false)) ? 30 : 0;
+                float yawBackwards = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - hardcodedYaw();
+                float yawOffset = MathHelper.wrapAngleTo180_float(yawBackwards - blockYaw);
+
+                if (!Utils.isMoving() || Utils.getHorizontalSpeed() == 0.0D) {
+                    e.setRotations(yaw, pitch);
+                    break;
+                }
+
+                float motionYaw = getMotionYaw();
+
+                float lastYaw = Utils.getLastReportedYaw();
+                float newYaw = motionYaw - offset * Math.signum(
+                        MathHelper.wrapAngleTo180_float(motionYaw - yaw)
+                );
+                yaw = applyGcd(
+                        lastYaw + MathHelper.wrapAngleTo180_float(newYaw - lastYaw)
+                );
+
+                double minSwitch = (!Utils.scaffoldDiagonal(false)) ? 0 : 13;
+                if (side >= 0) {
+                    if (yawOffset <= -minSwitch) {
+                        set2 = false;
+                    }
+                    else if (yawOffset >= 0) {
+                        if (yawOffset >= minSwitch) {
+                            set2 = true;
                         }
-                        else if (main <= -0) {
-                            mainOffset2 = -25;
-                        }*/
-                        e.setYaw(offsetRotation());
                     }
-
-
-
-
-
-                    else {
-                        e.setYaw(MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - hardcodedYaw());
+                    if (set2) {
+                        if (yawOffset <= -0) yawOffset = -0;
+                        if (yawOffset >= minOffset) yawOffset = minOffset;
+                        e.setRotations((yaw + offset * 2) - yawOffset, pitch);
+                        break;
                     }
-                    e.setPitch(getPitch);
+                } else if (side <= -0) {
+                    if (yawOffset >= minSwitch) {
+                        set2 = false;
+                    }
+                    else if (yawOffset <= 0) {
+                        if (yawOffset <= -minSwitch) {
+                           set2 = true;
+                        }
+                    }
+                    if (set2) {
+                        if (yawOffset >= 0) yawOffset = 0;
+                        if (yawOffset <= -minOffset) yawOffset = -minOffset;
+                        e.setRotations((yaw - offset * 2) - yawOffset, pitch);
+                        break;
+                    }
                 }
-                if (rotation.getInput() == 1) {
-                    e.setYaw(MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - hardcodedYaw());
+
+                if (side >= 0) {
+                    if (yawOffset >= 0) yawOffset = 0;
+                    if (yawOffset <= -minOffset) yawOffset = -minOffset;
+                } else if (side <= -0) {
+                    if (yawOffset <= -0) yawOffset = -0;
+                    if (yawOffset >= minOffset) yawOffset = minOffset;
                 }
+                e.setRotations(yaw - yawOffset, pitch);
+                break;
+
+            case 3:
+                if (blockRotations != null) {
+                    e.setRotations(blockRotations[0], blockRotations[1]);
+                }
+                else {
+                    e.setRotations(MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - hardcodedYaw(), 82);
+                }
+                break;
+        }
+
+
+
+        //jump facing forward
+        if (rotateForward && jumpFacingForward.isToggled()) {
+            if (rotation.getInput() > 0) {
+                if (!rotatingForward) {
+                    rotationDelay = 2;
+                    rotatingForward = true;
+                }
+                e.setYaw(MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - hardcodedYaw() - 180 - (float) Utils.randomizeDouble(-5, 5));
+                e.setPitch(10 - (float) Utils.randomizeDouble(1, 5));
             }
         }
         else {
-            if (rotation.getInput() > 0) {
-                e.setYaw(MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - hardcodedYaw() - 180 - (float)  Utils.randomizeDouble(-5, 5));
-                e.setPitch(10 - (float) Utils.randomizeDouble(1, 5));
-            }
-            if (!rotatingForward) {
-                rotationDelay = 2;
-                rotatingForward = true;
-            }
+            rotatingForward = false;
         }
+
+        if (ModuleManager.tower.isVerticalTowering()) {
+            if (blockRotations != null) {
+                e.setYaw(blockRotations[0]);
+            }
+            e.setPitch(ModuleManager.tower.pitch);
+        }
+
+        //pitch fix
+        if (e.getPitch() >= 89.9F) {
+            e.setPitch(89.9F);
+        }
+        lastYaw = MathHelper.wrapAngleTo180_float(e.getYaw());
+        lastPitch = e.getPitch();
+        if (lastPlaceTime > 0 && (System.currentTimeMillis() - lastPlaceTime) > rotationTimeout) blockRotations = null;
         if (rotationDelay > 0) --rotationDelay;
-    }
-
-    private float yaw;
-
-    private float offsetRotation() {
-        if (!Utils.isMoving() || Utils.getHorizontalSpeed() == 0.0D) {
-            return yaw;
-        }
-
-        float newYaw = getMotionYaw() - rotOffset * Math.signum(
-                MathHelper.wrapAngleTo180_float(getMotionYaw() - yaw)
-        );
-        yaw = applyGcd(
-                lastBlockYaw + MathHelper.wrapAngleTo180_float(newYaw - lastBlockYaw)
-        );
-        return yaw;
     }
 
     @SubscribeEvent
@@ -435,12 +413,16 @@ public class Scaffold extends Module {
             handleMotion();
         }
 
+
+
+
+
         if (disabledModule) {
-            if (ModuleManager.tower.canTower() && (ModuleManager.tower.dCount == 0 || !Utils.isMoving()) || floatStarted) {
+            if (ModuleManager.tower.canTower() && (ModuleManager.tower.dCount == 0 || !Utils.isMoving()) || floatStarted && Utils.isMoving()) {
                 dontDisable = true;
             }
 
-            if (dontDisable && ++disableTicks >= 2) {
+            if (dontDisable && ++disableTicks >= 3) {
                 isEnabled = false;
                 //Utils.print("Extra tick");
             }
@@ -474,7 +456,7 @@ public class Scaffold extends Module {
                 blockRotations = null;
                 startYPos = -1;
                 fastScaffoldKeepY = firstKeepYPlace = rotateForward = rotatingForward = lowhop = floatStarted = floatJumped = floatWasEnabled = false;
-                keepYDelay = rotationDelay = keepYTicks = keepYPlaceTicks = 0;
+                rotationDelay = keepYTicks = scaffoldTicks = 0;
                 startYPos = -1;
                 lookVec = null;
             }
@@ -612,6 +594,9 @@ public class Scaffold extends Module {
     private void placeBlock(int yOffset, int xOffset) {
         locateAndPlaceBlock(yOffset, xOffset);
         int input = (int) multiPlace.getInput();
+        if (sprint.getInput() == 0 && mc.thePlayer.onGround && !ModuleManager.tower.canTower() && !usingFastScaffold()) {
+            return;
+        }
         if (input >= 1) {
             locateAndPlaceBlock(yOffset, xOffset);
             if (input >= 2) {
@@ -823,7 +808,7 @@ public class Scaffold extends Module {
     }
 
     private void handleMotion() {
-        if (usingFastScaffold()) {
+        if (handleFastScaffolds() > 0 || ModuleManager.tower.canTower()) {
             return;
         }
         mc.thePlayer.motionX *= motion.getInput();

@@ -210,7 +210,7 @@ public class NoSlow extends Module {
                 speedModifier = 0.37;
                 break;
         }
-        return speedModifier;
+        return speedModifier - 0.005;
     }
 
     private boolean holdingConsumable(ItemStack itemStack) {

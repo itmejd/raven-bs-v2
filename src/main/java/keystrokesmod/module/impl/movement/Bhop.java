@@ -61,7 +61,7 @@ public class Bhop extends Module {
                 collided = false;
             }
             if (mc.thePlayer.onGround) {
-                if (mc.thePlayer.moveForward <= -0.5 && mc.thePlayer.moveStrafing == 0) {
+                if (mc.thePlayer.moveForward <= -0.5 && mc.thePlayer.moveStrafing == 0 && !ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !ModuleManager.scaffold.isEnabled && !mc.thePlayer.isCollidedHorizontally) {
                     setRotation = true;
                 }
                 mc.thePlayer.jump();

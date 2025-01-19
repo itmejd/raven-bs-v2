@@ -97,12 +97,17 @@ public class ModuleUtils {
 
     @SubscribeEvent
     public void onPreMotion(PreMotionEvent e) {
+        int simpleY = (int) Math.round((e.posY % 1) * 10000);
 
-        inAirTicks = mc.thePlayer.onGround ? 0 : ++inAirTicks;
+        if (inAirTicks <= 20) {
+            inAirTicks = mc.thePlayer.onGround ? 0 : ++inAirTicks;
+        }
+        else {
+            inAirTicks = 19;
+        }
 
         // 7 tick needs to always finish the motion or itll lag back
         if (!ModuleManager.bhop.isEnabled() && ModuleManager.bhop.mode.getInput() == 3 && ModuleManager.bhop.didMove) {
-            int simpleY = (int) Math.round((e.posY % 1) * 10000);
 
             if (mc.thePlayer.hurtTime == 0) {
                 switch (simpleY) {
@@ -124,9 +129,9 @@ public class ModuleUtils {
         }
 
         if (ModuleManager.bhop.setRotation) {
-            if (!ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !ModuleManager.scaffold.isEnabled && !mc.thePlayer.isCollidedHorizontally) {
-                float yaw = mc.thePlayer.rotationYaw;
-                e.setYaw(yaw - 55);
+            if (!ModuleManager.killAura.isTargeting && !ModuleManager.scaffold.isEnabled) {
+                float yaw = mc.thePlayer.rotationYaw - 55;
+                e.setYaw(yaw);
             }
             if (mc.thePlayer.onGround) {
                 ModuleManager.bhop.setRotation = false;

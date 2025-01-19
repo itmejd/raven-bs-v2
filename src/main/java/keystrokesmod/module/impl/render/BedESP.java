@@ -4,10 +4,7 @@ import keystrokesmod.Raven;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
-import keystrokesmod.utility.BlockUtils;
-import keystrokesmod.utility.RenderUtils;
-import keystrokesmod.utility.Theme;
-import keystrokesmod.utility.Utils;
+import keystrokesmod.utility.*;
 import net.minecraft.block.BlockBed;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.state.IBlockState;
@@ -17,12 +14,14 @@ import net.minecraft.util.BlockPos;
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.lwjgl.opengl.GL11;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
 
 public class BedESP extends Module {
     public SliderSetting theme;
@@ -30,8 +29,9 @@ public class BedESP extends Module {
     private SliderSetting rate;
     private ButtonSetting firstBed;
     private ButtonSetting renderFullBlock;
-    private BlockPos[] bed = null;
-    private Set<BlockPos[]> beds = ConcurrentHashMap.newKeySet();
+    private BlockPos[] bed;
+    private Timer firstBedTimer;
+    private Map<BlockPos[], Timer> beds = Collections.synchronizedMap(new HashMap<>());
     private long lastCheck = 0;
 
     public BedESP() {
@@ -65,12 +65,12 @@ public class BedESP extends Module {
                                 return;
                             }
                             else {
-                                for (BlockPos[] pos : beds) {
+                                for (BlockPos[] pos : beds.keySet()) {
                                     if (BlockUtils.isSamePos(blockPos, pos[0])) {
                                         continue priorityLoop;
                                     }
                                 }
-                                this.beds.add(new BlockPos[]{blockPos, blockPos.offset((EnumFacing) getBlockState.getValue((IProperty) BlockBed.FACING))});
+                                this.beds.put(new BlockPos[] { blockPos, blockPos.offset((EnumFacing) getBlockState.getValue((IProperty) BlockBed.FACING)) }, null);
                             }
                         }
                     }
@@ -87,29 +87,52 @@ public class BedESP extends Module {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onRenderWorld(RenderWorldLastEvent e) {
         if (Utils.nullCheck()) {
             float blockHeight = getBlockHeight();
             if (firstBed.isToggled() && this.bed != null) {
-                if (!(mc.theWorld.getBlockState(bed[0]).getBlock() instanceof BlockBed)) {
-                    this.bed = null;
-                    return;
+                float customAlpha = 0.25f;
+                if (!(mc.theWorld.getBlockState(this.bed[0]).getBlock() instanceof BlockBed)) {
+                    if (firstBedTimer == null) {
+                        (firstBedTimer = (new Timer(300))).start();
+                    }
+                    int alpha = firstBedTimer == null ? 230 : 230 - firstBedTimer.getValueInt(0, 230, 1);
+                    if (alpha <= 0) {
+                        this.bed = null;
+                        return;
+                    }
+                    customAlpha = alpha / 255.0f;
                 }
-                renderBed(this.bed, blockHeight);
+                else {
+                    firstBedTimer = null;
+                }
+                renderBed(this.bed, blockHeight, customAlpha);
                 return;
             }
-            if (this.beds.isEmpty()) {
-                return;
-            }
-            Iterator<BlockPos[]> iterator = this.beds.iterator();
-            while (iterator.hasNext()) {
-                BlockPos[] blockPos = iterator.next();
-                if (!(mc.theWorld.getBlockState(blockPos[0]).getBlock() instanceof BlockBed)) {
-                    iterator.remove();
-                    continue;
+            synchronized (beds) {
+                Iterator<Map.Entry<BlockPos[], Timer>> iterator = this.beds.entrySet().iterator();
+                while (iterator.hasNext()) {
+                    float customAlpha = 0.25f;
+                    Map.Entry<BlockPos[], Timer> entry = iterator.next();
+                    BlockPos[] blockPos = entry.getKey();
+                    if (!(mc.theWorld.getBlockState(blockPos[0]).getBlock() instanceof BlockBed)) {
+                        if (entry.getValue() == null) {
+                            entry.setValue(new Timer(300));
+                            entry.getValue().start();
+                        }
+                        int alpha = entry.getValue() == null ? 230 : 230 - entry.getValue().getValueInt(0, 230, 1);
+                        if (alpha <= 0) {
+                            iterator.remove();
+                            continue;
+                        }
+                        customAlpha = alpha / 255.0f;
+                    }
+                    else {
+                        entry.setValue(null);
+                    }
+                    renderBed(blockPos, blockHeight, customAlpha);
                 }
-                renderBed(blockPos, blockHeight);
             }
         }
     }
@@ -119,7 +142,7 @@ public class BedESP extends Module {
         this.beds.clear();
     }
 
-    private void renderBed(final BlockPos[] array, float height) {
+    private void renderBed(final BlockPos[] array, float height, float alpha) {
         final double n = array[0].getX() - mc.getRenderManager().viewerPosX;
         final double n2 = array[0].getY() - mc.getRenderManager().viewerPosY;
         final double n3 = array[0].getZ() - mc.getRenderManager().viewerPosZ;
@@ -129,12 +152,12 @@ public class BedESP extends Module {
         GL11.glDisable(3553);
         GL11.glDisable(2929);
         GL11.glDepthMask(false);
-        final int e = Theme.getGradient((int) theme.getInput(), 0);
-        final float n4 = (e >> 24 & 0xFF) / 255.0f;
-        final float n5 = (e >> 16 & 0xFF) / 255.0f;
-        final float n6 = (e >> 8 & 0xFF) / 255.0f;
-        final float n7 = (e & 0xFF) / 255.0f;
-        GL11.glColor4d(n5, n6, n7, n4);
+        final int color = Theme.getGradient((int) theme.getInput(), 0);
+        final float a = (color >> 24 & 0xFF) / 255.0f;
+        final float r = (color >> 16 & 0xFF) / 255.0f;
+        final float g = (color >> 8 & 0xFF) / 255.0f;
+        final float b = (color & 0xFF) / 255.0f;
+        GL11.glColor4d(r, g, b, a);
         AxisAlignedBB axisAlignedBB;
         if (array[0].getX() != array[1].getX()) {
             if (array[0].getX() > array[1].getX()) {
@@ -147,7 +170,7 @@ public class BedESP extends Module {
         } else {
             axisAlignedBB = new AxisAlignedBB(n, n2, n3, n + 1.0, n2 + height, n3 + 2.0);
         }
-        RenderUtils.drawBoundingBox(axisAlignedBB, n5, n6, n7);
+        RenderUtils.drawBoundingBox(axisAlignedBB, r, g, b, alpha);
         GL11.glEnable(3553);
         GL11.glEnable(2929);
         GL11.glDepthMask(true);

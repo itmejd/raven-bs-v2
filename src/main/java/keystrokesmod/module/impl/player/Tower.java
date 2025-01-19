@@ -35,6 +35,8 @@ public class Tower extends Module {
     private int cMotionTicks, placeTicks;
     public int dCount;
 
+    public float pitch;
+
     //vertical tower
     private boolean aligning, aligned, placed;
     private int firstX;
@@ -127,7 +129,7 @@ public class Tower extends Module {
                     else if (setLowMotion) {
                         ++cMotionTicks;
                         if (cMotionTicks == 1) {
-                            mc.thePlayer.motionY = 0.04f;
+                            mc.thePlayer.motionY = 0.05F;
                         }
                         else if (cMotionTicks == 3) {
                             cMotionTicks = 0;
@@ -175,17 +177,14 @@ public class Tower extends Module {
                         if (aligning && (int) mc.thePlayer.posX > firstX) {
                             aligned = true;
                         }
-                        //e.setYaw(90F);
-                        e.setPitch(85F);
+                        pitch = 85F;
                     }
                     if (aligned) {
                         if (placed) {
-                            //e.setYaw(270F);
-                            e.setPitch(89.9F);
+                            pitch = 89.9F;
                         }
                         else {
-                            //e.setYaw(90F);
-                            e.setPitch(85F);
+                            pitch = 85F;
                         }
                         placeExtraBlock = true;
                         mc.thePlayer.motionX = 0;
@@ -207,21 +206,21 @@ public class Tower extends Module {
 
     @SubscribeEvent
     public void onPostPlayerInput(PostPlayerInputEvent e) {
-        /*if (canTower() && Utils.keysDown() && towerMove.getInput() > 0) {
+        if (canTower() && Utils.keysDown() && towerMove.getInput() > 0) {
             mc.thePlayer.movementInput.jump = false;
             if (!firstJump) {
                 if (!mc.thePlayer.onGround) {
                     if (!startedTowerInAir) {
-                        Utils.setSpeed(getTowerGroundSpeed(getSpeedLevel()) - 0.04);
+                        //Utils.setSpeed(getTowerGroundSpeed(getSpeedLevel()) - 0.04);
                     }
                     startedTowerInAir = true;
                 }
                 else if (mc.thePlayer.onGround) {
-                    Utils.setSpeed(getTowerGroundSpeed(getSpeedLevel()));
+                    //Utils.setSpeed(getTowerGroundSpeed(getSpeedLevel()));
                     firstJump = true;
                 }
             }
-        }*/
+        }
         if (canTower() && !Utils.keysDown() && verticalTower.getInput() > 0) {
             mc.thePlayer.movementInput.jump = false;
         }
