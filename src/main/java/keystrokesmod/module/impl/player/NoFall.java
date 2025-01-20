@@ -80,7 +80,7 @@ public class NoFall extends Module {
         }
         if (isFalling && mode.getInput() == 3) {
             if (mc.thePlayer.ticksExisted % 2 == 0) {
-                Utils.getTimer().timerSpeed = (float) Utils.randomizeDouble(0.5, 0.6);
+                Utils.getTimer().timerSpeed = (float) Utils.randomizeDouble(0.5, 0.50201);
             }
             else {
                 Utils.getTimer().timerSpeed = (float) 1;

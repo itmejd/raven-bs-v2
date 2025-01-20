@@ -401,7 +401,7 @@ public class KillAura extends Module {
                 mc.thePlayer.rotationPitch = smoothedRotations[1];
             }
         }
-        if (attackingEntity != null && inRange(target, attackRange.getInput())) {
+        if (target != null && attackingEntity != null && inRange(target, attackRange.getInput())) {
             isTargeting = true;
         }
         else if (isTargeting) {
@@ -882,14 +882,14 @@ public class KillAura extends Module {
                 interactTicks++;
                 if (firstCycle) {
                     switch (interactTicks) {
-                        case 2:
+                        case 1:
                             blinking.set(true);
                             if (blocked) {
                                 mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, DOWN));
                                 blocked = false;
                             }
                             break;
-                        case 3:
+                        case 2:
                             handleInteractAndAttack(distance, true, true, swung);
                             sendBlockPacket();
                             blocked = true;

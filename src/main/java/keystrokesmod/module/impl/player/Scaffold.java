@@ -92,6 +92,8 @@ public class Scaffold extends Module {
     private int disableTicks;
     private int scaffoldTicks;
 
+    private long firstStroke;
+
     public Scaffold() {
         super("Scaffold", category.player);
         this.registerSetting(motion = new SliderSetting("Motion", "x", 1.0, 0.5, 1.2, 0.01));
@@ -237,25 +239,22 @@ public class Scaffold extends Module {
             case 1:
                 e.setRotations(MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - hardcodedYaw(), 82);
                 break;
-
-
-
-
-
-
-
             case 2:
                 if (blockRotations != null) {
                     blockYaw = blockRotations[0];
                     pitch = blockRotations[1];
                 }
                 else {
+                    firstStroke = System.currentTimeMillis();
                     blockYaw = 0;
-                    pitch = 82F;
+                    pitch = 80F;
+                }
+                if (firstStroke > 0 && (System.currentTimeMillis() - firstStroke) > 250) {
+                    firstStroke = 0;
                 }
                 float side = MathHelper.wrapAngleTo180_float(getMotionYaw() - yaw);
-                float offset = 137.625F;
-                float minOffset = (!Utils.scaffoldDiagonal(false)) ? 30 : 0;
+                float offset = (!Utils.scaffoldDiagonal(false)) ? 125.500F : 140.500F;
+                float minOffset = (!Utils.scaffoldDiagonal(false)) ? 25 : 0;
                 float yawBackwards = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - hardcodedYaw();
                 float yawOffset = MathHelper.wrapAngleTo180_float(yawBackwards - blockYaw);
 
@@ -273,13 +272,11 @@ public class Scaffold extends Module {
                 yaw = applyGcd(
                         lastYaw + MathHelper.wrapAngleTo180_float(newYaw - lastYaw)
                 );
-
-                double minSwitch = (!Utils.scaffoldDiagonal(false)) ? 0 : 13;
-                if (side >= 0) {
+                double minSwitch = (!Utils.scaffoldDiagonal(false)) ? 0 : 15;
+                if (side >= 0 && firstStroke == 0) {
                     if (yawOffset <= -minSwitch) {
                         set2 = false;
-                    }
-                    else if (yawOffset >= 0) {
+                    } else if (yawOffset >= 0) {
                         if (yawOffset >= minSwitch) {
                             set2 = true;
                         }
@@ -290,13 +287,12 @@ public class Scaffold extends Module {
                         e.setRotations((yaw + offset * 2) - yawOffset, pitch);
                         break;
                     }
-                } else if (side <= -0) {
+                } else if (side <= -0 && firstStroke == 0) {
                     if (yawOffset >= minSwitch) {
                         set2 = false;
-                    }
-                    else if (yawOffset <= 0) {
+                    } else if (yawOffset <= 0) {
                         if (yawOffset <= -minSwitch) {
-                           set2 = true;
+                            set2 = true;
                         }
                     }
                     if (set2) {
@@ -315,8 +311,8 @@ public class Scaffold extends Module {
                     if (yawOffset >= minOffset) yawOffset = minOffset;
                 }
                 e.setRotations(yaw - yawOffset, pitch);
+                set2 = false;
                 break;
-
             case 3:
                 if (blockRotations != null) {
                     e.setRotations(blockRotations[0], blockRotations[1]);
@@ -326,8 +322,8 @@ public class Scaffold extends Module {
                 }
                 break;
         }
-
-
+        float yv = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - hardcodedYaw();
+        Utils.print("" + MathHelper.wrapAngleTo180_float(yv - e.getYaw()));
 
         //jump facing forward
         if (rotateForward && jumpFacingForward.isToggled()) {

@@ -151,7 +151,7 @@ public class ItemESP extends Module { // entirely skidded from raven b4 source l
         GlStateManager.pushMatrix();
         GlStateManager.translate((float) n4, (float) n5 + 0.3, (float) n6);
         GlStateManager.rotate(-mc.getRenderManager().playerViewY, 0.0f, 1.0f, 0.0f);
-        GlStateManager.rotate(mc.getRenderManager().playerViewX, 1.0f, 0.0f, 0.0f);
+        GlStateManager.rotate((mc.gameSettings.thirdPersonView == 2 ? -1 : 1) * mc.getRenderManager().playerViewX, 1.0f, 0.0f, 0.0f);
         float min2 = Math.min(Math.max(0.02266667f, (float) (0.001500000013038516 * n7)), 0.07f);
         GlStateManager.scale(-min2, -min2, -min2);
         GlStateManager.depthMask(false);

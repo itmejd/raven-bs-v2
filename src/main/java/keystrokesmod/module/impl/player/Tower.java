@@ -129,7 +129,7 @@ public class Tower extends Module {
                     else if (setLowMotion) {
                         ++cMotionTicks;
                         if (cMotionTicks == 1) {
-                            mc.thePlayer.motionY = 0.05F;
+                            mc.thePlayer.motionY = 0.06F;
                         }
                         else if (cMotionTicks == 3) {
                             cMotionTicks = 0;

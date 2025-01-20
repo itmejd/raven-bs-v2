@@ -5,6 +5,7 @@ import keystrokesmod.event.PreUpdateEvent;
 import keystrokesmod.event.SendPacketEvent;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
+import keystrokesmod.module.impl.render.HUD;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.DescriptionSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
@@ -43,7 +44,7 @@ public class Blink extends Module {
     private ConcurrentLinkedQueue<Packet> blinkedPackets = new ConcurrentLinkedQueue<>();
     private Vec3 pos;
     //final private int color = Theme.getGradient((int) theme.getInput(), 255);
-    final private int color = new Color(0, 187, 255, 255).getRGB();
+    private int color = new Color(0, 187, 255, 255).getRGB();
     private int blinkTicks;
     private boolean started;
     public Blink() {
@@ -80,7 +81,7 @@ public class Blink extends Module {
             this.disable();
             return;
         }
-        if (ModuleManager.killAura.lag || ModuleManager.killAura.justUnTargeted || ModuleManager.killAura.target != null) {
+        if (ModuleManager.killAura.isTargeting || ModuleManager.killAura.justUnTargeted) {
             return;
         }
         if (disableOnBreak.isToggled() && (Utils.usingBedAura() || ModuleUtils.isBreaking)) {
@@ -119,7 +120,7 @@ public class Blink extends Module {
 
     @SubscribeEvent
     public void onRenderTick(TickEvent.RenderTickEvent ev) {
-        if (!Utils.nullCheck() || !renderTimer.isToggled()) {
+        if (!Utils.nullCheck() || !renderTimer.isToggled() || blinkTicks == 0) {
             return;
         }
         if (ev.phase == TickEvent.Phase.END) {
@@ -127,13 +128,13 @@ public class Blink extends Module {
                 return;
             }
         }
+        color = Theme.getGradient((int) HUD.theme.getInput(), 0);
         int widthOffset = (blinkTicks < 10) ? 4 : (blinkTicks >= 10 && blinkTicks < 100) ? 7 : (blinkTicks >= 100 && blinkTicks < 1000) ? 10 : (blinkTicks >= 1000) ? 13 : 16;
         String text = ("" + blinkTicks);
         int width = mc.fontRendererObj.getStringWidth(text) + Utils.getBoldWidth(text) / 2;
         final ScaledResolution scaledResolution = new ScaledResolution(mc);
         int[] display = {scaledResolution.getScaledWidth(), scaledResolution.getScaledHeight(), scaledResolution.getScaleFactor()};
         mc.fontRendererObj.drawString(text, display[0] / 2 - width + widthOffset, display[1] / 2 + 8, color, true);
-        //render.text(text, disp[0] / 2 - wid, disp[1] / 2 + 8, 1, -1, true);
     }
 
     @SubscribeEvent
@@ -146,6 +147,7 @@ public class Blink extends Module {
 
     private void drawBox(Vec3 pos) {
         GlStateManager.pushMatrix();
+        color = Theme.getGradient((int) HUD.theme.getInput(), 0);
         double x = pos.xCoord - mc.getRenderManager().viewerPosX;
         double y = pos.yCoord - mc.getRenderManager().viewerPosY;
         double z = pos.zCoord - mc.getRenderManager().viewerPosZ;

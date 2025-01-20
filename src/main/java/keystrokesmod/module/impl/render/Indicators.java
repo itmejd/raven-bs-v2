@@ -269,7 +269,7 @@ public class Indicators extends Module {
             return new Color(210, 0, 255);
         }
         else if (itemStack.getItem() == Items.fire_charge) {
-            return new Color(255, 150, 0);
+            return new Color(255, 115, 0);
         }
         else {
             return Color.WHITE;
