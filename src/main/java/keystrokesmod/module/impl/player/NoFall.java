@@ -49,7 +49,7 @@ public class NoFall extends Module {
             isFalling = false;
             return;
         }
-        else if (((double) mc.thePlayer.fallDistance >= minFallDistance.getInput())) {
+        else if ((double) mc.thePlayer.fallDistance >= minFallDistance.getInput()) {
            isFalling = true;
         }
 
