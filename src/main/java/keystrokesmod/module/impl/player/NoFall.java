@@ -124,6 +124,9 @@ public class NoFall extends Module {
         if (Utils.isBedwarsPractice()) {
             return true;
         }
+        if (Utils.spectatorCheck()) {
+            return true;
+        }
         if (mc.thePlayer.onGround) {
             return true;
         }
@@ -140,9 +143,6 @@ public class NoFall extends Module {
             return true;
         }
         if (mc.thePlayer.capabilities.isFlying) {
-            return true;
-        }
-        if (Utils.spectatorCheck()) {
             return true;
         }
         return false;
