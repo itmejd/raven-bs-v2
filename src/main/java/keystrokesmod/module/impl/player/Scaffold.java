@@ -215,7 +215,7 @@ public class Scaffold extends Module {
                 floatKeepY = false;
                 startYPos = -1;
                 if (moduleEnabled) {
-                    e.setPosY(e.getPosY() + 1E-11);
+                    e.setPosY(e.getPosY() + ModuleUtils.offsetValue);
                     if (Utils.isMoving()) Utils.setSpeed(getFloatSpeed(getSpeedLevel()));
                 }
             }
@@ -306,14 +306,17 @@ public class Scaffold extends Module {
                 if (blockRotations != null) {
                     blockYaw = blockRotations[0];
                     pitch = blockRotations[1];
-                    if (pitch < 78.750F && Utils.getHorizontalSpeed() < 0.5) {
-                        pitch = 78.750F;
+                    if (pitch < 79.150F && Utils.getHorizontalSpeed() < 0.5) {
+                        pitch = 79.150F;
                     }
                 } else {
                     firstStroke = 0;
+                    yawOffset = 40;
+                    lastYawOffset = 50;
                     blockYaw = 0;
-                    pitch = 78.750F;
+                    pitch = 79.150F;
                 }
+                //Utils.print("" + pitch);
 
                 if (firstStroke > 0 && (System.currentTimeMillis() - firstStroke) > 250) {
                     firstStroke = 0;
@@ -328,8 +331,8 @@ public class Scaffold extends Module {
                 float firstStraight = 64.50f;
                 float secondStraight = 60.50f;
                 float thirdStraight = 54.50f;
-                float firstDiag = 51.50f;
-                float secondDiag = 47.50f;
+                float firstDiag = 50.50f;
+                float secondDiag = 45.50f;
                 float thirdDiag = 41.50f;
                 float fourthDiag = 34.50f;
 
@@ -440,7 +443,12 @@ public class Scaffold extends Module {
             if (blockRotations != null) {
                 e.setYaw(blockRotations[0]);
             }
-            e.setPitch(ModuleManager.tower.pitch);
+            if (ModuleManager.tower.yaw != 0) {
+                e.setYaw(ModuleManager.tower.yaw);
+            }
+            if (ModuleManager.tower.pitch != 0) {
+                e.setPitch(ModuleManager.tower.pitch);
+            }
         }
 
         //pitch fix
@@ -509,11 +517,11 @@ public class Scaffold extends Module {
 
 
         if (disabledModule) {
-            if (hasPlaced && (ModuleManager.tower.canTower() && (ModuleManager.tower.dCount == 0 || !Utils.isMoving()) || floatStarted && Utils.isMoving())) {
+            if (hasPlaced && (ModuleManager.tower.canTower() && (ModuleManager.tower.dCount == 0 || !Utils.isMoving()) || floatStarted && Utils.isMoving() && Utils.onEdge())) {
                 dontDisable = true;
             }
 
-            if (dontDisable && ++disableTicks >= 3) {
+            if (dontDisable && ++disableTicks >= 2) {
                 isEnabled = false;
                 //Utils.print("Extra tick");
             }

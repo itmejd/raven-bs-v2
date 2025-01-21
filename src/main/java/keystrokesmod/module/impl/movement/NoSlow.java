@@ -127,7 +127,7 @@ public class NoSlow extends Module {
         if (!canFloat) {
             return;
         }
-        e.setPosY(e.getPosY() + 1E-11);
+        e.setPosY(e.getPosY() + ModuleUtils.offsetValue);
         noSlowing = true;
         if (groundSpeedOption.isToggled()) {
             if (!ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !Utils.jumpDown() && mc.thePlayer.moveForward <= -0.5 && mc.thePlayer.moveStrafing == 0 && Utils.isMoving() && mc.thePlayer.onGround) {

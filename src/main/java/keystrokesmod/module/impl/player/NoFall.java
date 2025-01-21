@@ -75,7 +75,6 @@ public class NoFall extends Module {
                 Utils.getTimer().timerSpeed = (float) 0.72;
                 mc.getNetHandler().addToSendQueue(new C03PacketPlayer(true));
                 initialY = mc.thePlayer.posY;
-                edging = "nofall packet";
             }
         }
         if (isFalling && mode.getInput() == 3) {
@@ -88,7 +87,6 @@ public class NoFall extends Module {
             if (distanceFallen >= 3) {
                 mc.getNetHandler().addToSendQueue(new C03PacketPlayer(true));
                 initialY = mc.thePlayer.posY;
-                edging = "nofall packet";
             }
         }
         edging += " " + dynamic;
@@ -129,7 +127,7 @@ public class NoFall extends Module {
         if (mc.thePlayer.onGround) {
             return true;
         }
-        if (BlockUtils.getBlock(new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY- 1, mc.thePlayer.posZ)) != Blocks.air) {
+        if (BlockUtils.getBlock(new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY - 1, mc.thePlayer.posZ)) != Blocks.air) {
             return true;
         }
         if (mc.thePlayer.motionY > -0.0784) {
@@ -138,7 +136,7 @@ public class NoFall extends Module {
         if (mc.thePlayer.capabilities.isCreativeMode) {
             return true;
         }
-        if (isVoid() && mc.thePlayer.posY <= 40) {
+        if (isVoid() && mc.thePlayer.posY <= 41) {
             return true;
         }
         if (mc.thePlayer.capabilities.isFlying) {

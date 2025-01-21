@@ -1,5 +1,6 @@
 package keystrokesmod.utility;
 
+import keystrokesmod.event.NoEventPacketEvent;
 import keystrokesmod.event.PreMotionEvent;
 import keystrokesmod.event.PreUpdateEvent;
 import keystrokesmod.event.SendPacketEvent;
@@ -7,8 +8,8 @@ import keystrokesmod.module.impl.movement.LongJump;
 import keystrokesmod.module.impl.render.HUD;
 import net.minecraft.client.Minecraft;
 import keystrokesmod.module.ModuleManager;
-import net.minecraft.network.play.client.C07PacketPlayerDigging;
-import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.network.play.client.*;
 import net.minecraft.util.BlockPos;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
@@ -33,9 +34,61 @@ public class ModuleUtils {
     public static int fadeEdge;
     public static int lastFaceDifference;
     private int lastFace;
+    public static float offsetValue = 1E-13F;
+
+
+    public static boolean isBlocked;
+
+    @SubscribeEvent
+    public void onSendPacketNoEvent(NoEventPacketEvent e) {
+        if (!Utils.nullCheck()) {
+            return;
+        }
+
+        // isBlocked
+        EntityLivingBase g = Utils.raytrace(3);
+
+        if (e.getPacket() instanceof C08PacketPlayerBlockPlacement && Utils.holdingSword() && !BlockUtils.isInteractable(mc.objectMouseOver) && !isBlocked) {
+            isBlocked = true;
+        }
+        else if (e.getPacket() instanceof C07PacketPlayerDigging && isBlocked) {
+            isBlocked = false;
+        }
+        else if (e.getPacket() instanceof C09PacketHeldItemChange && isBlocked) {
+            isBlocked = false;
+        }
+
+        //
+
+    }
 
     @SubscribeEvent
     public void onSendPacket(SendPacketEvent e) {
+        if (!Utils.nullCheck()) {
+            return;
+        }
+
+        // isBlocked
+        EntityLivingBase g = Utils.raytrace(3);
+
+        if (e.getPacket() instanceof C08PacketPlayerBlockPlacement && Utils.holdingSword() && !BlockUtils.isInteractable(mc.objectMouseOver) && !isBlocked) {
+            isBlocked = true;
+        }
+        else if (e.getPacket() instanceof C07PacketPlayerDigging && isBlocked) {
+            isBlocked = false;
+        }
+        else if (e.getPacket() instanceof C09PacketHeldItemChange && isBlocked) {
+            isBlocked = false;
+        }
+
+        //
+
+
+
+
+
+
+
         if (e.getPacket() instanceof C07PacketPlayerDigging) {
             isBreaking = true;
         }

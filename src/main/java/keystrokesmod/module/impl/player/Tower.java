@@ -5,19 +5,13 @@ import keystrokesmod.event.PreMotionEvent;
 import keystrokesmod.event.SendPacketEvent;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
-import keystrokesmod.module.impl.movement.LongJump;
 import keystrokesmod.module.setting.impl.ButtonSetting;
-import keystrokesmod.module.setting.impl.DescriptionSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
 import keystrokesmod.utility.Utils;
-import net.minecraft.network.Packet;
-import net.minecraft.network.handshake.client.C00Handshake;
-import net.minecraft.network.login.client.C00PacketLoginStart;
 import net.minecraft.network.play.client.*;
 import net.minecraft.potion.PotionEffect;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import org.lwjgl.input.Keyboard;
 
 public class Tower extends Module {
     final private SliderSetting towerMove;
@@ -34,6 +28,7 @@ public class Tower extends Module {
     private boolean hasTowered, startedTowerInAir, setLowMotion, firstJump;
     private int cMotionTicks, placeTicks;
     public int dCount;
+    public float yaw;
 
     public float pitch;
 
@@ -177,14 +172,17 @@ public class Tower extends Module {
                         if (aligning && (int) mc.thePlayer.posX > firstX) {
                             aligned = true;
                         }
-                        pitch = 85F;
+                        yaw = 80F;
+                        pitch = 0;
                     }
                     if (aligned) {
                         if (placed) {
+                            yaw = 0;
                             pitch = 89.9F;
                         }
                         else {
-                            pitch = 85F;
+                            yaw = 80F;
+                            pitch = 0;
                         }
                         placeExtraBlock = true;
                         mc.thePlayer.motionX = 0;
@@ -194,6 +192,7 @@ public class Tower extends Module {
                     break;
             }
         } else {
+            yaw = pitch = 0;
             aligning = aligned = placed = false;
             firstX = 0;
             placeExtraBlock = false;
