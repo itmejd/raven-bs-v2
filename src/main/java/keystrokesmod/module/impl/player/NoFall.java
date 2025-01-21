@@ -28,7 +28,6 @@ public class NoFall extends Module {
     private double initialY;
     private double dynamic;
     private boolean isFalling;
-    private String edging = new String("");
 
     public NoFall() {
         super("NoFall", category.player);
@@ -57,7 +56,6 @@ public class NoFall extends Module {
 
         double predictedY = mc.thePlayer.posY + mc.thePlayer.motionY;
         double distanceFallen = initialY - predictedY;
-        edging = "";
         if (mc.thePlayer.motionY >= -1.1) {
             dynamic = 3;
         }
@@ -89,7 +87,6 @@ public class NoFall extends Module {
                 initialY = mc.thePlayer.posY;
             }
         }
-        edging += " " + dynamic;
         //Utils.print("" + mc.thePlayer.ticksExisted + " " + mc.thePlayer.motionY + " " + edging);
     }
 
