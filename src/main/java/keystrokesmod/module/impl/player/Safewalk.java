@@ -95,7 +95,7 @@ public class Safewalk extends Module {
             return;
         }
         if (shift) {
-            final long targetShiftDelay = (long)shiftDelay.getInput();
+            final long targetShiftDelay = (long) shiftDelay.getInput();
             if (targetShiftDelay > 0L) {
                 if (Utils.timeBetween(this.lastShift, System.currentTimeMillis()) < targetShiftDelay) {
                     return;

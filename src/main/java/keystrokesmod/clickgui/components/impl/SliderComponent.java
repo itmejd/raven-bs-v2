@@ -16,9 +16,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 public class SliderComponent extends Component {
-    private SliderSetting sliderSetting;
+    public SliderSetting sliderSetting;
     private ModuleComponent moduleComponent;
-    private int o;
+    public int o;
     private int x;
     private int y;
     private boolean heldDown = false;
@@ -33,9 +33,6 @@ public class SliderComponent extends Component {
     }
 
     public void render() {
-        if (!isVisible()) {
-            this.o = this.o - 12;
-        }
         RenderUtils.drawRoundedRectangle(this.moduleComponent.categoryComponent.getX() + 4, this.moduleComponent.categoryComponent.getY() + this.o + 11, this.moduleComponent.categoryComponent.getX() + 4 + this.moduleComponent.categoryComponent.getWidth() - 8, this.moduleComponent.categoryComponent.getY() + this.o + 15, 4, -12302777);
         int l = this.moduleComponent.categoryComponent.getX() + 4;
         int r = this.moduleComponent.categoryComponent.getX() + 4 + (int) this.w;
@@ -61,7 +58,7 @@ public class SliderComponent extends Component {
                 value = this.sliderSetting.getOptions()[(int) this.sliderSetting.getInput()];
             }
             else {
-                value = Utils.isWholeNumber(input) ? (int) input + "" : String.valueOf(input);
+                value = Utils.asWholeNum(input);
             }
         }
         Minecraft.getMinecraft().fontRendererObj.drawStringWithShadow(this.sliderSetting.getName() + ": " + (this.sliderSetting.isString ? "§e" : "§b") +value + suffix, (float) ((int) ((float) (this.moduleComponent.categoryComponent.getX() + 4) * 2.0F)), (float) ((int) ((float) (this.moduleComponent.categoryComponent.getY() + this.o + 3) * 2.0F)), -1);
@@ -76,7 +73,6 @@ public class SliderComponent extends Component {
         this.y = this.moduleComponent.categoryComponent.getModuleY() + this.o;
         this.x = this.moduleComponent.categoryComponent.getX();
         double d = Math.min(this.moduleComponent.categoryComponent.getWidth() - 8, Math.max(0, x - this.x));
-
         if (this.heldDown) {
             this.moduleComponent.mod.onSlide(this.sliderSetting);
             if (d == 0.0D && this.sliderSetting.canBeDisabled) {
@@ -132,10 +128,4 @@ public class SliderComponent extends Component {
     public void onGuiClosed() {
         this.heldDown = false;
     }
-
-    @Override
-    public boolean isVisible() {
-        return sliderSetting == null || sliderSetting.isVisible;
-    }
-
 }

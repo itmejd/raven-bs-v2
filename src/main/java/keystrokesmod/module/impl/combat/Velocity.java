@@ -22,6 +22,7 @@ public class Velocity extends Module {
     private SliderSetting horizontal;
     private SliderSetting vertical;
     private SliderSetting chance;
+    private ButtonSetting onlyWhileAttacking;
     private ButtonSetting onlyWhileTargeting;
     private ButtonSetting disableS;
     private ButtonSetting zzWhileNotTargeting;
@@ -35,10 +36,11 @@ public class Velocity extends Module {
 
     public Velocity() {
         super("Velocity", category.combat);
-        this.registerSetting(velocityModes = new SliderSetting("Modes", 0, velocityModesString));
+        this.registerSetting(velocityModes = new SliderSetting("Mode", 0, velocityModesString));
         this.registerSetting(horizontal = new SliderSetting("Horizontal", 0.0, 0.0, 100.0, 1.0));
         this.registerSetting(vertical = new SliderSetting("Vertical", 0.0, 0.0, 100.0, 1.0));
         this.registerSetting(chance = new SliderSetting("Chance", "%", 100.0D, 0.0D, 100.0D, 1.0D));
+        this.registerSetting(onlyWhileAttacking = new ButtonSetting("Only while attacking", false));
         this.registerSetting(onlyWhileTargeting = new ButtonSetting("Only while targeting", false));
         this.registerSetting(disableS = new ButtonSetting("Disable while holding S", false));
         this.registerSetting(zzWhileNotTargeting = new ButtonSetting("00 while not targeting", false));
@@ -46,10 +48,20 @@ public class Velocity extends Module {
         this.registerSetting(allowSelfFireball = new ButtonSetting("Allow self fireball", false));
     }
 
+    public void guiUpdate() {
+        this.onlyWhileAttacking.setVisible(velocityModes.getInput() == 0, this);
+        this.onlyWhileTargeting.setVisible(velocityModes.getInput() == 0, this);
+        this.disableS.setVisible(velocityModes.getInput() == 0, this);
+
+        this.allowSelfFireball.setVisible(velocityModes.getInput() == 1, this);
+        this.disableExplosions.setVisible(velocityModes.getInput() == 1, this);
+        this.zzWhileNotTargeting.setVisible(velocityModes.getInput() == 1, this);
+    }
+
     @SubscribeEvent
     public void onReceivePacket(ReceivePacketEvent e) {
         if (velocityModes.getInput() == 1) {
-            if (!Utils.nullCheck() || LongJump.stopVelocity || e.isCanceled()) {
+            if (!Utils.nullCheck() || LongJump.stopVelocity || e.isCanceled() || ModuleManager.bedAura.cancelKnockback()) {
                 return;
             }
             if (e.getPacket() instanceof S27PacketExplosion) {
@@ -121,6 +133,9 @@ public class Velocity extends Module {
         if (velocityModes.getInput() == 0) {
             if (Utils.nullCheck() && !LongJump.stopVelocity && !ModuleManager.bedAura.cancelKnockback()) {
                 if (mc.thePlayer.maxHurtTime <= 0 || mc.thePlayer.hurtTime != mc.thePlayer.maxHurtTime) {
+                    return;
+                }
+                if (onlyWhileAttacking.isToggled() && !ModuleUtils.isAttacking) {
                     return;
                 }
                 if (onlyWhileTargeting.isToggled() && (mc.objectMouseOver == null || mc.objectMouseOver.entityHit == null)) {

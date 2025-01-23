@@ -93,7 +93,7 @@ public class BedESP extends Module {
             float blockHeight = getBlockHeight();
             if (firstBed.isToggled() && this.bed != null) {
                 float customAlpha = 0.25f;
-                if (!(mc.theWorld.getBlockState(this.bed[0]).getBlock() instanceof BlockBed)) {
+                if (!isBed(bed[0]) || !isBed(bed[1])) {
                     if (firstBedTimer == null) {
                         (firstBedTimer = (new Timer(300))).start();
                     }
@@ -116,7 +116,7 @@ public class BedESP extends Module {
                     float customAlpha = 0.25f;
                     Map.Entry<BlockPos[], Timer> entry = iterator.next();
                     BlockPos[] blockPos = entry.getKey();
-                    if (!(mc.theWorld.getBlockState(blockPos[0]).getBlock() instanceof BlockBed)) {
+                    if (!isBed(blockPos[0]) || !isBed(blockPos[1])) {
                         if (entry.getValue() == null) {
                             entry.setValue(new Timer(300));
                             entry.getValue().start();
@@ -179,5 +179,9 @@ public class BedESP extends Module {
 
     private float getBlockHeight() {
         return (renderFullBlock.isToggled() ? 1 : 0.5625F);
+    }
+
+    public boolean isBed(BlockPos blockPos) {
+        return mc.theWorld.getBlockState(blockPos).getBlock() instanceof BlockBed;
     }
 }

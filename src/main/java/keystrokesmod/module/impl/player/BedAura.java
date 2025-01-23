@@ -157,7 +157,7 @@ public class BedAura extends Module {
 
     @SubscribeEvent
     public void onReceivePacket(ReceivePacketEvent e) {
-        if (!Utils.nullCheck() || !cancelKnockback.isToggled() || currentBlock == null) {
+        if (!Utils.nullCheck() || !cancelKnockback()) {
             return;
         }
         if (e.getPacket() instanceof S12PacketEntityVelocity) {
@@ -218,7 +218,7 @@ public class BedAura extends Module {
     }
 
     public boolean cancelKnockback() {
-        return this.isEnabled() && this.currentBlock != null && this.cancelKnockback.isToggled();
+        return cancelKnockback.isToggled() && currentBlock != null && RotationUtils.inRange(currentBlock, range.getInput());
     }
 
     private BlockPos[] getBedPos() {

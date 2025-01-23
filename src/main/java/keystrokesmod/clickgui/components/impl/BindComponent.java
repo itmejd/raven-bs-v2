@@ -13,11 +13,11 @@ import org.lwjgl.opengl.GL11;
 
 public class BindComponent extends Component {
     public boolean isBinding;
-    private ModuleComponent moduleComponent;
-    private int o;
+    public ModuleComponent moduleComponent;
+    public int o;
     private int x;
     private int y;
-    private KeySetting keySetting;
+    public KeySetting keySetting;
 
     public BindComponent(ModuleComponent moduleComponent, int o) {
         this.moduleComponent = moduleComponent;
@@ -39,16 +39,13 @@ public class BindComponent extends Component {
     }
 
     public void render() {
-        if (!isVisible()) {
-            this.o = this.o - 12;
-        }
         GL11.glPushMatrix();
         GL11.glScaled(0.5D, 0.5D, 0.5D);
         if (keySetting == null) {
             this.drawString(!this.moduleComponent.mod.canBeEnabled() && this.moduleComponent.mod.script == null ? "Module cannot be bound." : this.isBinding ? "Press a key..." : "Current bind: '§e" + (this.moduleComponent.mod.getKeycode() >= 1000 ? "M" + (this.moduleComponent.mod.getKeycode() - 1000) : Keyboard.getKeyName(this.moduleComponent.mod.getKeycode())) + "§r'");
         }
         else {
-            this.drawString(this.isBinding ? "Press a key..." : "" + this.keySetting.getName() + ": '§e" + (this.keySetting.getKey() >= 1000 ? "M" + (this.keySetting.getKey() - 1000) : Keyboard.getKeyName(this.keySetting.getKey())) + "§r'");
+            this.drawString(this.isBinding ? "Press a key..." : this.keySetting.getName() + ": '§e" + (this.keySetting.getKey() >= 1000 ? "M" + (this.keySetting.getKey() - 1000) : Keyboard.getKeyName(this.keySetting.getKey())) + "§r'");
         }
         GL11.glPopMatrix();
     }
@@ -139,10 +136,4 @@ public class BindComponent extends Component {
     public void onGuiClosed() {
         this.isBinding = false;
     }
-
-    @Override
-    public boolean isVisible() {
-        return keySetting == null || keySetting.isVisible;
-    }
-
 }

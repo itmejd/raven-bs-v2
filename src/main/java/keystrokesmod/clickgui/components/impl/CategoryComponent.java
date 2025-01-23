@@ -72,14 +72,14 @@ public class CategoryComponent {
         this.xx = 0;
         this.opened = false;
         this.dragging = false;
-        int moduleRenderX = this.titleHeight + 3;
+        int moduleRenderY = this.titleHeight + 3;
         this.scale = new ScaledResolution(Minecraft.getMinecraft());
         this.targetModuleY = this.moduleY;
 
         for (Module mod : Raven.getModuleManager().inCategory(this.categoryName)) {
-            ModuleComponent b = new ModuleComponent(mod, this, moduleRenderX);
+            ModuleComponent b = new ModuleComponent(mod, this, moduleRenderY);
             this.modules.add(b);
-            moduleRenderX += 16;
+            moduleRenderY += 16;
         }
     }
 
@@ -238,7 +238,7 @@ public class CategoryComponent {
         GL11.glPushMatrix();
         GL11.glEnable(GL11.GL_SCISSOR_TEST);
         RenderUtils.scissor(0, this.y - 2, this.x + this.width + 4, extra - this.y + 4);
-        RenderUtils.drawRoundedGradientOutlinedRectangle(this.x - 2, this.y, this.x + this.width + 2, extra, 9, translucentBackground,
+        RenderUtils.drawRoundedGradientOutlinedRectangle(this.x - 2, this.y, this.x + this.width + 2, extra, 10, translucentBackground,
                 ((opened || hovering) && Gui.rainBowOutlines.isToggled()) ? RenderUtils.setAlpha(Utils.getChroma(2, 0), 0.5) : regularOutline, ((opened || hovering) && Gui.rainBowOutlines.isToggled()) ? RenderUtils.setAlpha(Utils.getChroma(2, 700), 0.5) : regularOutline2);
         renderItemForCategory(this.categoryName, this.x + 1, this.y + 4, opened || hovering);
         renderer.drawString(this.n4m ? this.pvp : this.categoryName.name(), namePos, (float) (this.y + 4), categoryNameColor, false);

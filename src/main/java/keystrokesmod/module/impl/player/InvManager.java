@@ -165,7 +165,7 @@ public class InvManager extends Module {
                 autoClose();
                 return;
             }
-            String name = chest.getLowerChestInventory().getName();
+            String name = Utils.stripColor(chest.getLowerChestInventory().getName());
             if (!customChest.isToggled() && !name.equals("Chest") && !name.equals("Ender Chest") && !name.equals("Large Chest")) {
                 return;
             }
@@ -395,7 +395,7 @@ public class InvManager extends Module {
         if (desiredSlot != -1) {
             ItemStack itemStackInSlot = getItemStack(desiredSlot + 35);
             if (itemStackInSlot != null && itemStackInSlot.getItem() instanceof ItemSword) {
-                damageInSlot = Utils.getDamage(itemStackInSlot);
+                damageInSlot = Utils.getDamageLevel(itemStackInSlot);
             }
         }
         for (int i = 9; i < 45; i++) {
@@ -403,7 +403,7 @@ public class InvManager extends Module {
             if (item == null || !(item.getItem() instanceof ItemSword)) {
                 continue;
             }
-            double damage = Utils.getDamage(item);
+            double damage = Utils.getDamageLevel(item);
             if (damage > lastDamage && damage > damageInSlot) {
                 lastDamage = damage;
                 bestSword = i;
@@ -415,7 +415,7 @@ public class InvManager extends Module {
                 if (item == null || !(item.getItem() instanceof ItemSword)) {
                     continue;
                 }
-                double damage = Utils.getDamage(item);
+                double damage = Utils.getDamageLevel(item);
                 if (damage > lastDamage && damage > damageInSlot) {
                     lastDamage = damage;
                     bestSword = i;
@@ -544,99 +544,131 @@ public class InvManager extends Module {
         return bestRod;
     }
 
-    private int getBestTool(ItemStack itemStack, IInventory inventory) {
-        int bestTool = -1;
-        double lastEfficiency = -1;
+    private int getBestTool(ItemStack tool, IInventory inventory) {
+        if (tool == null || !(tool.getItem() instanceof ItemTool)) {
+            return -1;
+        }
+
         Block blockType = Blocks.dirt;
-        if (itemStack.getItem() instanceof ItemAxe) {
+        if (tool.getItem() instanceof ItemAxe) {
             blockType = Blocks.log;
         }
-        else if (itemStack.getItem() instanceof ItemPickaxe) {
+        else if (tool.getItem() instanceof ItemPickaxe) {
             blockType = Blocks.stone;
         }
-        for (int i = 5; i < 45; i++) {
-            ItemStack item = getItemStack(i);
-            if (item == null || !(item.getItem() instanceof ItemTool) || item.getItem() != itemStack.getItem()) {
+        else if (tool.getItem() instanceof ItemSpade) {
+            blockType = Blocks.dirt;
+        }
+
+        Class<?> toolClass = tool.getItem().getClass();
+
+        int bestSlot = -1;
+        double bestEfficiency = -1.0;
+
+        for (int slot = 5; slot < 45; slot++) {
+            ItemStack stack = getItemStack(slot);
+            if (stack == null || !(stack.getItem() instanceof ItemTool)) {
                 continue;
             }
-            double efficiency = Utils.getEfficiency(item, blockType);
-            if (efficiency > lastEfficiency) {
-                lastEfficiency = efficiency;
-                bestTool = i;
+
+            if (toolClass.isInstance(stack.getItem())) {
+                double efficiency = Utils.getEfficiency(stack, blockType);
+                if (efficiency > bestEfficiency) {
+                    bestEfficiency = efficiency;
+                    bestSlot = slot;
+                }
             }
         }
+
         if (inventory != null) {
-            for (int i = 0; i < inventory.getSizeInventory(); i++) {
-                ItemStack item = inventory.getStackInSlot(i);
-                if (item == null || !(item.getItem() instanceof ItemTool) || item.getItem() != itemStack.getItem()) {
+            for (int slot = 0; slot < inventory.getSizeInventory(); slot++) {
+                ItemStack stack = inventory.getStackInSlot(slot);
+                if (stack == null || !(stack.getItem() instanceof ItemTool)) {
                     continue;
                 }
-                double efficiency = Utils.getEfficiency(item, blockType);;
-                if (efficiency > lastEfficiency) {
-                    lastEfficiency = efficiency;
-                    bestTool = i;
+                if (toolClass.isInstance(stack.getItem())) {
+                    double efficiency = Utils.getEfficiency(stack, blockType);
+                    if (efficiency > bestEfficiency) {
+                        bestEfficiency = efficiency;
+                        bestSlot = slot;
+                    }
                 }
             }
         }
-        return bestTool;
+        return bestSlot;
     }
 
     private int getBestPotion(int desiredSlot, IInventory inventory) {
-        int amplifier = -1;
+        int bestScore = -1;
         int bestPotion = -1;
+        int bestStackSize = -1;
+
         double amplifierInSlot = -1;
-        int biggestStack = 0;
-        if (amplifierInSlot != -1) {
-            ItemStack itemStackInSlot = getItemStack( desiredSlot + 35);
-            if (itemStackInSlot != null && itemStackInSlot.getItem() instanceof ItemPotion) {
-                amplifierInSlot = getPotionLevel(itemStackInSlot);
-            }
+        ItemStack itemStackInSlot = getItemStack(desiredSlot + 35);
+        if (itemStackInSlot != null && itemStackInSlot.getItem() instanceof ItemPotion) {
+            amplifierInSlot = getPotionScore(itemStackInSlot);
         }
+
         for (int i = 9; i < 45; i++) {
             ItemStack item = getItemStack(i);
-            if (item != null && item.getItem() instanceof ItemPotion) {
-                List<PotionEffect> list = ((ItemPotion) item.getItem()).getEffects(item);
-                if (list == null) {
-                    continue;
-                }
-                int size = item.stackSize;
-                for (PotionEffect effect : list) {
-                    int score = effect.getAmplifier() + effect.getDuration();
-                    if (effect.getEffectName().equals("potion.moveSpeed") && score > amplifier && score > amplifierInSlot && size > biggestStack) {
-                        bestPotion = i;
-                        amplifier = score;
-                        biggestStack = size;
-                    }
-                }
+            if (item == null || !(item.getItem() instanceof ItemPotion)) {
+                continue;
+            }
+
+            int score = getPotionScore(item);
+            if (score <= 0) {
+                continue;
+            }
+
+            if (score > bestScore && score > amplifierInSlot) {
+                bestPotion = i;
+                bestScore = score;
+                bestStackSize = item.stackSize;
+            }
+            else if (score == bestScore && item.stackSize > bestStackSize && score > amplifierInSlot) {
+                bestPotion = i;
+                bestScore = score;
+                bestStackSize = item.stackSize;
             }
         }
         if (inventory != null) {
             for (int i = 0; i < inventory.getSizeInventory(); i++) {
                 ItemStack item = inventory.getStackInSlot(i);
-                if (item != null && item.getItem() instanceof ItemPotion) {
-                    List<PotionEffect> list = ((ItemPotion) item.getItem()).getEffects(item);
-                    if (list == null) {
-                        continue;
-                    }
-                    for (PotionEffect effect : list) {
-                        if (effect.getEffectName().equals("potion.moveSpeed") && effect.getAmplifier() > amplifier && effect.getAmplifier() > amplifierInSlot) {
-                            bestPotion = i;
-                            amplifier = effect.getAmplifier();
-                        }
-                    }
+                if (item == null || !(item.getItem() instanceof ItemPotion)) {
+                    continue;
+                }
+
+                int score = getPotionScore(item);
+                if (score <= 0) {
+                    continue;
+                }
+
+                if (score > bestScore && score > amplifierInSlot) {
+                    bestPotion = i;
+                    bestScore = score;
+                    bestStackSize = item.stackSize;
+                }
+                else if (score == bestScore && item.stackSize > bestStackSize && score > amplifierInSlot) {
+                    bestPotion = i;
+                    bestScore = score;
+                    bestStackSize = item.stackSize;
                 }
             }
         }
+
         return bestPotion;
     }
 
-    private int getPotionLevel(ItemStack item) {
+    private int getPotionScore(ItemStack item) {
+        if (!(item.getItem() instanceof ItemPotion)) {
+            return -1;
+        }
         List<PotionEffect> list = ((ItemPotion) item.getItem()).getEffects(item);
         if (list == null) {
             return -1;
         }
         for (PotionEffect effect : list) {
-            if (effect.getEffectName().equals("potion.moveSpeed")) {
+            if ("potion.moveSpeed".equals(effect.getEffectName())) {
                 return effect.getAmplifier() + effect.getDuration();
             }
         }
@@ -649,7 +681,7 @@ public class InvManager extends Module {
         int stackInSlot = -1;
         if (desiredSlot != -1) {
             ItemStack itemStackInSlot = getItemStack(desiredSlot + 35);
-            if (itemStackInSlot != null) {
+            if (itemStackInSlot != null && itemStackInSlot.getItem() == targetItem) {
                 stackInSlot = itemStackInSlot.stackSize;
             }
         }
@@ -689,9 +721,12 @@ public class InvManager extends Module {
     }
 
     private int getMostProjectiles(int desiredSlot) {
-        int biggestSnowballSlot = getBiggestStack(Items.snowball, (int) projectileSlot.getInput());
-        int biggestEggSlot = getBiggestStack(Items.egg, (int) projectileSlot.getInput());
-        int biggestSlot = -1;
+        int biggestSnowballSlot = getBiggestStack(Items.snowball, desiredSlot);
+        int biggestEggSlot = getBiggestStack(Items.egg, desiredSlot);
+
+        int snowballStackSize = (biggestSnowballSlot != -1) ? getItemStack(biggestSnowballSlot).stackSize : 0;
+        int eggStackSize = (biggestEggSlot != -1) ? getItemStack(biggestEggSlot).stackSize : 0;
+
         int stackInSlot = 0;
         if (desiredSlot != -1) {
             ItemStack itemStackInSlot = getItemStack(desiredSlot + 35);
@@ -699,19 +734,23 @@ public class InvManager extends Module {
                 stackInSlot = itemStackInSlot.stackSize;
             }
         }
-        if (stackInSlot >= biggestEggSlot && stackInSlot >=  biggestSnowballSlot) {
+
+        if (stackInSlot >= snowballStackSize && stackInSlot >= eggStackSize) {
             return -1;
         }
-        if (biggestEggSlot > biggestSnowballSlot) {
-            biggestSlot = biggestEggSlot;
+
+        if (eggStackSize > snowballStackSize) {
+            return biggestEggSlot;
         }
-        else if (biggestSnowballSlot > biggestEggSlot) {
-            biggestSlot = biggestSnowballSlot;
+        else if (snowballStackSize > eggStackSize) {
+            return biggestSnowballSlot;
         }
-        else if (biggestSnowballSlot != -1 && biggestEggSlot != -1 && biggestEggSlot == biggestSnowballSlot) {
-            biggestSlot = biggestSnowballSlot;
+        else {
+            if (snowballStackSize != 0 && eggStackSize != 0) {
+                return biggestSnowballSlot;
+            }
         }
-        return biggestSlot;
+        return -1;
     }
 
     private int getMostBlocks() {

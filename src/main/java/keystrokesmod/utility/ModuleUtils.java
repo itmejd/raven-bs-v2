@@ -34,7 +34,9 @@ public class ModuleUtils {
     public static int fadeEdge;
     public static int lastFaceDifference;
     private int lastFace;
-    public static float offsetValue = 1E-13F;
+    public static float offsetValue = 1E-9F;
+    public static boolean isAttacking;
+    private int attackingTicks;
 
 
     public static boolean isBlocked;
@@ -57,6 +59,14 @@ public class ModuleUtils {
         else if (e.getPacket() instanceof C09PacketHeldItemChange && isBlocked) {
             isBlocked = false;
         }
+
+        //
+         // isAttacking
+
+            if (e.getPacket() instanceof C02PacketUseEntity) {
+                isAttacking = true;
+                attackingTicks = 5;
+            }
 
         //
 
@@ -82,7 +92,14 @@ public class ModuleUtils {
         }
 
         //
+         // isAttacking
 
+            if (e.getPacket() instanceof C02PacketUseEntity) {
+                isAttacking = true;
+                attackingTicks = 5;
+            }
+
+        //
 
 
 
@@ -119,6 +136,15 @@ public class ModuleUtils {
 
     @SubscribeEvent
     public void onPreUpdate(PreUpdateEvent e) {
+
+        if (isAttacking) {
+            if (attackingTicks <= 0) {
+                isAttacking = false;
+            }
+            else {
+                --attackingTicks;
+            }
+        }
 
         if (LongJump.slotReset && ++LongJump.slotResetTicks >= 2) {
             LongJump.stopKillAura = false;

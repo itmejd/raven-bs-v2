@@ -28,7 +28,6 @@ import net.minecraft.network.play.client.*;
 import net.minecraft.util.*;
 import net.minecraftforge.client.event.MouseEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
-import net.minecraftforge.event.entity.living.LivingSetAttackTargetEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -204,6 +203,11 @@ public class KillAura extends Module {
             blinkedPackets.add(packet);
             e.setCanceled(true);
         }
+        if (!lag && target != null && Utils.holdingSword() && autoBlockMode.getInput() >= 2) {
+            if (packet instanceof C08PacketPlayerBlockPlacement) {
+                e.setCanceled(true);
+            }
+        }
     }
 
     @SubscribeEvent
@@ -211,21 +215,21 @@ public class KillAura extends Module {
         if (!Utils.nullCheck()) {
             return;
         }
-        if (target != null && Mouse.isButtonDown(0)) {
-            swingItem();
+        if (target != null) {
+            if (Mouse.isButtonDown(0)) {
+                swingItem();
+            }
+            if (blinkAutoBlock() || autoBlockMode.getInput() == 2) {
+                KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
+            }
         }
         if (checkUsing && disableCheckUsing && ++disableCTicks >= 2) {
             checkUsing = false;
         }
-        if (autoBlockOverride() && target != null) {
-            KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
-        }
         if (target == null) {
-            if (checkUsing && Mouse.isButtonDown(1) && !blinkAutoBlock()) {
-                if (!sendUnBlock) {
-                    KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), true);
-                    checkUsing = false;
-                }
+            if (checkUsing && !sendUnBlock && Mouse.isButtonDown(1) && !blinkAutoBlock()) {
+                KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), true);
+                checkUsing = false;
             }
         }
         if (!checkUsing) {
@@ -470,6 +474,9 @@ public class KillAura extends Module {
 
     @SubscribeEvent
     public void onMouse(MouseEvent e) {
+        if (!settingCondition()) {
+            return;
+        }
         if (e.button == 0 || e.button == 1) {
             if (e.button == 1) {
                 EntityLivingBase g = Utils.raytrace(3);
@@ -841,11 +848,18 @@ public class KillAura extends Module {
                         if (ModuleUtils.isBlocked) {
                             mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, DOWN));
                         }
+                        else {
+                            handleInteractAndAttack(distance, true, true, swung);
+                            sendBlockPacket();
+                            lag = true;
+                        }
                         break;
                     case 2:
-                        handleInteractAndAttack(distance, true, true, swung);
-                        sendBlockPacket();
-                        lag = true;
+                        if (!ModuleUtils.isBlocked) {
+                            handleInteractAndAttack(distance, true, true, swung);
+                            sendBlockPacket();
+                            lag = true;
+                        }
                         break;
                 }
                 break;
@@ -859,13 +873,22 @@ public class KillAura extends Module {
                         blinking.set(true);
                         if (ModuleUtils.isBlocked) {
                             mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, DOWN));
+                            lag = false;
+                        }
+                        else {
+                            handleInteractAndAttack(distance, true, true, swung);
+                            sendBlockPacket();
+                            releasePackets(); // release
+                            lag = true;
                         }
                         break;
                     case 2:
-                        handleInteractAndAttack(distance, true, true, swung);
-                        sendBlockPacket();
-                        releasePackets(); // release
-                        lag = true;
+                        if (!lag) {
+                            handleInteractAndAttack(distance, true, true, swung);
+                            sendBlockPacket();
+                            releasePackets(); // release
+                            lag = true;
+                        }
                         break;
                 }
                 break;
@@ -877,20 +900,29 @@ public class KillAura extends Module {
                 switch (interactTicks) {
                     case 1:
                         blinking.set(true);
-                        if (lag) {
+                        if (ModuleUtils.isBlocked) {
                             setSwapSlot();
                             swapped = true;
+                            lag = false;
+                        }
+                        else {
+                            handleInteractAndAttack(distance, true, true, swung);
+                            sendBlockPacket();
+                            releasePackets(); // release
+                            lag = true;
                         }
                         break;
                     case 2:
-                        if (lag) {
+                        if (swapped) {
                             setCurrentSlot();
                             swapped = false;
                         }
-                        handleInteractAndAttack(distance, true, true, swung);
-                        sendBlockPacket();
-                        releasePackets(); // release
-                        lag = true;
+                        if (!lag) {
+                            handleInteractAndAttack(distance, true, true, swung);
+                            sendBlockPacket();
+                            releasePackets(); // release
+                            lag = true;
+                        }
                         break;
                 }
                 break;
@@ -904,13 +936,22 @@ public class KillAura extends Module {
                         blinking.set(true);
                         if (ModuleUtils.isBlocked) {
                             mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, DOWN));
+                            lag = false;
+                        }
+                        else {
+                            handleInteractAndAttack(distance, true, true, swung);
+                            sendBlockPacket();
+                            releasePackets(); // release
+                            lag = true;
                         }
                         break;
                     case 2:
-                        handleInteractAndAttack(distance, true, true, swung);
-                        sendBlockPacket();
-                        releasePackets(); // release
-                        lag = true;
+                        if (!lag) {
+                            handleInteractAndAttack(distance, true, true, swung);
+                            sendBlockPacket();
+                            releasePackets(); // release
+                            lag = true;
+                        }
                         break;
                 }
                 break;
@@ -925,14 +966,25 @@ public class KillAura extends Module {
                             blinking.set(true);
                             if (ModuleUtils.isBlocked) {
                                 mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, DOWN));
+                                lag = false;
+                            }
+                            else {
+                                handleInteractAndAttack(distance, true, true, swung);
+                                sendBlockPacket();
+                                releasePackets(); // release
+                                lag = true;
                             }
                             break;
                         case 2:
-                            handleInteractAndAttack(distance, true, true, swung);
-                            sendBlockPacket();
-                            releasePackets();
+                            if (!lag) {
+                                handleInteractAndAttack(distance, true, true, swung);
+                                sendBlockPacket();
+                                releasePackets(); // release
+                                lag = true;
+                            }
+                            break;
+                        case 3:
                             firstCycle = false;
-                            lag = true;
                             break;
                     }
                 }
@@ -942,15 +994,24 @@ public class KillAura extends Module {
                             blinking.set(true);
                             if (ModuleUtils.isBlocked) {
                                 mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, DOWN));
+                                lag = false;
+                            }
+                            else {
+                                handleInteractAndAttack(distance, true, true, swung);
+                                sendBlockPacket();
+                                releasePackets(); // release
+                                lag = true;
                             }
                             break;
                         case 2:
-                            handleInteractAndAttack(distance, true, true, swung);
-                            sendBlockPacket();
-                            releasePackets();
-                            interactTicks = 0;
+                            if (!lag) {
+                                handleInteractAndAttack(distance, true, true, swung);
+                                sendBlockPacket();
+                                releasePackets(); // release
+                                lag = true;
+                            }
                             firstCycle = true;
-                            lag = true;
+                            interactTicks = 0;
                             break;
                     }
                 }
@@ -1056,7 +1117,7 @@ public class KillAura extends Module {
                 continue;
             }
             ItemStack stack = mc.thePlayer.inventory.getStackInSlot(i);
-            double damage = Utils.getDamage(stack);
+            double damage = Utils.getDamageLevel(stack);
             if (damage != 0) {
                 if (damage > bestDamage) {
                     bestDamage = damage;

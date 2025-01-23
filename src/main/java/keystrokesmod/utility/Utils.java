@@ -3,7 +3,6 @@ package keystrokesmod.utility;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
-import keystrokesmod.Raven;
 import keystrokesmod.mixin.impl.accessor.IAccessorEntityPlayerSP;
 import keystrokesmod.mixin.impl.accessor.IAccessorGuiIngame;
 import keystrokesmod.mixin.impl.accessor.IAccessorItemFood;
@@ -20,7 +19,6 @@ import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.inventory.GuiInventory;
 import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.client.renderer.ActiveRenderInfo;
-import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
@@ -450,7 +448,7 @@ public class Utils {
     public static double ap(final EntityPlayer entityPlayer, final ItemStack itemStack) {
         double n = 1.0;
         if (itemStack != null && (itemStack.getItem() instanceof ItemSword || itemStack.getItem() instanceof ItemAxe)) {
-            n += getDamage(itemStack);
+            n += getDamageLevel(itemStack);
         }
         double n2 = 0.0;
         double n3 = 0.0;
@@ -1014,6 +1012,14 @@ public class Utils {
         return Math.abs(n2 - n);
     }
 
+    public static long time() {
+        return System.currentTimeMillis();
+    }
+
+    public static double getMotionSpeed() {
+        return Math.abs(mc.thePlayer.motionX) + Math.abs(mc.thePlayer.motionZ);
+    }
+
     public static void sendModuleMessage(Module module, String s) {
         sendRawMessage("&3" + module.getName() + "&7: &r" + s);
     }
@@ -1253,18 +1259,17 @@ public class Utils {
         return false;
     }
 
-    public static double getDamage(ItemStack itemStack) {
-        if (itemStack == null) {
-            return 0;
-        }
-        double getAmount = 0;
+    public static double getDamageLevel(ItemStack itemStack) {
+        double baseDamage = 0.0;
         for (final Map.Entry<String, AttributeModifier> entry : itemStack.getAttributeModifiers().entries()) {
             if (entry.getKey().equals("generic.attackDamage")) {
-                getAmount = entry.getValue().getAmount();
+                baseDamage = entry.getValue().getAmount();
                 break;
             }
         }
-        return getAmount + EnchantmentHelper.getEnchantmentLevel(Enchantment.sharpness.effectId, itemStack) * 1.25;
+        int sharp_level = EnchantmentHelper.getEnchantmentLevel(Enchantment.sharpness.effectId, itemStack);
+        int fire_level = EnchantmentHelper.getEnchantmentLevel(Enchantment.fireAspect.effectId, itemStack);
+        return baseDamage + sharp_level * 1.25 + (fire_level * 4 - 1);
     }
 
 

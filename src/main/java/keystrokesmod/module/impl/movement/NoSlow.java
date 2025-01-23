@@ -13,6 +13,7 @@ import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.item.*;
 import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
 import net.minecraft.util.BlockPos;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.lwjgl.input.Mouse;
 
@@ -154,6 +155,13 @@ public class NoSlow extends Module {
                 canFloat = false;
                 e.setCanceled(true);
             }
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST) // called last in order to apply fix
+    public void onMoveInput(PrePlayerInputEvent e) {
+        if (mode.getInput() == 4 && getSlowed() != 0.2f && !canFloat) {
+            mc.thePlayer.movementInput.jump = false;
         }
     }
 

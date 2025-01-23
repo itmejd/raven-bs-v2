@@ -78,7 +78,10 @@ public class LongJump extends Module {
     }
 
     public void guiUpdate() {
-        //temporaryFlightKey.isVisible = mode.getInput() == 0;
+        this.verticalMotion.setVisible(mode.getInput() == 0, this);
+        this.motionDecay.setVisible(mode.getInput() == 0, this);
+        this.allowStrafe.setVisible(mode.getInput() == 0, this);
+        this.temporaryFlightKey.setVisible(mode.getInput() == 0, this);
     }
 
     public void onEnable() {

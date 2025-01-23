@@ -56,16 +56,16 @@ public class NoFall extends Module {
 
         double predictedY = mc.thePlayer.posY + mc.thePlayer.motionY;
         double distanceFallen = initialY - predictedY;
-        if (mc.thePlayer.motionY >= -1.1) {
+        if (mc.thePlayer.motionY >= -1.0) {
             dynamic = 3;
         }
-        if (mc.thePlayer.motionY < -1.1) {
+        if (mc.thePlayer.motionY < -1.0) {
             dynamic = 3.5;
         }
-        if (mc.thePlayer.motionY < -1.8) {
+        if (mc.thePlayer.motionY < -1.7) {
             dynamic = 4;
         }
-        if (mc.thePlayer.motionY < -2.4) {
+        if (mc.thePlayer.motionY < -2.6) {
             dynamic = 4.5;
         }
         if (isFalling && mode.getInput() == 2) {
