@@ -31,7 +31,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Scaffold extends Module {
-    private SliderSetting motion;
+    private final SliderSetting motion;
     public SliderSetting rotation;
     private SliderSetting sprint;
     private SliderSetting fastScaffold;
@@ -243,13 +243,13 @@ public class Scaffold extends Module {
 
         switch ((int) rotation.getInput()) {
             case 1:
-                e.setRotations(MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - hardcodedYaw(), 82);
+                e.setRotations(mc.thePlayer.rotationYaw - hardcodedYaw(), 81.150F);
                 break;
             case 2:
                 float side = MathHelper.wrapAngleTo180_float(getMotionYaw() - yaw);
                 float offset = (!Utils.scaffoldDiagonal(false)) ? 125.500F : 140.500F;
                 float minOffset = (!Utils.scaffoldDiagonal(false)) ? 25 : 0;
-                float yawBackwards = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - hardcodedYaw();
+                float yawBackwards = mc.thePlayer.rotationYaw - hardcodedYaw();
                 float blockYawOffset = MathHelper.wrapAngleTo180_float(yawBackwards - blockYaw);
 
                 /*if (!Utils.isMoving() || Utils.getHorizontalSpeed() == 0.0D) {
@@ -399,9 +399,9 @@ public class Scaffold extends Module {
                     lastYawOffset = yawOffset;
                 }
 
-                yaw = MathHelper.wrapAngleTo180_float((mc.thePlayer.rotationYaw - hardcodedYaw()));
+                yaw = (mc.thePlayer.rotationYaw - hardcodedYaw());
                 if (firstStroke == 0 || mc.thePlayer.onGround || ModuleManager.tower.speed) {
-                    yaw = MathHelper.wrapAngleTo180_float((mc.thePlayer.rotationYaw - hardcodedYaw()));
+                    yaw = (mc.thePlayer.rotationYaw - hardcodedYaw());
                 }
                 else {
                     float yawDifference = getAngleDifference(lastEdge, yaw);
@@ -422,7 +422,7 @@ public class Scaffold extends Module {
                     e.setRotations(blockRotations[0], blockRotations[1]);
                 }
                 else {
-                    e.setRotations(MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - hardcodedYaw(), 82);
+                    e.setRotations(mc.thePlayer.rotationYaw - hardcodedYaw(), 81.150F);
                 }
                 break;
         }
@@ -440,7 +440,7 @@ public class Scaffold extends Module {
                     rotationDelay = 2;
                     rotatingForward = true;
                 }
-                e.setYaw(MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - hardcodedYaw() - 180 - (float) Utils.randomizeDouble(-5, 5));
+                e.setYaw(mc.thePlayer.rotationYaw - hardcodedYaw() - 180 - (float) Utils.randomizeDouble(-5, 5));
                 e.setPitch(10 - (float) Utils.randomizeDouble(1, 5));
             }
         }
@@ -464,6 +464,9 @@ public class Scaffold extends Module {
         if (e.getPitch() >= 89.9F) {
             e.setPitch(89.9F);
         }
+
+        Utils.print("" + e.getYaw());
+
         lastYaw = mc.thePlayer.rotationYaw;
         if (lastPlaceTime > 0 && (System.currentTimeMillis() - lastPlaceTime) > rotationTimeout) blockRotations = null;
         if (rotationDelay > 0) --rotationDelay;
@@ -520,10 +523,6 @@ public class Scaffold extends Module {
             }
             handleMotion();
         }
-
-
-
-
 
         if (disabledModule) {
             if (hasPlaced && (towerEdge || floatStarted && Utils.isMoving() && Utils.isEdgeOfBlock())) {
@@ -678,25 +677,6 @@ public class Scaffold extends Module {
             return false;
         }
         return true;
-    }
-
-    private boolean canGetBlock() {
-        int slot = -1;
-        int highestStack = -1;
-        ItemStack heldItem = mc.thePlayer.getHeldItem();
-        for (int i = 0; i < 9; ++i) {
-            final ItemStack itemStack = mc.thePlayer.inventory.mainInventory[i];
-            if (itemStack != null && itemStack.getItem() instanceof ItemBlock && Utils.canBePlaced((ItemBlock) itemStack.getItem()) && itemStack.stackSize > 0) {
-                if (Utils.getBedwarsStatus() == 2 && ((ItemBlock) itemStack.getItem()).getBlock() instanceof BlockTNT) {
-                    continue;
-                }
-                if (itemStack != null && heldItem != null && (heldItem.getItem() instanceof ItemBlock) && Utils.canBePlaced((ItemBlock) heldItem.getItem()) && ModuleManager.autoSwap.sameType.isToggled() && !(itemStack.getItem().getClass().equals(heldItem.getItem().getClass()))) {
-                    //Utils.print("Got block");
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     public int totalBlocks() {
