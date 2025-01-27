@@ -2,9 +2,12 @@ package keystrokesmod.utility.profile;
 
 import com.google.gson.*;
 import keystrokesmod.Raven;
+import keystrokesmod.clickgui.ClickGui;
 import keystrokesmod.clickgui.components.impl.CategoryComponent;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
+import keystrokesmod.module.impl.client.Gui;
+import keystrokesmod.module.impl.client.Settings;
 import keystrokesmod.module.impl.movement.Sprint;
 import keystrokesmod.module.impl.render.HUD;
 import keystrokesmod.module.impl.render.TargetHUD;
@@ -22,6 +25,7 @@ import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 public class ProfileManager {
     public static Minecraft mc = Minecraft.getMinecraft();
@@ -93,6 +97,11 @@ public class ProfileManager {
             moduleInformation.addProperty("posY", ModuleManager.sprint.posY);
             moduleInformation.addProperty("text", ModuleManager.sprint.text);
         }
+        else if (module instanceof Gui) {
+            for (CategoryComponent c : ClickGui.categories) {
+                moduleInformation.addProperty(c.category.name(), c.x + "," + c.y + "," + c.opened);
+            }
+        }
         for (Setting setting : module.getSettings()) {
             if (setting instanceof ButtonSetting && !((ButtonSetting) setting).isMethodButton) {
                 moduleInformation.addProperty(setting.getName(), ((ButtonSetting) setting).isToggled());
@@ -143,6 +152,7 @@ public class ProfileManager {
                     failedMessage("load", name);
                     return;
                 }
+                boolean currentProfileGuiSave = Settings.loadGuiPositions.isToggled();
                 for (JsonElement moduleJson : modules) {
                     JsonObject moduleInformation = moduleJson.getAsJsonObject();
                     String moduleName = moduleInformation.get("name").getAsString();
@@ -217,6 +227,31 @@ public class ProfileManager {
                             ModuleManager.sprint.text = text;
                         }
                     }
+                    else if (currentProfileGuiSave && module.getName().equals("Gui")) {
+                        for (Map.Entry<String, JsonElement> setting : moduleInformation.entrySet()) {
+                            String settingName = setting.getKey();
+                            if (!Module.categoriesString.contains(settingName)) {
+                                continue;
+                            }
+                            String element = setting.getValue().getAsString();
+                            String[] statesStr = element.split(",");
+
+                            int posX = Integer.parseInt(statesStr[0]);
+                            int posY = Integer.parseInt(statesStr[1]);
+
+                            for (CategoryComponent c : ClickGui.categories) {
+                                if (c.category.name().equals(settingName)) {
+                                    c.setX(posX, true);
+                                    c.setY(posY, true);
+                                    if (statesStr.length > 2) {
+                                        boolean opened = Boolean.parseBoolean(statesStr[2]);
+                                        c.opened = opened;
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
 
                     for (Setting setting : module.getSettings()) {
                         setting.loadProfile(moduleInformation);
@@ -279,7 +314,7 @@ public class ProfileManager {
             }
 
             for (CategoryComponent categoryComponent : Raven.clickGui.categories) {
-                if (categoryComponent.categoryName == Module.category.profiles) {
+                if (categoryComponent.category == Module.category.profiles) {
                     categoryComponent.reloadModules(true);
                 }
             }

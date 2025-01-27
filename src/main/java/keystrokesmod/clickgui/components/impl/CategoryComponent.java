@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 
 public class CategoryComponent {
     public List<ModuleComponent> modules = new CopyOnWriteArrayList<>();
-    public Module.category categoryName;
+    public Module.category category;
     public boolean opened;
     public int width;
     public int y;
@@ -38,8 +38,6 @@ public class CategoryComponent {
     public boolean dragging;
     public int xx;
     public int yy;
-    public boolean n4m = false;
-    public String pvp;
     public boolean pin = false;
     public boolean hovering = false;
     public boolean hoveringOverCategory = false;
@@ -62,7 +60,7 @@ public class CategoryComponent {
     private float closedHeight;
 
     public CategoryComponent(Module.category category) {
-        this.categoryName = category;
+        this.category = category;
         this.width = 92;
         this.x = 5;
         this.moduleY = this.y = 5;
@@ -76,7 +74,7 @@ public class CategoryComponent {
         this.scale = new ScaledResolution(Minecraft.getMinecraft());
         this.targetModuleY = this.moduleY;
 
-        for (Module mod : Raven.getModuleManager().inCategory(this.categoryName)) {
+        for (Module mod : Raven.getModuleManager().inCategory(this.category)) {
             ModuleComponent b = new ModuleComponent(mod, this, moduleRenderY);
             this.modules.add(b);
             moduleRenderY += 16;
@@ -92,7 +90,7 @@ public class CategoryComponent {
         this.titleHeight = 13;
         int moduleRenderY = this.titleHeight + 3;
 
-        if ((this.categoryName == Module.category.profiles && isProfile) || (this.categoryName == Module.category.scripts && !isProfile)) {
+        if ((this.category == Module.category.profiles && isProfile) || (this.category == Module.category.scripts && !isProfile)) {
             ModuleComponent manager = new ModuleComponent(isProfile ? new Manager() : new keystrokesmod.script.Manager(), this, moduleRenderY);
             this.modules.add(manager);
 
@@ -119,11 +117,26 @@ public class CategoryComponent {
         }
     }
 
-    public void setX(int n) {
+    public void setX(int n, boolean limit) {
+        if (limit) {
+            ScaledResolution sr = new ScaledResolution(Minecraft.getMinecraft());
+            int screenW = sr.getScaledWidth();
+            n = Math.max(n, 2);
+            n = Math.min(n, screenW - this.width - 4);
+        }
         this.x = n;
     }
 
-    public void setY(int y) {
+    public void setY(int y, boolean limit) {
+        if (limit) {
+            ScaledResolution sr = new ScaledResolution(Minecraft.getMinecraft());
+            int screenH = sr.getScaledHeight();
+            float catHeight = this.titleHeight;
+
+            y = Math.max(y, 1);
+            int maxY = (int) (screenH - catHeight - 5);
+            y = Math.min(y, maxY);
+        }
         this.moduleY = this.y = y;
         this.targetModuleY = y;
     }
@@ -158,6 +171,9 @@ public class CategoryComponent {
     }
 
     public void onScroll(int mouseScrollInput) {
+        for (Component component : this.modules) {
+            component.onScroll(mouseScrollInput);
+        }
         if (!hoveringOverCategory || !this.opened) {
             return;
         }
@@ -195,7 +211,7 @@ public class CategoryComponent {
             bigSettings = settingsHeight;
         }
 
-        float middlePos = (float) (this.x + this.width / 2 - Minecraft.getMinecraft().fontRendererObj.getStringWidth(this.categoryName.name()) / 2);
+        float middlePos = (float) (this.x + this.width / 2 - Minecraft.getMinecraft().fontRendererObj.getStringWidth(this.category.name()) / 2);
         float xPos = opened ? middlePos : this.x + 12;
         float extra = this.y + this.titleHeight + modulesHeight + 4;
 
@@ -215,7 +231,7 @@ public class CategoryComponent {
 
         float namePos = textTimer == null ? xPos : textTimer.getValueFloat(this.x + 12, middlePos, 1);
         if (!this.opened) {
-            namePos = textTimer == null ? xPos : middlePos - textTimer.getValueFloat(0, this.width / 2 - Minecraft.getMinecraft().fontRendererObj.getStringWidth(this.categoryName.name()) / 2 - 12, 1);
+            namePos = textTimer == null ? xPos : middlePos - textTimer.getValueFloat(0, this.width / 2 - Minecraft.getMinecraft().fontRendererObj.getStringWidth(this.category.name()) / 2 - 12, 1);
         }
 
         if (scrolled && smoothScrollTimer != null) {
@@ -240,21 +256,19 @@ public class CategoryComponent {
         RenderUtils.scissor(0, this.y - 2, this.x + this.width + 4, extra - this.y + 4);
         RenderUtils.drawRoundedGradientOutlinedRectangle(this.x - 2, this.y, this.x + this.width + 2, extra, 10, translucentBackground,
                 ((opened || hovering) && Gui.rainBowOutlines.isToggled()) ? RenderUtils.setAlpha(Utils.getChroma(2, 0), 0.5) : regularOutline, ((opened || hovering) && Gui.rainBowOutlines.isToggled()) ? RenderUtils.setAlpha(Utils.getChroma(2, 700), 0.5) : regularOutline2);
-        renderItemForCategory(this.categoryName, this.x + 1, this.y + 4, opened || hovering);
-        renderer.drawString(this.n4m ? this.pvp : this.categoryName.name(), namePos, (float) (this.y + 4), categoryNameColor, false);
+        renderItemForCategory(this.category, this.x + 1, this.y + 4, opened || hovering);
+        renderer.drawString(this.category.name(), namePos, (float) (this.y + 4), categoryNameColor, false);
         RenderUtils.scissor(0, this.y + this.titleHeight + 3, this.x + this.width + 4, extra - this.y - 4 - this.titleHeight);
 
-        if (!this.n4m) {
-            int prevY = this.y;
-            this.y = this.moduleY;
+        int prevY = this.y;
+        this.y = this.moduleY;
 
-            if (this.opened || smoothTimer != null) {
-                for (Component c2 : this.modules) {
-                    c2.render();
-                }
+        if (this.opened || smoothTimer != null) {
+            for (Component c2 : this.modules) {
+                c2.render();
             }
-            this.y = prevY;
         }
+        this.y = prevY;
         GL11.glDisable(GL11.GL_SCISSOR_TEST);
         GL11.glPopMatrix();
     }
@@ -284,13 +298,32 @@ public class CategoryComponent {
         return this.width;
     }
 
-    public void mousePosition(int x, int y) {
+    public void mousePosition(int mouseX, int mouseY) {
         if (this.dragging) {
-            this.setX(x - this.xx);
-            this.setY(y - this.yy);
+            int newX = mouseX - this.xx;
+            int newY = mouseY - this.yy;
+
+            if (Gui.limitToScreen.isToggled()) {
+                ScaledResolution sr = new ScaledResolution(Minecraft.getMinecraft());
+                int screenW = sr.getScaledWidth();
+                int screenH = sr.getScaledHeight();
+
+                float catHeight = this.titleHeight;
+
+                newX = Math.max(newX, 2);
+                newX = Math.min(newX, screenW - this.width - 4);
+
+                newY = Math.max(newY, 1);
+                int maxY = (int) (screenH - catHeight - 5);
+                newY = Math.min(newY, maxY);
+            }
+
+            this.setX(newX, false);
+            this.setY(newY, false);
         }
-        hoveringOverCategory = overCategory(x, y);
-        hovering = overTitle(x, y);
+
+        hoveringOverCategory = overCategory(mouseX, mouseY);
+        hovering = overTitle(mouseX, mouseY);
     }
 
     public boolean i(int x, int y) {
@@ -370,5 +403,10 @@ public class CategoryComponent {
 
     public void setScreenHeight(int screenHeight) {
         this.screenHeight = screenHeight;
+    }
+
+    public void limitPositions() {
+        setX(this.x, true);
+        setY(this.y, true);
     }
 }

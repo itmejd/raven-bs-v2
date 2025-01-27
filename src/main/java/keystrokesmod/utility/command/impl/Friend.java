@@ -5,19 +5,22 @@ import keystrokesmod.utility.command.Command;
 
 public class Friend extends Command {
     public Friend() {
-        super("Friend");
+        super("friend", new String[] { "friend", "f" });
     }
-
-    private String ign;
 
     @Override
     public void onExecute(String[] args) {
         if (args.length == 2) {
-            ign = args[1];
-            if (Utils.isFriended(ign)) {
-                Utils.removeFriend(ign);
+            if (args[1].equals("clear")) {
+                chatWithPrefix("&b" + Utils.friends.size() + " &7friend" + (Utils.friends.size() == 1 ? "" : "s") + " cleared.");
+                Utils.friends.clear();
+                return;
             }
-            else Utils.addFriend(ign);
+
+            boolean added = Utils.addFriend(args[1]);
+            if (!added) {
+                Utils.removeFriend(args[1]);
+            }
         }
         else {
             syntaxError();

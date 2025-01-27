@@ -20,10 +20,10 @@ public abstract class Setting {
         }
         this.visible = visible;
         for (CategoryComponent categoryComponent : Raven.clickGui.categories) {
-            if (categoryComponent.categoryName == module.moduleCategory()) {
+            if (categoryComponent.category == module.moduleCategory()) {
                 for (ModuleComponent moduleComponent : categoryComponent.modules) {
                     if (moduleComponent.mod.getName().equals(module.getName())) {
-                        moduleComponent.updateSettingPositions();
+                        moduleComponent.updateSettingPositions(0);
                         break;
                     }
                 }

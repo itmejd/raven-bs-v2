@@ -56,25 +56,23 @@ public class NoFall extends Module {
 
         double predictedY = mc.thePlayer.posY + mc.thePlayer.motionY;
         double distanceFallen = initialY - predictedY;
-        if (mc.thePlayer.motionY >= -1.0) {
-            dynamic = 3;
+        if (mc.thePlayer.motionY >= -2.0) {
+            dynamic = 3.0;
         }
-        if (mc.thePlayer.motionY < -1.0) {
-            dynamic = 3.5;
+        if (mc.thePlayer.motionY < -2.0) {
+            dynamic = 4.0;
         }
-        if (mc.thePlayer.motionY < -1.7) {
-            dynamic = 4;
-        }
-        if (mc.thePlayer.motionY < -2.6) {
-            dynamic = 4.5;
+        if (mc.thePlayer.motionY < -3.0) {
+            dynamic = 5.0;
         }
         if (isFalling && mode.getInput() == 2) {
             if (distanceFallen >= dynamic) {
-                Utils.getTimer().timerSpeed = (float) 0.72;
+                Utils.getTimer().timerSpeed = (0.6799789F + (float) Utils.randomizeDouble(-0.012, 0.012));
                 mc.getNetHandler().addToSendQueue(new C03PacketPlayer(true));
                 initialY = mc.thePlayer.posY;
             }
         }
+        //Utils.print("" + dynamic);
         if (isFalling && mode.getInput() == 3) {
             if (mc.thePlayer.ticksExisted % 2 == 0) {
                 Utils.getTimer().timerSpeed = (float) Utils.randomizeDouble(0.5, 0.50201);

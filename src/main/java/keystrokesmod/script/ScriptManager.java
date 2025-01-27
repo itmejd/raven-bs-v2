@@ -131,7 +131,7 @@ public class ScriptManager {
         }
 
         for (CategoryComponent categoryComponent : Raven.clickGui.categories) {
-            if (categoryComponent.categoryName == Module.category.scripts) {
+            if (categoryComponent.category == Module.category.scripts) {
                 categoryComponent.reloadModules(false);
             }
         }

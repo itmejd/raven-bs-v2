@@ -52,6 +52,7 @@ public class ModuleManager {
     public static NoFall noFall;
     public static Disabler disabler;
     public static NoRotate noRotate;
+    public static AntiObby antiObby;
     public static PlayerESP playerESP;
     public static Module reduce;
     public static Safewalk safeWalk;
@@ -67,6 +68,7 @@ public class ModuleManager {
     public static AutoTool autoTool;
     public static Sprint sprint;
     public static Weather weather;
+    public static Arrows arrows;
     public static ChatCommands chatCommands;
     public static LongJump LongJump;
     public static Blink blink;
@@ -152,6 +154,7 @@ public class ModuleManager {
         this.addModule(new MobESP());
         this.addModule(new Fun.Spin());
         this.addModule(noRotate = new NoRotate());
+        this.addModule(antiObby = new AntiObby());
         this.addModule(new FakeChat());
         this.addModule(nameHider = new NameHider());
         this.addModule(new FakeLag());
@@ -160,6 +163,7 @@ public class ModuleManager {
         this.addModule(commandLine = new CommandLine());
         this.addModule(bedwars = new BedWars());
         this.addModule(fastMine = new FastMine());
+        this.addModule(arrows = new Arrows());
         this.addModule(new JumpReset());
         this.addModule(new Manager());
         this.addModule(new ViewPackets());
@@ -210,12 +214,12 @@ public class ModuleManager {
 
     public static void sort() {
         if (HUD.alphabeticalSort.isToggled()) {
-            Collections.sort(organizedModules, Comparator.comparing(Module::getName));
-        } else {
-            organizedModules.sort((o1, o2) -> Utils.mc.fontRendererObj.getStringWidth(o2.getName() + ((HUD.showInfo.isToggled() && !o2.getInfo().isEmpty()) ? " " + o2.getInfo() : "")) - Utils.mc.fontRendererObj.getStringWidth(o1.getName() + (HUD.showInfo.isToggled() && !o1.getInfo().isEmpty() ? " " + o1.getInfo() : "")));
+            Collections.sort(organizedModules, Comparator.comparing(Module::getNameInHud));
+        }
+        else {
+            organizedModules.sort((o1, o2) -> Utils.mc.fontRendererObj.getStringWidth(o2.getNameInHud() + ((HUD.showInfo.isToggled() && !o2.getInfo().isEmpty()) ? " " + o2.getInfo() : "")) - Utils.mc.fontRendererObj.getStringWidth(o1.getNameInHud() + (HUD.showInfo.isToggled() && !o1.getInfo().isEmpty() ? " " + o1.getInfo() : "")));
         }
     }
-
     public static boolean canExecuteChatCommand() {
         return ModuleManager.chatCommands != null && ModuleManager.chatCommands.isEnabled();
     }

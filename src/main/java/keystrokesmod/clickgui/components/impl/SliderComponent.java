@@ -19,10 +19,12 @@ public class SliderComponent extends Component {
     public SliderSetting sliderSetting;
     private ModuleComponent moduleComponent;
     public int o;
-    private int x;
+    public int x;
     private int y;
     private boolean heldDown = false;
     private double w;
+    public int xOffset;
+    public boolean renderLine;
 
     public SliderComponent(SliderSetting sliderSetting, ModuleComponent moduleComponent, int o) {
         this.sliderSetting = sliderSetting;
@@ -33,14 +35,14 @@ public class SliderComponent extends Component {
     }
 
     public void render() {
-        RenderUtils.drawRoundedRectangle(this.moduleComponent.categoryComponent.getX() + 4, this.moduleComponent.categoryComponent.getY() + this.o + 11, this.moduleComponent.categoryComponent.getX() + 4 + this.moduleComponent.categoryComponent.getWidth() - 8, this.moduleComponent.categoryComponent.getY() + this.o + 15, 4, -12302777);
+        RenderUtils.drawRoundedRectangle(this.moduleComponent.categoryComponent.getX() + 4 + (xOffset / 2), this.moduleComponent.categoryComponent.getY() + this.o + 11, this.moduleComponent.categoryComponent.getX() + 4 + this.moduleComponent.categoryComponent.getWidth() - 8, this.moduleComponent.categoryComponent.getY() + this.o + 15, 4, -12302777);
         int l = this.moduleComponent.categoryComponent.getX() + 4;
         int r = this.moduleComponent.categoryComponent.getX() + 4 + (int) this.w;
         if (r - l > 84) {
             r = l + 84;
         }
 
-        RenderUtils.drawRoundedRectangle(l, this.moduleComponent.categoryComponent.getY() + this.o + 11, r, this.moduleComponent.categoryComponent.getY() + this.o + 15, 4, Color.getHSBColor((float) (System.currentTimeMillis() % 11000L) / 11000.0F, 0.75F, 0.9F).getRGB());
+        RenderUtils.drawRoundedRectangle(l + (xOffset / 2), this.moduleComponent.categoryComponent.getY() + this.o + 11, r, this.moduleComponent.categoryComponent.getY() + this.o + 15, 4, Color.getHSBColor((float) (System.currentTimeMillis() % 11000L) / 11000.0F, 0.75F, 0.9F).getRGB());
         GL11.glPushMatrix();
         GL11.glScaled(0.5D, 0.5D, 0.5D);
         String value;
@@ -61,7 +63,11 @@ public class SliderComponent extends Component {
                 value = Utils.asWholeNum(input);
             }
         }
-        Minecraft.getMinecraft().fontRendererObj.drawStringWithShadow(this.sliderSetting.getName() + ": " + (this.sliderSetting.isString ? "§e" : "§b") +value + suffix, (float) ((int) ((float) (this.moduleComponent.categoryComponent.getX() + 4) * 2.0F)), (float) ((int) ((float) (this.moduleComponent.categoryComponent.getY() + this.o + 3) * 2.0F)), -1);
+        Minecraft.getMinecraft().fontRendererObj.drawStringWithShadow(this.sliderSetting.getName() + ": " + (this.sliderSetting.isString ? "§e" : "§b") +value + suffix, (float) ((int) ((float) (this.moduleComponent.categoryComponent.getX() + 4) * 2.0F)) + xOffset, (float) ((int) ((float) (this.moduleComponent.categoryComponent.getY() + this.o + 3) * 2.0F)), -1);
+        GL11.glScaled(1, 1, 1);
+        if (renderLine) {
+            //RenderUtils.drawRectangleGL((float) ((this.moduleComponent.categoryComponent.getX() + 4) * 2), (float) ((this.moduleComponent.categoryComponent.getY() + this.o) * 2), (float) ((this.moduleComponent.categoryComponent.getX() + 4) * 2) + 1, (float) ((this.moduleComponent.categoryComponent.getY() + this.o + 4) * 2) + 22, new Color(192, 192, 192).getRGB());
+        }
         GL11.glPopMatrix();
     }
 

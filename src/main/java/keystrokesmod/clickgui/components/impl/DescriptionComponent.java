@@ -10,8 +10,8 @@ public class DescriptionComponent extends Component {
     public DescriptionSetting desc;
     private ModuleComponent p;
     public int o;
-    private int x;
-    private int y;
+    public int x;
+    public int y;
 
     public DescriptionComponent(DescriptionSetting desc, ModuleComponent b, int o) {
         this.desc = desc;

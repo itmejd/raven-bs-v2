@@ -46,6 +46,8 @@ public class ClickGui extends GuiScreen {
     private GuiTextField commandLineInput;
     public static ArrayList<CategoryComponent> categories;
     public int originalScale;
+    public int previousScale;
+    private static boolean isNotFirstOpen;
 
     public ClickGui() {
         categories = new ArrayList();
@@ -56,7 +58,7 @@ public class ClickGui extends GuiScreen {
         for (int i = 0; i < length; ++i) {
             Module.category c = values[i];
             CategoryComponent categoryComponent = new CategoryComponent(c);
-            categoryComponent.setY(y);
+            categoryComponent.setY(y, false);
             categories.add(categoryComponent);
             y += 20;
         }
@@ -72,6 +74,15 @@ public class ClickGui extends GuiScreen {
     @Override
     public void initGui() {
         super.initGui();
+        if (!isNotFirstOpen) {
+            isNotFirstOpen = true;
+            this.previousScale = (int) Gui.guiScale.getInput();
+        }
+        if (this.previousScale != Gui.guiScale.getInput()) {
+            for (CategoryComponent categoryComponent : categories) {
+                categoryComponent.limitPositions();
+            }
+        }
         this.sr = new ScaledResolution(this.mc);
         for (CategoryComponent categoryComponent : categories) {
             categoryComponent.setScreenHeight(this.sr.getScaledHeight());
@@ -79,6 +90,7 @@ public class ClickGui extends GuiScreen {
         (this.commandLineInput = new GuiTextField(1, this.mc.fontRendererObj, 22, this.height - 100, 150, 20)).setMaxStringLength(256);
         this.buttonList.add(this.commandLineSend = new GuiButtonExt(2, 22, this.height - 70, 150, 20, "Send"));
         this.commandLineSend.visible = CommandLine.a;
+        this.previousScale = (int) Gui.guiScale.getInput();
     }
 
     public void drawScreen(int x, int y, float p) {
@@ -86,7 +98,7 @@ public class ClickGui extends GuiScreen {
             BlurUtils.prepareBlur();
             RoundedUtils.drawRound(0, 0, this.width, this.height, 0.0f, true, Color.black);
             float inputToRange = (float) (3 * ((Gui.backgroundBlur.getInput() + 35) / 100));
-            BlurUtils.blurEnd(2, this.blurSmooth.getValueFloat(1, inputToRange, 1));
+            BlurUtils.blurEnd(2, this.blurSmooth.getValueFloat(0, inputToRange, 1));
         }
         if (Gui.darkBackground.isToggled()) {
             drawRect(0, 0, this.width, this.height, (int) (this.backgroundFade.getValueFloat(0.0F, 0.7F, 2) * 255.0F) << 24);
@@ -310,12 +322,5 @@ public class ClickGui extends GuiScreen {
             }
         }
         return false;
-    }
-
-    public static int[] calculateBlur(int setting) {
-        int passes = (int) (setting * 6.0 / 100.0 + 1.0);
-        int offset = (int) (setting * 3.0 / 100.0);
-
-        return new int[]{passes, offset};
     }
 }

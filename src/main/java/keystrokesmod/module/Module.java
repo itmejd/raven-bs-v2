@@ -8,15 +8,16 @@ import keystrokesmod.script.Script;
 import keystrokesmod.utility.Utils;
 import keystrokesmod.utility.profile.ProfileModule;
 import net.minecraft.client.Minecraft;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 public class Module {
-    public boolean alwaysOn;
     protected ArrayList<Setting> settings;
     private String moduleName;
     private Module.category moduleCategory;
@@ -29,6 +30,16 @@ public class Module {
     public boolean hidden = false;
     public Script script = null;
     public boolean closetModule = false;
+    public boolean alwaysOn = false;
+    public String lastInfo;
+    public static boolean sort; // global boolean in charge of sorting upon info change
+    public static List<String> categoriesString = new ArrayList<>();
+
+    static { // loads the categories
+        for (category cat : category.values()) {
+            categoriesString.add(cat.name());
+        }
+    }
 
     public Module(String moduleName, Module.category moduleCategory, int keycode) {
         this.moduleName = moduleName;
@@ -73,14 +84,14 @@ public class Module {
         this.settings = new ArrayList<>();
     }
 
-    public void keybind() {
+    public void onKeyBind() {
         if (this.keycode != 0) {
             try {
-                if (!this.isToggled && (this.keycode >= 1000 ? Mouse.isButtonDown(this.keycode - 1000) : Keyboard.isKeyDown(this.keycode))) {
+                if (!this.isToggled && (this.keycode >= 1000 ? ((this.keycode == 1069 || this.keycode == 1070) ? isScrollDown(this.keycode) : Mouse.isButtonDown(this.keycode - 1000)) : Keyboard.isKeyDown(this.keycode))) {
                     this.toggle();
                     this.isToggled = true;
                 }
-                else if ((this.keycode >= 1000 ? !Mouse.isButtonDown(this.keycode - 1000) : !Keyboard.isKeyDown(this.keycode))) {
+                else if ((this.keycode >= 1000 ? ((this.keycode == 1069 || this.keycode == 1070) ? !isScrollDown(this.keycode) : !Mouse.isButtonDown(this.keycode - 1000)) : !Keyboard.isKeyDown(this.keycode))) {
                     this.isToggled = false;
                 }
             }
@@ -90,6 +101,16 @@ public class Module {
                 this.keycode = 0;
             }
         }
+    }
+
+    public static boolean isScrollDown(int key) {
+        if (key == 1069) {
+            return Mouse.getDWheel() > 0;
+        }
+        else if (key == 1070) {
+            return Mouse.getDWheel() < 0;
+        }
+        return false;
     }
 
     public boolean canBeEnabled() {
@@ -122,7 +143,7 @@ public class Module {
         }
         else {
             if (!alwaysOn) {
-                FMLCommonHandler.instance().bus().register(this);
+                MinecraftForge.EVENT_BUS.register(this);
             }
             this.onEnable();
         }
@@ -139,7 +160,7 @@ public class Module {
         }
         else {
             if (!alwaysOn) {
-                FMLCommonHandler.instance().bus().unregister(this);
+                MinecraftForge.EVENT_BUS.unregister(this);
             }
             this.onDisable();
         }
@@ -149,8 +170,13 @@ public class Module {
         return "";
     }
 
-    public int getInfoType() {
-        return 0;
+    public String getInfoUpdate() { // when called updates the modules info, and sorts if necessary
+        String info = getInfo();
+        if (info != lastInfo) {
+            sort = true;
+        }
+        lastInfo = info;
+        return info;
     }
 
     public void setEnabled(boolean enabled) {
@@ -158,6 +184,10 @@ public class Module {
     }
 
     public String getName() {
+        return this.moduleName;
+    }
+
+    public String getNameInHud() {
         return this.moduleName;
     }
 

@@ -2,6 +2,7 @@ package keystrokesmod.module.impl.render;
 
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
+import keystrokesmod.module.impl.combat.Velocity;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.DescriptionSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
@@ -82,6 +83,16 @@ public class HUD extends Module {
         if (mc.currentScreen != null || mc.gameSettings.showDebugInfo) {
             return;
         }
+        for (Module module : ModuleManager.organizedModules) {
+            module.getInfoUpdate();
+            if (Module.sort) {
+                break;
+            }
+        }
+        if (Module.sort) {
+            ModuleManager.sort();
+        }
+        Module.sort = false;
         int yPos = posY;
         double n2 = 0.0;
         String previousModule = "";
@@ -104,7 +115,7 @@ public class HUD extends Module {
                     if (removeCloset.isToggled() && module.closetModule) {
                         continue;
                     }
-                    String moduleName = module.getName();
+                    String moduleName = module.getNameInHud();
                     if (showInfo.isToggled() && !module.getInfo().isEmpty()) {
                         moduleName += " §7" + module.getInfo();
                     }

@@ -7,9 +7,16 @@ import org.lwjgl.input.Mouse;
 
 public class KeySetting extends Setting {
     private int key;
+    public GroupSetting group;
 
     public KeySetting(String name, int key) {
         super(name);
+        this.key = key;
+    }
+
+    public KeySetting(GroupSetting group, String name, int key) {
+        super(name);
+        this.group = group;
         this.key = key;
     }
 

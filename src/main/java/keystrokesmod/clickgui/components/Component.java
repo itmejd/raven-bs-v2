@@ -28,4 +28,6 @@ public class Component {
 
     public void onGuiClosed() {
     }
+
+    public void onScroll(int scroll) {}
 }

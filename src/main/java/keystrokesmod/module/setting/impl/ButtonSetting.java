@@ -8,9 +8,18 @@ public class ButtonSetting extends Setting {
     private boolean isEnabled;
     public boolean isMethodButton;
     private Runnable method;
+    public GroupSetting group;
 
     public ButtonSetting(String name, boolean isEnabled) {
         super(name);
+        this.name = name;
+        this.isEnabled = isEnabled;
+        this.isMethodButton = false;
+    }
+
+    public ButtonSetting(GroupSetting group, String name, boolean isEnabled) {
+        super(name);
+        this.group = group;
         this.name = name;
         this.isEnabled = isEnabled;
         this.isMethodButton = false;
@@ -61,9 +70,7 @@ public class ButtonSetting extends Setting {
             try {
                 booleanValue = data.getAsJsonPrimitive(getName()).getAsBoolean();
             }
-            catch (Exception e) {
-
-            }
+            catch (Exception e) {}
             setEnabled(booleanValue);
         }
     }

@@ -16,6 +16,7 @@ import keystrokesmod.module.setting.impl.SliderSetting;
 import net.minecraft.block.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.inventory.GuiInventory;
 import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.client.renderer.ActiveRenderInfo;
@@ -440,9 +441,31 @@ public class Utils {
         return ObfuscationReflectionHelper.getPrivateValue(Minecraft.class, Minecraft.getMinecraft(), "timer", "field_71428_T");
     }
 
-    public static String getHitsToKill(final EntityPlayer entityPlayer, final ItemStack itemStack) {
-        final int n = (int)Math.ceil(ap(entityPlayer, itemStack));
-        return "§" + ((n <= 1) ? "c" : ((n <= 3) ? "6" : ((n <= 5) ? "e" : "a"))) + n;
+    public static double getHitsToKill(final EntityPlayer target, final ItemStack usedItem) {
+        double heldItemDamageLevel = 1.0;
+        if (usedItem != null && (usedItem.getItem() instanceof ItemSword || usedItem.getItem() instanceof ItemAxe)) {
+            heldItemDamageLevel += getDamageLevel(usedItem);
+        }
+        double armorProtPercentage = 0.0;
+        double totalEPF = 0.0;
+        for (int i = 0; i < 4; ++i) {
+            final ItemStack stack = target.inventory.armorItemInSlot(i);
+            if (stack != null) {
+                if (stack.getItem() instanceof ItemArmor) {
+                    armorProtPercentage += ((ItemArmor)stack.getItem()).damageReduceAmount * 0.04;
+                    final int protLevel = EnchantmentHelper.getEnchantmentLevel(Enchantment.protection.effectId, stack);
+                    if (protLevel != 0) {
+                        final double epf = Math.floor(0.75 * (6 + protLevel * protLevel) / 3.0);
+                        totalEPF += epf;
+                    }
+                }
+            }
+        }
+        totalEPF = 0.04 * Math.min(Math.ceil(Math.min(totalEPF, 25.0) * 0.75), 20.0);
+        final double armorReduction = armorProtPercentage + totalEPF * (1.0 - armorProtPercentage);
+        final double damage = heldItemDamageLevel * (1.0 - armorReduction);
+        final double hitsToKill = getCompleteHealth(target) / damage;
+        return round(hitsToKill, 1);
     }
 
     public static double ap(final EntityPlayer entityPlayer, final ItemStack itemStack) {
@@ -519,12 +542,26 @@ public class Utils {
     public static boolean isTeamMate(Entity entity) {
         try {
             Entity teamMate = entity;
-            if (mc.thePlayer.isOnSameTeam((EntityLivingBase) entity) || mc.thePlayer.getDisplayName().getUnformattedText().startsWith(teamMate.getDisplayName().getUnformattedText().substring(0, 2))) {
+            if (mc.thePlayer.isOnSameTeam((EntityLivingBase) entity) || mc.thePlayer.getDisplayName().getUnformattedText().startsWith(teamMate.getDisplayName().getUnformattedText().substring(0, 2)) || getNetworkDisplayName().startsWith(teamMate.getDisplayName().getUnformattedText().substring(0, 2))) {
                 return true;
             }
-        } catch (Exception e) {
         }
+        catch (Exception ignored) {}
         return false;
+    }
+
+    public static String getNetworkDisplayName() {
+        try {
+            NetworkPlayerInfo playerInfo = mc.getNetHandler().getPlayerInfo(mc.thePlayer.getUniqueID());
+            return ScorePlayerTeam.formatPlayerName(playerInfo.getPlayerTeam(), playerInfo.getGameProfile().getName());
+        }
+        catch (Exception ignored) {}
+        return "";
+    }
+
+    public static String getHitsToKillStr(final EntityPlayer entityPlayer, final ItemStack itemStack) {
+        final int n = (int)Math.ceil(getHitsToKill(entityPlayer, itemStack));
+        return "§" + ((n <= 1) ? "c" : ((n <= 3) ? "6" : ((n <= 5) ? "e" : "a"))) + n;
     }
 
     public static void setSpeed(double n) {
@@ -1259,7 +1296,60 @@ public class Utils {
         return false;
     }
 
+    public static int getColorFromEntity(Entity entity) {
+        if (entity instanceof EntityPlayer) {
+            ScorePlayerTeam scoreplayerteam = (ScorePlayerTeam)((EntityLivingBase) entity).getTeam();
+            if (scoreplayerteam != null) {
+                String s = FontRenderer.getFormatFromString(scoreplayerteam.getColorPrefix());
+                if (s.length() >= 2) {
+                    return mc.getRenderManager().getFontRenderer().getColorCode(s.charAt(1));
+                }
+            }
+        }
+        String displayName = entity.getDisplayName().getFormattedText();
+        displayName = Utils.removeFormatCodes(displayName);
+        if (displayName.isEmpty() || !displayName.startsWith("§") || displayName.charAt(1) == 'f') {
+            return -1;
+        }
+        switch (displayName.charAt(1)) {
+            case '0':
+                return -16777216;
+            case '1':
+                return -16777046;
+            case '2':
+                return -16733696;
+            case '3':
+                return -16733526;
+            case '4':
+                return -5636096;
+            case '5':
+                return -5635926;
+            case '6':
+                return -22016;
+            case '7':
+                return -5592406;
+            case '8':
+                return -11184811;
+            case '9':
+                return -11184641;
+            case 'a':
+                return -11141291;
+            case 'b':
+                return -11141121;
+            case 'c':
+                return -43691;
+            case 'd':
+                return -43521;
+            case 'e':
+                return -171;
+        }
+        return -1;
+    }
+
     public static double getDamageLevel(ItemStack itemStack) {
+        if (itemStack == null) {
+            return 0.0;
+        }
         double baseDamage = 0.0;
         for (final Map.Entry<String, AttributeModifier> entry : itemStack.getAttributeModifiers().entries()) {
             if (entry.getKey().equals("generic.attackDamage")) {
@@ -1271,7 +1361,6 @@ public class Utils {
         int fire_level = EnchantmentHelper.getEnchantmentLevel(Enchantment.fireAspect.effectId, itemStack);
         return baseDamage + sharp_level * 1.25 + (fire_level * 4 - 1);
     }
-
 
     public static boolean canBePlaced(ItemBlock itemBlock) {
         Block block = itemBlock.getBlock();

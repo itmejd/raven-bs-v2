@@ -5,19 +5,22 @@ import keystrokesmod.utility.command.Command;
 
 public class Enemy extends Command {
     public Enemy() {
-        super("Enemy");
+        super("enemy",  new String[] { "enemy", "e" });
     }
-
-    private String ign;
 
     @Override
     public void onExecute(String[] args) {
         if (args.length == 2) {
-            ign = args[1];
-            if (Utils.isEnemy(ign)) {
-                Utils.removeEnemy(ign);
+            if (args[1].equals("clear")) {
+                chatWithPrefix("&b" + Utils.enemies.size() + " &7enem" + (Utils.enemies.size() == 1 ? "y" : "ies") + " cleared.");
+                Utils.enemies.clear();
+                return;
             }
-            else Utils.addEnemy(ign);
+
+            boolean added = Utils.addEnemy(args[1]);
+            if (!added) {
+                Utils.removeEnemy(args[1]);
+            }
         }
         else {
             syntaxError();

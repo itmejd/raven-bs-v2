@@ -651,7 +651,7 @@ public class ScriptDefaults {
                 for (ModuleComponent module : categoryComponent.modules) {
                     modules.add(module.mod.getName());
                 }
-                categories.put(categoryComponent.categoryName.name(), modules);
+                categories.put(categoryComponent.category.name(), modules);
             }
             return categories;
         }

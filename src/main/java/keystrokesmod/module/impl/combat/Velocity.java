@@ -19,8 +19,8 @@ import org.lwjgl.input.Keyboard;
 
 public class Velocity extends Module {
     private SliderSetting velocityModes;
-    private SliderSetting horizontal;
-    private SliderSetting vertical;
+    public static SliderSetting horizontal;
+    public static SliderSetting vertical;
     private SliderSetting chance;
     private ButtonSetting onlyWhileAttacking;
     private ButtonSetting onlyWhileTargeting;
@@ -121,11 +121,6 @@ public class Velocity extends Module {
     @Override
     public String getInfo() {
         return (int) horizontal.getInput() + "%" + " " + (int) vertical.getInput() + "%";
-    }
-
-    @Override
-    public int getInfoType() {
-        return 1;
     }
 
     @SubscribeEvent

@@ -10,13 +10,16 @@ import net.minecraft.client.Minecraft;
 import keystrokesmod.module.ModuleManager;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.network.play.client.*;
+import net.minecraft.network.play.server.S27PacketExplosion;
 import net.minecraft.util.BlockPos;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 
 public class ModuleUtils {
     private final Minecraft mc;
@@ -26,18 +29,19 @@ public class ModuleUtils {
     }
 
     public static boolean isBreaking;
-    public static boolean threwFireball;
+    public static boolean threwFireball, threwFireballLow;
     private int isBreakingTick;
     public static long MAX_EXPLOSION_DIST_SQ = 10;
     private long FIREBALL_TIMEOUT = 500L, fireballTime = 0;
-    public static int inAirTicks;
+    public static int inAirTicks, groundTicks;
     public static int fadeEdge;
     public static int lastFaceDifference;
     private int lastFace;
-    public static float offsetValue = 1E-9F;
+    public static float offsetValue = 1E-14F;
     public static boolean isAttacking;
     private int attackingTicks;
-
+    private int unTargetTicks;
+    public static int profileTicks = -1;
 
     public static boolean isBlocked;
 
@@ -54,7 +58,12 @@ public class ModuleUtils {
             isBlocked = true;
         }
         else if (e.getPacket() instanceof C07PacketPlayerDigging && isBlocked) {
-            isBlocked = false;
+            C07PacketPlayerDigging c07 = (C07PacketPlayerDigging) e.getPacket();
+            String edger;
+            edger = String.valueOf(c07.getStatus());
+            if (Objects.equals(edger, "RELEASE_USE_ITEM")) {
+                isBlocked = false;
+            }
         }
         else if (e.getPacket() instanceof C09PacketHeldItemChange && isBlocked) {
             isBlocked = false;
@@ -85,7 +94,12 @@ public class ModuleUtils {
             isBlocked = true;
         }
         else if (e.getPacket() instanceof C07PacketPlayerDigging && isBlocked) {
-            isBlocked = false;
+            C07PacketPlayerDigging c07 = (C07PacketPlayerDigging) e.getPacket();
+            String edger;
+            edger = String.valueOf(c07.getStatus());
+            if (Objects.equals(edger, "RELEASE_USE_ITEM")) {
+                isBlocked = false;
+            }
         }
         else if (e.getPacket() instanceof C09PacketHeldItemChange && isBlocked) {
             isBlocked = false;
@@ -114,6 +128,9 @@ public class ModuleUtils {
             if (Utils.keybinds.isMouseDown(1)) {
                 fireballTime = System.currentTimeMillis();
                 threwFireball = true;
+                if (mc.thePlayer.rotationPitch > 50F) {
+                    threwFireballLow = true;
+                }
             }
         }
 
@@ -137,6 +154,8 @@ public class ModuleUtils {
     @SubscribeEvent
     public void onPreUpdate(PreUpdateEvent e) {
 
+        profileTicks++;
+
         if (isAttacking) {
             if (attackingTicks <= 0) {
                 isAttacking = false;
@@ -147,14 +166,18 @@ public class ModuleUtils {
         }
 
         if (LongJump.slotReset && ++LongJump.slotResetTicks >= 2) {
-            LongJump.stopKillAura = false;
-            LongJump.stopScaffold = false;
+            LongJump.stopModules = false;
             LongJump.slotResetTicks = 0;
             LongJump.slotReset = false;
         }
 
+        if (fireballTime > 0 && (System.currentTimeMillis() - fireballTime) > FIREBALL_TIMEOUT / 3) {
+            threwFireballLow = false;
+            ModuleManager.velocity.disableVelo = false;
+        }
+
         if (fireballTime > 0 && (System.currentTimeMillis() - fireballTime) > FIREBALL_TIMEOUT) {
-            threwFireball = false;
+            threwFireball = threwFireballLow = false;
             fireballTime = 0;
             ModuleManager.velocity.disableVelo = false;
         }
@@ -165,8 +188,8 @@ public class ModuleUtils {
         }
 
         if (ModuleManager.killAura.justUnTargeted) {
-            if (++ModuleManager.killAura.unTargetTicks >= 2) {
-                ModuleManager.killAura.unTargetTicks = 0;
+            if (++unTargetTicks >= 2) {
+                unTargetTicks = 0;
                 ModuleManager.killAura.justUnTargeted = false;
             }
         }
@@ -184,6 +207,7 @@ public class ModuleUtils {
         else {
             inAirTicks = 19;
         }
+        groundTicks = !mc.thePlayer.onGround ? 0 : ++groundTicks;
 
         // 7 tick needs to always finish the motion or itll lag back
         if (!ModuleManager.bhop.isEnabled() && ModuleManager.bhop.mode.getInput() == 3 && ModuleManager.bhop.didMove) {

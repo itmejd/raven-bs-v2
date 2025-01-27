@@ -44,11 +44,6 @@ public class HitBox extends Module {
         return ((int) multiplier.getInput() == multiplier.getInput() ? (int) multiplier.getInput() + "" : multiplier.getInput()) + multiplier.getSuffix();
     }
 
-    @Override
-    public int getInfoType() {
-        return 1;
-    }
-
     @SubscribeEvent
     public void onMouse(MouseEvent e) {
         if (e.button != 0 || !e.buttonstate || !Utils.nullCheck() || multiplier.getInput() == 1 || mc.thePlayer.isBlocking() || mc.currentScreen != null) {

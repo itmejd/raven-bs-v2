@@ -99,7 +99,7 @@ public class Raven {
                 }
                 for (Module module : getModuleManager().getModules()) {
                     if (mc.currentScreen == null && module.canBeEnabled()) {
-                        module.keybind();
+                        module.onKeyBind();
                     }
                     else if (mc.currentScreen instanceof ClickGui) {
                         module.guiUpdate();
@@ -111,10 +111,10 @@ public class Raven {
                 }
                 if (mc.currentScreen == null) {
                     for (Profile profile : Raven.profileManager.profiles) {
-                        profile.getModule().keybind();
+                        profile.getModule().onKeyBind();
                     }
                     for (Module module : Raven.scriptManager.scripts.values()) {
-                        module.keybind();
+                        module.onKeyBind();
                     }
                 }
             }

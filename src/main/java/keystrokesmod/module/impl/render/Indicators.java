@@ -4,7 +4,6 @@ import keystrokesmod.mixin.impl.accessor.IAccessorEntityArrow;
 import keystrokesmod.mixin.impl.accessor.IAccessorEntityRenderer;
 import keystrokesmod.mixin.impl.accessor.IAccessorMinecraft;
 import keystrokesmod.module.Module;
-import keystrokesmod.module.impl.world.AntiBot;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
 import keystrokesmod.utility.BlockUtils;
@@ -18,7 +17,6 @@ import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityEnderPearl;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.projectile.EntityArrow;
 import net.minecraft.entity.projectile.EntityFireball;
 import net.minecraft.entity.projectile.EntityLargeFireball;
@@ -40,14 +38,17 @@ public class Indicators extends Module {
     private ButtonSetting renderArrows;
     private ButtonSetting renderPearls;
     private ButtonSetting renderFireballs;
-    private ButtonSetting renderPlayers;
     private SliderSetting arrow;
     private SliderSetting radius;
     private ButtonSetting itemColors;
     private ButtonSetting renderItem;
+    private ButtonSetting renderDistance;
     private ButtonSetting threatsOnly;
+    private ButtonSetting renderOnlyOffScreen;
+
     private HashSet<Entity> threats = new HashSet<>();
     private Map<String, String> lastHeldItems = new ConcurrentHashMap<>();
+
     private String[] arrowTypes = new String[] { "Caret", "Greater than", "Triangle" };
 
     public Indicators() {
@@ -55,12 +56,13 @@ public class Indicators extends Module {
         this.registerSetting(renderArrows = new ButtonSetting("Render arrows", true));
         this.registerSetting(renderPearls = new ButtonSetting("Render ender pearls", true));
         this.registerSetting(renderFireballs = new ButtonSetting("Render fireballs", true));
-        this.registerSetting(renderPlayers = new ButtonSetting("Render players", true));
         this.registerSetting(arrow = new SliderSetting("Arrow", 0, arrowTypes));
         this.registerSetting(radius = new SliderSetting("Circle radius", 50, 30, 200, 5));
         this.registerSetting(itemColors = new ButtonSetting("Item colors", true));
         this.registerSetting(renderItem = new ButtonSetting("Render item", true));
+        this.registerSetting(renderDistance = new ButtonSetting("Render distance", true));
         this.registerSetting(threatsOnly = new ButtonSetting("Render only threats", true));
+        this.registerSetting(renderOnlyOffScreen = new ButtonSetting("Render only offscreen", false));
     }
 
     public void onDisable() {
@@ -95,7 +97,11 @@ public class Indicators extends Module {
                 else if (en instanceof EntityEnderPearl) {
                     itemStack = new ItemStack(Items.ender_pearl);
                 }
-                if (!threats.contains(en) && !(en instanceof EntityPlayer)) {
+                if (!threats.contains(en)) {
+                    continue;
+                }
+                if (!mc.theWorld.loadedEntityList.contains(en) || !canRender(en)) {
+                    threats.remove(en);
                     continue;
                 }
                 this.renderIndicatorFor(en, itemStack, event.renderTickTime);
@@ -127,9 +133,6 @@ public class Indicators extends Module {
         else if (entity instanceof EntityEnderPearl && renderPearls.isToggled()) {
             return true;
         }
-        else if (entity instanceof EntityPlayer && renderPlayers.isToggled() && !AntiBot.isBot(entity)) {
-            return true;
-        }
         return false;
     }
 
@@ -138,6 +141,9 @@ public class Indicators extends Module {
             return;
         }
         if (!this.shouldRender(en, itemStack)) {
+            return;
+        }
+        if (renderOnlyOffScreen.isToggled() && RenderUtils.isInViewFrustum(en)) {
             return;
         }
         Color colorForStack = getColorForItem(itemStack);
@@ -190,7 +196,9 @@ public class Indicators extends Module {
             GlStateManager.rotate((float) angle2, 0.0f, 0.0f, 1.0f);
             GlStateManager.scale(1.0f, 1.0f, 1.0f);
 
-            if (arrow.getInput() == 0) {
+            int arrowInput = (int) arrow.getInput();
+
+            if (arrowInput == 0) {
                 if (color == -1) {
                     GL11.glColor3d(1.0, 1.0, 1.0);
                 }
@@ -216,13 +224,13 @@ public class Indicators extends Module {
                 GL11.glDisable(GL11.GL_BLEND);
                 GL11.glDisable(GL11.GL_LINE_SMOOTH);
             }
-            else if (arrow.getInput() == 1) {
+            else if (arrowInput == 1) {
                 GlStateManager.rotate(-90.0f, 0.0f, 0.0f, 1.0f);
                 GlStateManager.scale(1.5, 1.5, 1.5);
                 mc.fontRendererObj.drawString(">", -2.0f, -4.0f, color, false);
             }
-            else if (arrow.getInput() == 2) {
-                RenderUtils.draw2DPolygon(0.0, 0.0, 5.0, 3, color);
+            else if (arrowInput == 2) {
+                RenderUtils.draw2DPolygon(0.0, 0.0, 5.0, 3, Utils.mergeAlpha(color, 255));
             }
 
             GlStateManager.popMatrix();
@@ -234,8 +242,10 @@ public class Indicators extends Module {
             GlStateManager.translate(renderX, renderY, 0.0);
             GlStateManager.scale(0.8, 0.8, 0.8);
 
-            String text = (int) mc.thePlayer.getDistanceToEntity(en) + "m";
-            mc.fontRendererObj.drawString(text, (float) (-mc.fontRendererObj.getStringWidth(text) / 2), -4.0f, -1, true);
+            if (renderDistance.isToggled()) {
+                String text = (int) mc.thePlayer.getDistanceToEntity(en) + "m";
+                mc.fontRendererObj.drawString(text, (float) (-mc.fontRendererObj.getStringWidth(text) / 2), -4.0f, -1, true);
+            }
 
             GlStateManager.popMatrix();
 
@@ -269,7 +279,7 @@ public class Indicators extends Module {
             return new Color(210, 0, 255);
         }
         else if (itemStack.getItem() == Items.fire_charge) {
-            return new Color(255, 115, 0);
+            return new Color(255, 150, 0);
         }
         else {
             return Color.WHITE;

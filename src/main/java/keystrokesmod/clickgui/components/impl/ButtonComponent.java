@@ -4,6 +4,7 @@ import keystrokesmod.Raven;
 import keystrokesmod.clickgui.components.Component;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.setting.impl.ButtonSetting;
+import keystrokesmod.utility.RenderUtils;
 import keystrokesmod.utility.profile.ProfileModule;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.opengl.GL11;
@@ -11,13 +12,15 @@ import org.lwjgl.opengl.GL11;
 import java.awt.*;
 
 public class ButtonComponent extends Component {
-    private final int c = (new Color(20, 255, 0)).getRGB();
+    private final int enabledColor = (new Color(20, 255, 0)).getRGB();
     private Module mod;
     public ButtonSetting buttonSetting;
     private ModuleComponent p;
     public int o;
-    private int x;
+    public int x;
     private int y;
+    public int xOffset;
+    public boolean renderLine;
 
     public ButtonComponent(Module mod, ButtonSetting op, ModuleComponent b, int o) {
         this.mod = mod;
@@ -31,7 +34,11 @@ public class ButtonComponent extends Component {
     public void render() {
         GL11.glPushMatrix();
         GL11.glScaled(0.5D, 0.5D, 0.5D);
-        Minecraft.getMinecraft().fontRendererObj.drawString((this.buttonSetting.isMethodButton ? "[=]  " : (this.buttonSetting.isToggled() ? "[+]  " : "[-]  ")) + this.buttonSetting.getName(), (float) ((this.p.categoryComponent.getX() + 4) * 2), (float) ((this.p.categoryComponent.getY() + this.o + 4) * 2), this.buttonSetting.isToggled() ? this.c : -1, false);
+        Minecraft.getMinecraft().fontRendererObj.drawString((this.buttonSetting.isMethodButton ? "[=]  " : (this.buttonSetting.isToggled() ? "[+]  " : "[-]  ")) + this.buttonSetting.getName(), (float) ((this.p.categoryComponent.getX() + 4) * 2) + xOffset, (float) ((this.p.categoryComponent.getY() + this.o + 4) * 2), this.buttonSetting.isToggled() ? this.enabledColor : -1, false);
+        GL11.glScaled(1, 1, 1);
+        if (renderLine) {
+            //RenderUtils.drawRectangleGL((float) ((this.p.categoryComponent.getX() + 4) * 2), (float) ((this.p.categoryComponent.getY() + this.o) * 2), (float) ((this.p.categoryComponent.getX() + 4) * 2) + 1, (float) ((this.p.categoryComponent.getY() + this.o + 4) * 2) + 16, new Color(192, 192, 192).getRGB());
+        }
         GL11.glPopMatrix();
     }
 

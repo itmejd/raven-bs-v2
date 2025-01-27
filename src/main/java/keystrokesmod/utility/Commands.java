@@ -4,6 +4,7 @@ import keystrokesmod.Raven;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.client.Settings;
+import keystrokesmod.module.impl.combat.Velocity;
 import keystrokesmod.module.impl.minigames.DuelsStats;
 import keystrokesmod.module.impl.movement.Bhop;
 import keystrokesmod.module.impl.movement.Fly;
@@ -213,11 +214,11 @@ public class Commands {
                 switch (args[1]) {
                     case "horizontal":
                     case "h":
-                        //Velocity.horizontal.setValueRaw(value);
+                        Velocity.horizontal.setValueRaw(value);
                         break;
                     case "vertical":
                     case "v":
-                        //Velocity.vertical.setValueRaw(value);
+                        Velocity.vertical.setValueRaw(value);
                         break;
                     default:
                         print(invSyn, 1);
@@ -228,7 +229,7 @@ public class Commands {
                 print(args[2], 0);
             }
             else if (cm.startsWith("ping")) {
-                Ping.checkPing();
+                Ping.checkPing(false);
             }
             else if (cm.startsWith("sprint")) {
                 if (!hasArgs || args.length != 2) {
@@ -360,7 +361,8 @@ public class Commands {
                         print("&aSaved profile:", 1);
                         print(name, 0);
                         Raven.profileManager.loadProfiles();
-                    } else if (args[1].equals("load") || args[1].equals("l")) {
+                    }
+                    else if (args[1].equals("load") || args[1].equals("l")) {
                         if (args.length != 3) {
                             print(invSyn, 1);
                             return;
@@ -378,7 +380,8 @@ public class Commands {
                             }
                         }
                         print("&cInvalid profile.", 1);
-                    } else if (args[1].equals("remove") || args[1].equals("r")) {
+                    }
+                    else if (args[1].equals("remove") || args[1].equals("r")) {
                         if (args.length != 3) {
                             print(invSyn, 1);
                             return;
@@ -494,6 +497,6 @@ public class Commands {
     }
 
     public static void od() {
-        Ping.rs();
+        Ping.reset(false);
     }
 }

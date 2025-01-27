@@ -73,6 +73,25 @@ public class RotationUtils {
         return new float[] { yaw, pitch };
     }
 
+    public static float[] getRotations(double posX, double posY, double posZ) {
+        double x = posX + 1.0 - mc.thePlayer.posX;
+        double y = posY + 1.0 - (mc.thePlayer.posY + mc.thePlayer.getEyeHeight());
+        double z = posZ + 1.0 - mc.thePlayer.posZ;
+
+        float angleToBlock = (float) (Math.atan2(z, x) * (180 / Math.PI)) - 90.0f;
+        float deltaYaw = MathHelper.wrapAngleTo180_float(angleToBlock - mc.thePlayer.rotationYaw);
+        float yaw = mc.thePlayer.rotationYaw + deltaYaw;
+
+        double distance = MathHelper.sqrt_double(x * x + z * z);
+        float angleToBlockPitch = (float) (-(Math.atan2(y, distance) * (180 / Math.PI)));
+        float deltaPitch = MathHelper.wrapAngleTo180_float(angleToBlockPitch - mc.thePlayer.rotationPitch);
+        float pitch = mc.thePlayer.rotationPitch + deltaPitch;
+
+        pitch = clampTo90(pitch);
+
+        return new float[] { yaw, pitch };
+    }
+
     public static float[] getRotations(BlockPos blockPos, EnumFacing enumFacing) {
         double x = blockPos.getX() + 0.5D;
         double y = blockPos.getY() + 0.5D;

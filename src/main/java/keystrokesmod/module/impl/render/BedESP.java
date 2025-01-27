@@ -93,7 +93,7 @@ public class BedESP extends Module {
             float blockHeight = getBlockHeight();
             if (firstBed.isToggled() && this.bed != null) {
                 float customAlpha = 0.25f;
-                if (!isBed(bed[0]) || !isBed(bed[1])) {
+                if (!isBed(bed[0])) {
                     if (firstBedTimer == null) {
                         (firstBedTimer = (new Timer(300))).start();
                     }
@@ -116,7 +116,7 @@ public class BedESP extends Module {
                     float customAlpha = 0.25f;
                     Map.Entry<BlockPos[], Timer> entry = iterator.next();
                     BlockPos[] blockPos = entry.getKey();
-                    if (!isBed(blockPos[0]) || !isBed(blockPos[1])) {
+                    if (!isBed(blockPos[0])) {
                         if (entry.getValue() == null) {
                             entry.setValue(new Timer(300));
                             entry.getValue().start();

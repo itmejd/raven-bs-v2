@@ -46,6 +46,32 @@ public class RenderUtils {
         renderBox(blockPos.getX() + 0.0625F, blockPos.getY(), blockPos.getZ() + 0.0625F, 0.875f, 0.875f, 0.875f, color, outline, shade);
     }
 
+    public static void drawPlayerBoundingBox(Vec3 pos, int color) {
+        GlStateManager.pushMatrix();
+        double x = pos.xCoord - mc.getRenderManager().viewerPosX;
+        double y = pos.yCoord - mc.getRenderManager().viewerPosY;
+        double z = pos.zCoord - mc.getRenderManager().viewerPosZ;
+        AxisAlignedBB bbox = mc.thePlayer.getEntityBoundingBox().expand(0.1D, 0.1, 0.1);
+        AxisAlignedBB axis = new AxisAlignedBB(bbox.minX - mc.thePlayer.posX + x, bbox.minY - mc.thePlayer.posY + y, bbox.minZ - mc.thePlayer.posZ + z, bbox.maxX - mc.thePlayer.posX + x, bbox.maxY - mc.thePlayer.posY + y, bbox.maxZ - mc.thePlayer.posZ + z);
+        float a = (float) (color >> 24 & 255) / 255.0F;
+        float r = (float) (color >> 16 & 255) / 255.0F;
+        float g = (float) (color >> 8 & 255) / 255.0F;
+        float b = (float) (color & 255) / 255.0F;
+        GL11.glBlendFunc(770, 771);
+        GL11.glEnable(3042);
+        GL11.glDisable(3553);
+        GL11.glDisable(2929);
+        GL11.glDepthMask(false);
+        GL11.glLineWidth(2.0F);
+        GL11.glColor4f(r, g, b, a);
+        drawBoundingBox(axis, r, g, b, a);
+        GL11.glEnable(3553);
+        GL11.glEnable(2929);
+        GL11.glDepthMask(true);
+        GL11.glDisable(3042);
+        GlStateManager.popMatrix();
+    }
+
     public static void renderBlock(BlockPos blockPos, int color, double y2, boolean outline, boolean shade) {
         renderBox(blockPos.getX(), blockPos.getY(), blockPos.getZ(), 1, y2, 1, color, outline, shade);
     }

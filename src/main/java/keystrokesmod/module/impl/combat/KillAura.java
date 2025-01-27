@@ -6,6 +6,7 @@ import keystrokesmod.mixin.impl.accessor.IAccessorMinecraft;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.client.Settings;
+import keystrokesmod.module.impl.minigames.SkyWars;
 import keystrokesmod.module.impl.movement.LongJump;
 import keystrokesmod.module.impl.world.AntiBot;
 import keystrokesmod.module.setting.impl.ButtonSetting;
@@ -16,6 +17,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityArmorStand;
+import net.minecraft.entity.monster.EntityGiantZombie;
 import net.minecraft.entity.monster.EntityIronGolem;
 import net.minecraft.entity.monster.EntitySilverfish;
 import net.minecraft.entity.player.EntityPlayer;
@@ -79,7 +81,6 @@ public class KillAura extends Module {
     private List<Entity> hostileMobs = new ArrayList<>();
     private Map<Integer, Boolean> golems = new HashMap<>(); // entity id, is teammate
     public boolean justUnTargeted;
-    public int unTargetTicks;
 
     // blocking related
     public boolean blockingClient;
@@ -171,7 +172,7 @@ public class KillAura extends Module {
         if (rotated || reset) {
             resetYaw();
         }
-        rotated = false;
+        rotated = checkUsing = sendUnBlock = false;
         partialTicks = 0;
         delayTicks = 0;
         if (isTargeting) {
@@ -226,7 +227,7 @@ public class KillAura extends Module {
         if (checkUsing && disableCheckUsing && ++disableCTicks >= 2) {
             checkUsing = false;
         }
-        if (target == null) {
+        if (target == null && Utils.tabbedIn()) {
             if (checkUsing && !sendUnBlock && Mouse.isButtonDown(1) && !blinkAutoBlock()) {
                 KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), true);
                 checkUsing = false;
@@ -320,7 +321,7 @@ public class KillAura extends Module {
             setTarget(null);
             return;
         }
-        if (ModuleManager.scaffold.isEnabled || LongJump.stopKillAura) {
+        if (ModuleManager.scaffold.isEnabled || LongJump.stopModules) {
             if (blinking.get() || lag) {
                 resetBlinkState(false);
             }
@@ -965,7 +966,15 @@ public class KillAura extends Module {
                         case 1:
                             blinking.set(true);
                             if (ModuleUtils.isBlocked) {
-                                mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, DOWN));
+                                if (firstEdge <= 1) {
+                                    setSwapSlot();
+                                    swapped = true;
+                                    firstEdge++;
+                                }
+                                else {
+                                    mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, DOWN));
+                                    firstEdge = 0;
+                                }
                                 lag = false;
                             }
                             else {
@@ -976,6 +985,10 @@ public class KillAura extends Module {
                             }
                             break;
                         case 2:
+                            if (swapped) {
+                                setCurrentSlot();
+                                swapped = false;
+                            }
                             if (!lag) {
                                 handleInteractAndAttack(distance, true, true, swung);
                                 sendBlockPacket();
@@ -1285,15 +1298,24 @@ public class KillAura extends Module {
     }
 
     private boolean isHostile(EntityCreature entityCreature) {
-        if (entityCreature instanceof EntitySilverfish) {
+        if (SkyWars.onlyAuraHostiles()) {
+            if (entityCreature instanceof EntityGiantZombie) {
+                return false;
+            }
+            return !ModuleManager.skyWars.spawnedMobs.contains(entityCreature.getEntityId());
+        }
+        else if (entityCreature instanceof EntitySilverfish) {
             String teamColor = Utils.getFirstColorCode(entityCreature.getCustomNameTag());
             String teamColorSelf = Utils.getFirstColorCode(mc.thePlayer.getDisplayName().getFormattedText());
-            if (!teamColor.isEmpty() && teamColorSelf.equals(teamColor)) { // same team
+            if (!teamColor.isEmpty() && (teamColorSelf.equals(teamColor) || Utils.isTeamMate(entityCreature))) { // same team
                 return false;
             }
             return true;
         }
         else if (entityCreature instanceof EntityIronGolem) {
+            if (Utils.getBedwarsStatus() != 2) {
+                return true;
+            }
             if (!golems.containsKey(entityCreature.getEntityId())) {
                 double nearestDistance = -1;
                 EntityArmorStand nearestArmorStand = null;
@@ -1314,7 +1336,7 @@ public class KillAura extends Module {
                     String teamColor = Utils.getFirstColorCode(nearestArmorStand.getDisplayName().getFormattedText());
                     String teamColorSelf = Utils.getFirstColorCode(mc.thePlayer.getDisplayName().getFormattedText());
                     boolean isTeam = false;
-                    if (!teamColor.isEmpty() && teamColorSelf.equals(teamColor)) { // same team
+                    if (!teamColor.isEmpty() && (teamColorSelf.equals(teamColor) || Utils.isTeamMate(nearestArmorStand))) { // same team
                         isTeam = true;
                     }
                     golems.put(entityCreature.getEntityId(), isTeam);

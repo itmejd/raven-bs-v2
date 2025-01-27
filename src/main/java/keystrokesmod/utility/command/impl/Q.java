@@ -24,7 +24,7 @@ public class Q extends Command {
     }
 
     Map<String, String> hypixelPlayCommands = new HashMap<>();
-        {hypixelPlayCommands.put("p", "bedwars_practice");
+    {hypixelPlayCommands.put("p", "bedwars_practice");
         hypixelPlayCommands.put("1", "bedwars_eight_one");
         hypixelPlayCommands.put("2", "bedwars_eight_two");
         hypixelPlayCommands.put("3", "bedwars_four_three");

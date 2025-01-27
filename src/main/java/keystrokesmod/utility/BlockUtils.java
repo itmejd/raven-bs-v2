@@ -43,6 +43,18 @@ public class BlockUtils {
         return false;
     }
 
+    public static boolean isObsidian(Block block) {
+        return block instanceof BlockObsidian;
+    }
+
+    public static boolean isObsidian(MovingObjectPosition mv) {
+        if (mv == null || mv.typeOfHit != MovingObjectPosition.MovingObjectType.BLOCK || mv.getBlockPos() == null) {
+            return false;
+        }
+        IBlockState iblockstate = mc.theWorld.getBlockState(mv.getBlockPos());
+        return isObsidian(iblockstate.getBlock());
+    }
+
     public static Vec3 getHitVec(Vec3 hitVec, BlockPos blockPos) {
         float x = (float)(hitVec.xCoord - blockPos.getX());
         float y = (float)(hitVec.yCoord - blockPos.getY());

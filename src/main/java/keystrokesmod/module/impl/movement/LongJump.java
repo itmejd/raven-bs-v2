@@ -6,10 +6,9 @@ import keystrokesmod.mixin.impl.accessor.IAccessorMinecraft;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.setting.impl.ButtonSetting;
-import keystrokesmod.module.setting.impl.DescriptionSetting;
 import keystrokesmod.module.setting.impl.KeySetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
-import keystrokesmod.utility.Reflection;
+import keystrokesmod.utility.ModuleUtils;
 import keystrokesmod.utility.Utils;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
@@ -18,7 +17,6 @@ import net.minecraft.network.play.server.*;
 import net.minecraft.potion.PotionEffect;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.input.Keyboard;
 
 public class LongJump extends Module {
@@ -28,6 +26,10 @@ public class LongJump extends Module {
     private SliderSetting motionTicks;
     private SliderSetting verticalMotion;
     private SliderSetting motionDecay;
+
+    private ButtonSetting manual;
+    private ButtonSetting onlyWithVelocity;
+    private KeySetting disableKey;
 
     private ButtonSetting allowStrafe;
     private ButtonSetting invertYaw;
@@ -39,11 +41,14 @@ public class LongJump extends Module {
 
     public String[] modes = new String[]{"Floyd", "Boost"};
 
+    private boolean manualWasOn;
+
     private float yaw;
     private float pitch;
 
     private boolean notMoving;
     private boolean enabled;
+    public boolean function;
 
     private int boostTicks;
     private int lastSlot = -1;
@@ -56,8 +61,7 @@ public class LongJump extends Module {
     private long FIREBALL_TIMEOUT = 750L;
 
     public static boolean stopVelocity;
-    public static boolean stopKillAura;
-    public static boolean stopScaffold;
+    public static boolean stopModules;
     public static boolean slotReset;
     public static int slotResetTicks;
 
@@ -65,8 +69,11 @@ public class LongJump extends Module {
         super("Long Jump", category.movement);
         this.registerSetting(mode = new SliderSetting("Mode", 0, modes));
 
-        this.registerSetting(boostSetting = new SliderSetting("Horizontal boost", 1.7, 0.0, 2.0, 0.05));
+        this.registerSetting(manual = new ButtonSetting("Manual", false));
+        this.registerSetting(onlyWithVelocity = new ButtonSetting("Only while velocity enabled", false));
+        this.registerSetting(disableKey = new KeySetting("Disable key", Keyboard.KEY_SPACE));
 
+        this.registerSetting(boostSetting = new SliderSetting("Horizontal boost", 1.7, 0.0, 2.0, 0.05));
         this.registerSetting(verticalMotion = new SliderSetting("Vertical motion", 0, 0.4, 0.9, 0.01));
         this.registerSetting(motionDecay = new SliderSetting("Motion decay", 17, 1, 40, 1));
         this.registerSetting(allowStrafe = new ButtonSetting("Allow strafe", false));
@@ -78,26 +85,25 @@ public class LongJump extends Module {
     }
 
     public void guiUpdate() {
+        this.onlyWithVelocity.setVisible(manual.isToggled(), this);
+        this.disableKey.setVisible(manual.isToggled(), this);
+
         this.verticalMotion.setVisible(mode.getInput() == 0, this);
         this.motionDecay.setVisible(mode.getInput() == 0, this);
-        this.allowStrafe.setVisible(mode.getInput() == 0, this);
         this.temporaryFlightKey.setVisible(mode.getInput() == 0, this);
     }
 
     public void onEnable() {
-        slotReset = false;
-        slotResetTicks = 0;
-        enabled = true;
-        ModuleManager.bhop.disable();
-        stopKillAura = true;
-        stopScaffold = true;
+        if (ModuleUtils.profileTicks <= 1) {
+            return;
+        }
+        if (!manual.isToggled()) {
+            enabled();
+        }
     }
 
     public void onDisable() {
-        fireballTime = rotateTick = stopTime = 0;
-        boostTicks = -1;
-        resetSlot();
-        enabled = notMoving = stopVelocity = false;
+        disabled();
     }
 
     /*public boolean onChat(String chatMessage) {
@@ -113,17 +119,44 @@ public class LongJump extends Module {
 
     @SubscribeEvent
     public void onPreUpdate(PreUpdateEvent e) {
+        if (manual.isToggled()) {
+            manualWasOn = true;
+        }
+        else {
+            if (manualWasOn) {
+                disabled();
+            }
+            manualWasOn = false;
+        }
+
+        if (manual.isToggled() && disableKey.isPressed() && Utils.jumpDown()) {
+            function = false;
+            disabled();
+        }
+
+        if (!function) {
+            if (manual.isToggled() && !enabled && (!onlyWithVelocity.isToggled() || onlyWithVelocity.isToggled() && ModuleManager.velocity.isEnabled())) {
+                if (ModuleUtils.threwFireballLow) {
+                    ModuleManager.velocity.disableVelo = true;
+                    enabled();
+                }
+            }
+            return;
+        }
+
         if (enabled) {
             if (!Utils.isMoving()) notMoving = true;
             if (boostSetting.getInput() == 0 && verticalMotion.getInput() == 0) {
                 Utils.print("&cValues are set to 0!");
-                disable();
+                disabled();
                 return;
             }
             int fireballSlot = setupFireballSlot(true);
             if (fireballSlot != -1) {
-                lastSlot = mc.thePlayer.inventory.currentItem;
-                mc.thePlayer.inventory.currentItem = fireballSlot;
+                if (!manual.isToggled()) {
+                    lastSlot = mc.thePlayer.inventory.currentItem;
+                    mc.thePlayer.inventory.currentItem = fireballSlot;
+                }
                 //("Set fireball slot");
                 rotateTick = 1;
                 if (stopMovement.isToggled()) {
@@ -139,23 +172,23 @@ public class LongJump extends Module {
             motionDecayVal = (int) motionDecay.getInput();
         }
         if (stopTime == -1 && ++boostTicks > (!temporaryFlightKey() ? 33/*flat motion ticks*/ : (!notMoving ? 32/*normal motion ticks*/ : 33/*vertical motion ticks*/))) {
-            disable();
+            disabled();
             return;
         }
 
         if (fireballTime > 0 && (System.currentTimeMillis() - fireballTime) > FIREBALL_TIMEOUT) {
             Utils.print("&cFireball timed out.");
-            disable();
+            disabled();
             return;
         }
-        if (mode.getInput() == 0) {
-            if (boostTicks > 0) {
+        if (boostTicks > 0) {
+            if (mode.getInput() == 0) {
                 modifyVertical(); // has to be onPreUpdate
-                //Utils.print("Modifying vertical");
-                if (allowStrafe.isToggled()) {
-                    Utils.setSpeed(Utils.getHorizontalSpeed(mc.thePlayer));
-                    //Utils.print("Speed");
-                }
+            }
+            //Utils.print("Modifying vertical");
+            if (allowStrafe.isToggled() && boostTicks < 32) {
+                Utils.setSpeed(Utils.getHorizontalSpeed(mc.thePlayer));
+                //Utils.print("Speed");
             }
         }
 
@@ -164,6 +197,10 @@ public class LongJump extends Module {
                 ++stopTime;
             }
         }
+
+        if (mc.thePlayer.onGround && boostTicks > 2) {
+            disabled();
+        }
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
@@ -171,39 +208,30 @@ public class LongJump extends Module {
         if (!Utils.nullCheck()) {
             return;
         }
-        if (rotateTick > 0) {
+        if (rotateTick == 1) {
             if ((invertYaw.isToggled() || stopMovement.isToggled()) && !notMoving) {
                 if (!stopMovement.isToggled()) {
-                    if (rotateTick == 1) {
-                        yaw = mc.thePlayer.rotationYaw - 180f;
-                        pitch = 90f;
-                    }
+                    yaw = mc.thePlayer.rotationYaw - 180f;
+                    pitch = 90f;
                 } else {
-                    if (rotateTick == 1) {
-                        yaw = mc.thePlayer.rotationYaw - 180f;
-                        pitch = 66.3f;//(float) pitchVal.getInput();
-                    }
+                    yaw = mc.thePlayer.rotationYaw - 180f;
+                    pitch = 66.3f;//(float) pitchVal.getInput();
                 }
             } else {
-                if (rotateTick == 1) {
-                    yaw = mc.thePlayer.rotationYaw;
-                    pitch = 90f;
-                }
-            }
-            if (rotateTick > 1) {
                 yaw = mc.thePlayer.rotationYaw;
-                pitch = mc.thePlayer.rotationPitch;
+                pitch = 90f;
             }
-            e.setYaw(yaw);
-            e.setPitch(pitch);
+            e.setRotations(yaw, pitch);
         }
         if (rotateTick > 0 && ++rotateTick >= 3) {
             rotateTick = 0;
             int fireballSlot = setupFireballSlot(false);
             if (fireballSlot != -1) {
-                mc.thePlayer.inventory.currentItem = fireballSlot; // we are probably already on the slot but make sure
-                fireballTime = System.currentTimeMillis();
-                ((IAccessorMinecraft) mc).callRightClickMouse();
+                if (!manual.isToggled()) {
+                    mc.thePlayer.inventory.currentItem = fireballSlot; // we are probably already on the slot but make sure
+                    fireballTime = System.currentTimeMillis();
+                    ((IAccessorMinecraft) mc).callRightClickMouse();
+                }
                 mc.thePlayer.swingItem();
                 mc.getItemRenderer().resetEquippedProgress();
                 stopVelocity = true;
@@ -216,12 +244,18 @@ public class LongJump extends Module {
             }
             modifyHorizontal();
             stopVelocity = false;
+            if (!manual.isToggled() && !allowStrafe.isToggled() && mode.getInput() == 1) {
+                disabled();
+            }
         }
 
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST) // called last in order to apply fix
     public void onMoveInput(PrePlayerInputEvent e) {
+        if (!function) {
+            return;
+        }
         mc.thePlayer.movementInput.jump = false;
         if (rotateTick > 0 || fireballTime > 0) {
             if (Utils.isMoving()) e.setForward(1);
@@ -241,6 +275,9 @@ public class LongJump extends Module {
 
     @SubscribeEvent
     public void onReceivePacket(ReceivePacketEvent e) {
+        if (!function) {
+            return;
+        }
         Packet packet = e.getPacket();
         if (packet instanceof S27PacketExplosion) {
             S27PacketExplosion s27 = (S27PacketExplosion) packet;
@@ -258,7 +295,7 @@ public class LongJump extends Module {
             //client.print(client.getPlayer().getTicksExisted() + " s27 " + boostTicks + " " + client.getPlayer().getHurtTime() + " " + client.getPlayer().getSpeed());
         } else if (packet instanceof S08PacketPlayerPosLook) {
             Utils.print("&cReceived setback, disabling.");
-            disable();
+            disabled();
         }
 
         if (hideExplosion.isToggled() && fireballTime != 0 && (packet instanceof S0EPacketSpawnObject || packet instanceof S2APacketParticles || packet instanceof S29PacketSoundEffect)) {
@@ -278,22 +315,41 @@ public class LongJump extends Module {
         return n;
     }
 
+    private void enabled() {
+        slotReset = false;
+        slotResetTicks = 0;
+        enabled = function = true;
+        ModuleManager.bhop.disable();
+
+        stopModules = true;
+    }
+
+    private void disabled() {
+        fireballTime = rotateTick = stopTime = 0;
+        boostTicks = -1;
+        resetSlot();
+        enabled = function = notMoving = stopVelocity = stopModules = false;
+        if (!manual.isToggled()) {
+            disable();
+        }
+    }
+
     private int setupFireballSlot(boolean pre) {
         // only cancel bad packet right click on the tick we are sending it
         int fireballSlot = getFireballSlot();
         if (fireballSlot == -1) {
             Utils.print("&cFireball not found.");
-            disable();
+            disabled();
         } else if (ModuleManager.scaffold.isEnabled || (pre && Utils.distanceToGround(mc.thePlayer) > 3)/* || (!pre && !PacketUtil.canRightClickItem())*/) { //needs porting
             Utils.print("&cCan't throw fireball right now.");
-            disable();
+            disabled();
             fireballSlot = -1;
         }
         return fireballSlot;
     }
 
     private void resetSlot() {
-        if (lastSlot != -1) {
+        if (lastSlot != -1 && !manual.isToggled()) {
             mc.thePlayer.inventory.currentItem = lastSlot;
             lastSlot = -1;
         }

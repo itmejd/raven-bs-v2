@@ -4,10 +4,7 @@ import keystrokesmod.Raven;
 import keystrokesmod.clickgui.components.Component;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.setting.Setting;
-import keystrokesmod.module.setting.impl.ButtonSetting;
-import keystrokesmod.module.setting.impl.DescriptionSetting;
-import keystrokesmod.module.setting.impl.KeySetting;
-import keystrokesmod.module.setting.impl.SliderSetting;
+import keystrokesmod.module.setting.impl.*;
 import keystrokesmod.utility.RenderUtils;
 import keystrokesmod.utility.Timer;
 import keystrokesmod.utility.Utils;
@@ -74,6 +71,12 @@ public class ModuleComponent extends Component {
                     this.settings.add(keyComponent);
                     y += 12;
                 }
+                else if (v instanceof GroupSetting) {
+                    GroupSetting b = (GroupSetting) v;
+                    GroupComponent c = new GroupComponent(b, this, y);
+                    this.settings.add(c);
+                    y += 12;
+                }
             }
         }
         this.settings.add(new BindComponent(this, y));
@@ -94,7 +97,7 @@ public class ModuleComponent extends Component {
                 if (co instanceof SliderComponent) {
                     y += 16;
                 }
-                else if (co instanceof ButtonComponent || co instanceof BindComponent || co instanceof DescriptionComponent) {
+                else if (co instanceof ButtonComponent || co instanceof BindComponent || co instanceof DescriptionComponent || co instanceof GroupComponent) {
                     y += 12;
                 }
             }
@@ -187,7 +190,7 @@ public class ModuleComponent extends Component {
                     if (c instanceof SliderComponent) {
                         h += 16;
                     }
-                    else if (c instanceof ButtonComponent || c instanceof BindComponent || c instanceof DescriptionComponent) {
+                    else if (c instanceof ButtonComponent || c instanceof BindComponent || c instanceof DescriptionComponent || c instanceof GroupComponent) {
                         h += 12;
                     }
                 }
@@ -210,7 +213,7 @@ public class ModuleComponent extends Component {
                 if (c instanceof SliderComponent) {
                     h += 16;
                 }
-                else if (c instanceof ButtonComponent || c instanceof BindComponent || c instanceof DescriptionComponent) {
+                else if (c instanceof ButtonComponent || c instanceof BindComponent || c instanceof DescriptionComponent || c instanceof GroupComponent) {
                     h += 12;
                 }
             }
@@ -281,6 +284,12 @@ public class ModuleComponent extends Component {
         }
     }
 
+    public void onScroll(int scroll) {
+        for (Component component : this.settings) {
+            component.onScroll(scroll);
+        }
+    }
+
     public void onGuiClosed() {
         for (Component c : this.settings) {
             c.onGuiClosed();
@@ -294,7 +303,7 @@ public class ModuleComponent extends Component {
         return x > this.categoryComponent.getX() && x < this.categoryComponent.getX() + this.categoryComponent.getWidth() && y > this.categoryComponent.getModuleY() + this.yPos && y < this.categoryComponent.getModuleY() + 16 + this.yPos;
     }
 
-    public void updateSettingPositions() {
+    public void updateSettingPositions(int xOffset) {
         int y = this.yPos + 12;
         for (Component c : this.settings) {
             if (!isVisible(c)) {
@@ -307,15 +316,35 @@ public class ModuleComponent extends Component {
             else if (c instanceof BindComponent) {
                 ((BindComponent) c).o = y;
                 if (((BindComponent) c).keySetting != null) { // not the bind for the module
+                    if (xOffset != 0 & isGroupOpened(c, false)) {
+                        ((BindComponent) c).x += xOffset;
+                        ((BindComponent) c).xOffset = xOffset;
+                    }
                     y += 12;
                 }
             }
             else if (c instanceof SliderComponent) {
                 ((SliderComponent) c).o = y;
-                y += 12;
+                if (xOffset != 0 & isGroupOpened(c, false)) {
+                    ((SliderComponent) c).x += xOffset;
+                    ((SliderComponent) c).xOffset = xOffset;
+                    ((SliderComponent) c).renderLine = true;
+                }
+                else {
+                    ((SliderComponent) c).renderLine = false;
+                }
+                y += 16;
             }
             else if (c instanceof ButtonComponent) {
                 ((ButtonComponent) c).o = y;
+                if (xOffset != 0 & isGroupOpened(c, false)) {
+                    ((ButtonComponent) c).x += xOffset;
+                    ((ButtonComponent) c).xOffset = xOffset;
+                    ((ButtonComponent) c).renderLine = true;
+                }
+                else {
+                    ((ButtonComponent) c).renderLine = false;
+                }
                 y += 12;
             }
         }
@@ -324,19 +353,43 @@ public class ModuleComponent extends Component {
 
     public boolean isVisible(Component component) {
         if (component instanceof SliderComponent) {
-            return ((SliderComponent) component).sliderSetting.visible;
+            return isGroupOpened(component, ((SliderComponent) component).sliderSetting.visible);
         }
         if (component instanceof ButtonComponent) {
-            return ((ButtonComponent) component).buttonSetting.visible;
+            return isGroupOpened(component, ((ButtonComponent) component).buttonSetting.visible);
         }
         if (component instanceof DescriptionComponent) {
             return ((DescriptionComponent) component).desc.visible;
         }
         if (component instanceof BindComponent) {
             if (((BindComponent) component).keySetting != null) {
-                return ((BindComponent) component).keySetting.visible;
+                return isGroupOpened(component, ((BindComponent) component).keySetting.visible);
             }
         }
         return true;
+    }
+
+    public boolean isGroupOpened(Component component, boolean defaultBool) {
+        String groupName = "";
+        if (component instanceof SliderComponent && ((SliderComponent) component).sliderSetting.groupSetting != null) {
+            groupName = ((SliderComponent) component).sliderSetting.groupSetting.getName();
+        }
+        if (component instanceof ButtonComponent && ((ButtonComponent) component).buttonSetting.group != null) {
+            groupName = ((ButtonComponent) component).buttonSetting.group.getName();
+        }
+        if (component instanceof BindComponent && ((BindComponent) component).keySetting != null && ((BindComponent) component).keySetting.group != null) {
+            groupName = ((BindComponent) component).keySetting.group.getName();
+        }
+        if (groupName.isEmpty()) { // no group exists for component, returning default
+            return defaultBool;
+        }
+        for (Component c : this.settings) {
+            if (c instanceof GroupComponent) {
+                if (((GroupComponent) c).setting.getName().equals(groupName)) { // group exsits
+                    return ((GroupComponent) c).opened;
+                }
+            }
+        }
+        return defaultBool;
     }
 }

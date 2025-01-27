@@ -10,9 +10,17 @@ import keystrokesmod.module.setting.impl.DescriptionSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
 import keystrokesmod.utility.*;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.enchantment.Enchantment;
+import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.init.Items;
 import net.minecraft.item.*;
+import net.minecraft.network.play.client.C02PacketUseEntity;
+import net.minecraft.network.play.client.C07PacketPlayerDigging;
 import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
+import net.minecraft.network.play.client.C09PacketHeldItemChange;
 import net.minecraft.util.BlockPos;
+import net.minecraftforge.client.event.MouseEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.lwjgl.input.Mouse;
@@ -30,6 +38,8 @@ public class NoSlow extends Module {
     private boolean canFloat;
     private boolean reSendConsume;
     public static boolean noSlowing;
+    private int offsetDelay;
+    private boolean setCancelled;
 
     public NoSlow() {
         super("NoSlow", category.movement, 0);
@@ -92,11 +102,61 @@ public class NoSlow extends Module {
 
     @SubscribeEvent
     public void onPostPlayerInput(PostPlayerInputEvent e) {
-        if ((canFloat && mc.thePlayer.onGround)) {
+        if (canFloat && noSlowing && mc.thePlayer.onGround) {
             if (groundSpeedOption.isToggled() && !Utils.jumpDown() && !ModuleManager.bhop.isEnabled() && Utils.keysDown() && !Utils.bowBackwards()) {
                 Utils.setSpeed(getSpeedModifier());
                 //Utils.print("ground speed");
             }
+        }
+
+        handleFloatSetup();
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onMouse(MouseEvent e) {
+        handleFloatSetup();
+
+        if (setCancelled && e.button == 1) {
+            setCancelled = false;
+            e.setCanceled(true);
+        }
+    }
+
+    private void handleFloatSetup() {
+        if (mode.getInput() != 4 || canFloat || reSendConsume || getSlowed() == 0.2f) {
+            return;
+        }
+        if (!Mouse.isButtonDown(1) || (mc.thePlayer.getHeldItem() == null || !holdingConsumable(mc.thePlayer.getHeldItem()))) {
+            return;
+        }
+        if (!mc.thePlayer.onGround) {
+            canFloat = true;
+        }
+        else {
+            KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
+            setCancelled = true;
+            if (!Utils.jumpDown()) {
+                mc.thePlayer.jump();
+            }
+            reSendConsume = true;
+            canFloat = false;
+        }
+    }
+
+    @SubscribeEvent
+    public void onSendPacket(SendPacketEvent e) {
+        if (!Utils.nullCheck()) {
+            return;
+        }
+
+        if (e.getPacket() instanceof C08PacketPlayerBlockPlacement) {
+            if (mode.getInput() != 4 || canFloat || reSendConsume || !mc.thePlayer.onGround || getSlowed() == 0.2f) {
+                return;
+            }
+            if (!Mouse.isButtonDown(1) || (mc.thePlayer.getHeldItem() == null || !holdingConsumable(mc.thePlayer.getHeldItem()))) {
+                return;
+            }
+            e.setCanceled(true);
         }
     }
 
@@ -107,53 +167,37 @@ public class NoSlow extends Module {
             return;
         }
         postPlace = false;
-        if (mc.thePlayer.getHeldItem() != null && holdingConsumable(mc.thePlayer.getHeldItem()) && !Mouse.isButtonDown(1)) {
+        if (mc.thePlayer.getHeldItem() != null && holdingConsumable(mc.thePlayer.getHeldItem()) && (!Mouse.isButtonDown(1) || !canFloat)) {
             KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
         }
         if (!Mouse.isButtonDown(1) || (mc.thePlayer.getHeldItem() == null || !holdingConsumable(mc.thePlayer.getHeldItem()))) {
             resetFloat();
             noSlowing = false;
+            offsetDelay = 0;
             //Utils.print("!Noslowing");
             return;
         }
         if (reSendConsume) {
-            if (ModuleUtils.inAirTicks > 1) {
-                KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
+            if (ModuleUtils.inAirTicks > 0) {
                 KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), true);
-                mc.playerController.sendUseItem(mc.thePlayer, mc.theWorld, mc.thePlayer.getHeldItem());
-                canFloat = true;
                 reSendConsume = false;
+                canFloat = true;
             }
         }
         if (!canFloat) {
+            offsetDelay = 0;
             return;
         }
+        /*offsetDelay++;
+        if (offsetDelay < 3) {
+            return;
+        }*/
         e.setPosY(e.getPosY() + ModuleUtils.offsetValue);
         noSlowing = true;
         if (groundSpeedOption.isToggled()) {
             if (!ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !Utils.jumpDown() && mc.thePlayer.moveForward <= -0.5 && mc.thePlayer.moveStrafing == 0 && Utils.isMoving() && mc.thePlayer.onGround) {
                 float yaw = mc.thePlayer.rotationYaw;
                 e.setYaw(yaw - 55);
-            }
-        }
-    }
-
-    @SubscribeEvent
-    public void onPacketSend(SendPacketEvent e) {
-        if (e.getPacket() instanceof C08PacketPlayerBlockPlacement && mode.getInput() == 4 && getSlowed() != 0.2f && holdingConsumable(((C08PacketPlayerBlockPlacement) e.getPacket()).getStack()) && !BlockUtils.isInteractable(mc.objectMouseOver) && Utils.holdingEdible(((C08PacketPlayerBlockPlacement) e.getPacket()).getStack())) {
-            if (ModuleManager.skyWars.isEnabled() && Utils.getSkyWarsStatus() == 1 || canFloat || reSendConsume) {
-                return;
-            }
-            if (!mc.thePlayer.onGround) {
-                canFloat = true;
-            }
-            else {
-                if (!Utils.jumpDown()) {
-                    mc.thePlayer.jump();
-                }
-                reSendConsume = true;
-                canFloat = false;
-                e.setCanceled(true);
             }
         }
     }
@@ -198,6 +242,11 @@ public class NoSlow extends Module {
         canFloat = false;
     }
 
+    public static boolean hasArrows(ItemStack stack) {
+        final boolean flag = mc.thePlayer.capabilities.isCreativeMode || EnchantmentHelper.getEnchantmentLevel(Enchantment.infinity.effectId, stack) > 0;
+        return flag || mc.thePlayer.inventory.hasItem(Items.arrow);
+    }
+
     private double getSpeedModifier() {
         double speedModifier = 0.2;
         final int speedAmplifier = Utils.getSpeedAmplifier();
@@ -218,12 +267,12 @@ public class NoSlow extends Module {
                 speedModifier = 0.37;
                 break;
         }
-        return speedModifier - 0.005;
+        return speedModifier;
     }
 
     private boolean holdingConsumable(ItemStack itemStack) {
         Item heldItem = itemStack.getItem();
-        if (heldItem instanceof ItemFood || heldItem instanceof ItemBow || (heldItem instanceof ItemPotion && !ItemPotion.isSplash(mc.thePlayer.getHeldItem().getItemDamage())) || (heldItem instanceof ItemSword && !vanillaSword.isToggled())) {
+        if (heldItem instanceof ItemFood || heldItem instanceof ItemBow && hasArrows(itemStack) || (heldItem instanceof ItemPotion && !ItemPotion.isSplash(mc.thePlayer.getHeldItem().getItemDamage())) || (heldItem instanceof ItemSword && !vanillaSword.isToggled())) {
             return true;
         }
         return false;

@@ -23,14 +23,20 @@ public class Settings extends Module {
     public static ButtonSetting weaponStick;
     public static ButtonSetting middleClickFriends;
     public static ButtonSetting setChatAsInventory;
+
     public static ButtonSetting rotateBody;
     public static ButtonSetting fullBody;
     public static ButtonSetting movementFix;
     public static SliderSetting randomYawFactor;
+
+    public static ButtonSetting loadGuiPositions;
+    public static ButtonSetting sendMessage;
+
     public static SliderSetting offset;
     public static SliderSetting timeMultiplier;
-    public static ButtonSetting sendMessage;
-    private String[] capes = new String[]{"None", "Anime", "Aqua", "Green", "Purple", "Red", "White", "Yellow"};
+
+    private String[] capes = new String[] { "None", "Anime", "Aqua", "Green", "Purple", "Red", "White", "Yellow" };
+
     public static List<ResourceLocation> loadedCapes = new ArrayList<>();
 
     public Settings() {
@@ -48,6 +54,7 @@ public class Settings extends Module {
         this.registerSetting(movementFix = new ButtonSetting("Movement fix", false));
         this.registerSetting(randomYawFactor = new SliderSetting("Random yaw factor", 1.0, 0.0, 10.0, 1.0));
         this.registerSetting(new DescriptionSetting("Profiles"));
+        this.registerSetting(loadGuiPositions = new ButtonSetting("Load gui states", false));
         this.registerSetting(sendMessage = new ButtonSetting("Send message on enable", true));
         this.registerSetting(new DescriptionSetting("Theme colors"));
         this.registerSetting(offset = new SliderSetting("Offset", 0.5, -3.0, 3.0, 0.1));
