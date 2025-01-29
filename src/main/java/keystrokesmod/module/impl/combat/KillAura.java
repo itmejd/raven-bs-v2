@@ -125,8 +125,8 @@ public class KillAura extends Module {
         super("KillAura", category.combat);
         this.registerSetting(aps = new SliderSetting("APS", 16.0, 1.0, 20.0, 0.5));
         this.registerSetting(autoBlockMode = new SliderSetting("Autoblock", 0, autoBlockModes));
-        this.registerSetting(interactA = new SliderSetting("Modes", 0, interactAModes));
-        this.registerSetting(interactB = new SliderSetting("Modes", 0, interactBModes));
+        this.registerSetting(interactA = new SliderSetting("APS cap", 0, interactAModes));
+        this.registerSetting(interactB = new SliderSetting("APS cap", 0, interactBModes));
         this.registerSetting(fov = new SliderSetting("FOV", 360.0, 30.0, 360.0, 4.0));
         this.registerSetting(attackRange = new SliderSetting("Range (attack)", 3.0, 3.0, 6.0, 0.05));
         this.registerSetting(swingRange = new SliderSetting("Range (swing)", 3.3, 3.0, 8.0, 0.05));
@@ -878,183 +878,194 @@ public class KillAura extends Module {
             case 3: // interact a
                 switch ((int) interactA.getInput()) {
                     case 0:
-                        if (interactTicks >= 2) {
-                            interactTicks = 0;
-                        }
-                        interactTicks++;
-                        switch (interactTicks) {
-                            case 1:
-                                blinking.set(true);
-                                if (ModuleUtils.isBlocked) {
-                                    mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, DOWN));
-                                    lag = false;
-                                }
-                                else {
-                                    handleInteractAndAttack(distance, true, true, swung);
-                                    sendBlockPacket();
-                                    releasePackets(); // release
-                                    lag = true;
-                                }
-                                break;
-                            case 2:
-                                if (!lag) {
-                                    handleInteractAndAttack(distance, true, true, swung);
-                                    sendBlockPacket();
-                                    releasePackets(); // release
-                                    lag = true;
-                                }
-                                break;
-                        }
+                        getInteractA0(distance, swung);
                         break;
                     case 1:
-                        if (interactTicks >= 3) {
-                            interactTicks = 0;
-                        }
-                        interactTicks++;
-                        switch (interactTicks) {
-                            case 1:
-                                blinking.set(true);
-                                if (ModuleUtils.isBlocked) {
-                                    mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, DOWN));
-                                    lag = false;
-                                }
-                                else {
-                                    handleInteractAndAttack(distance, true, true, swung);
-                                    sendBlockPacket();
-                                    releasePackets(); // release
-                                    lag = true;
-                                }
-                                break;
-                            case 2:
-                                if (!lag) {
-                                    handleInteractAndAttack(distance, true, true, swung);
-                                    sendBlockPacket();
-                                    releasePackets(); // release
-                                    lag = true;
-                                }
-                                break;
-                        }
+                        getInteractA1(distance, swung);
                         break;
                 }
                 break;
             case 4: // interact b
-                switch ((int) interactA.getInput()) {
+                switch ((int) interactB.getInput()) {
                     case 0:
-                        if (interactTicks >= 2) {
-                            interactTicks = 0;
-                        }
-                        interactTicks++;
-                        switch (interactTicks) {
-                            case 1:
-                                blinking.set(true);
-                                if (ModuleUtils.isBlocked) {
-                                    setSwapSlot();
-                                    swapped = true;
-                                    lag = false;
-                                } else {
-                                    handleInteractAndAttack(distance, true, true, swung);
-                                    sendBlockPacket();
-                                    releasePackets(); // release
-                                    lag = true;
-                                }
-                                break;
-                            case 2:
-                                if (swapped) {
-                                    setCurrentSlot();
-                                    swapped = false;
-                                }
-                                if (!lag) {
-                                    handleInteractAndAttack(distance, true, true, swung);
-                                    sendBlockPacket();
-                                    releasePackets(); // release
-                                    lag = true;
-                                }
-                                break;
-                        }
+                        getInteractB0(distance, swung);
                         break;
                     case 1:
-                        if (interactTicks >= 3) {
-                            interactTicks = 0;
-                        }
-                        interactTicks++;
-                        if (firstCycle) {
-                            switch (interactTicks) {
-                                case 1:
-                                    blinking.set(true);
-                                    if (ModuleUtils.isBlocked) {
-                                        if (firstEdge == 1) {
-                                            setSwapSlot();
-                                            swapped = true;
-                                        }
-                                        else {
-                                            mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, DOWN));
-                                        }
-                                        firstEdge++;
-                                        if (firstEdge > 3) {
-                                            firstEdge = 0;
-                                        }
-                                        lag = false;
-                                    }
-                                    else {
-                                        handleInteractAndAttack(distance, true, true, swung);
-                                        sendBlockPacket();
-                                        releasePackets(); // release
-                                        lag = true;
-                                    }
-                                    break;
-                                case 2:
-                                    if (swapped) {
-                                        setCurrentSlot();
-                                        swapped = false;
-                                    }
-                                    if (!lag) {
-                                        handleInteractAndAttack(distance, true, true, swung);
-                                        sendBlockPacket();
-                                        releasePackets(); // release
-                                        lag = true;
-                                    }
-                                    break;
-                                case 3:
-                                    firstCycle = false;
-                                    break;
-                            }
-                        }
-                        else {
-                            switch (interactTicks) {
-                                case 1:
-                                    blinking.set(true);
-                                    if (ModuleUtils.isBlocked) {
-                                        mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, DOWN));
-                                        lag = false;
-                                    }
-                                    else {
-                                        handleInteractAndAttack(distance, true, true, swung);
-                                        sendBlockPacket();
-                                        releasePackets(); // release
-                                        lag = true;
-                                    }
-                                    break;
-                                case 2:
-                                    if (!lag) {
-                                        handleInteractAndAttack(distance, true, true, swung);
-                                        sendBlockPacket();
-                                        releasePackets(); // release
-                                        lag = true;
-                                    }
-                                    firstCycle = true;
-                                    interactTicks = 0;
-                                    break;
-                            }
-                        }
-                    break;
+                        getInteractB1(distance, swung);
+                        break;
                 }
                 break;
-            case 5: // hypixel a
+        }
+    }
 
+    private void getInteractA0(double distance, boolean swung) {
+        if (interactTicks >= 2) {
+            interactTicks = 0;
+        }
+        interactTicks++;
+        switch (interactTicks) {
+            case 1:
+                blinking.set(true);
+                if (ModuleUtils.isBlocked) {
+                    mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, DOWN));
+                    lag = false;
+                }
+                else {
+                    handleInteractAndAttack(distance, true, true, swung);
+                    sendBlockPacket();
+                    releasePackets(); // release
+                    lag = true;
+                }
                 break;
-            case 6: // hypixel b
+            case 2:
+                if (!lag) {
+                    handleInteractAndAttack(distance, true, true, swung);
+                    sendBlockPacket();
+                    releasePackets(); // release
+                    lag = true;
+                }
+                break;
+        }
+    }
 
+    private void getInteractA1(double distance, boolean swung) {
+        if (interactTicks >= 3) {
+            interactTicks = 0;
+        }
+        interactTicks++;
+        switch (interactTicks) {
+            case 1:
+                blinking.set(true);
+                if (ModuleUtils.isBlocked) {
+                    mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, DOWN));
+                    lag = false;
+                }
+                else {
+                    handleInteractAndAttack(distance, true, true, swung);
+                    sendBlockPacket();
+                    releasePackets(); // release
+                    lag = true;
+                }
                 break;
+            case 2:
+                if (!lag) {
+                    handleInteractAndAttack(distance, true, true, swung);
+                    sendBlockPacket();
+                    releasePackets(); // release
+                    lag = true;
+                }
+                break;
+        }
+    }
+
+    private void getInteractB0(double distance, boolean swung) {
+        if (interactTicks >= 2) {
+            interactTicks = 0;
+        }
+        interactTicks++;
+        switch (interactTicks) {
+            case 1:
+                blinking.set(true);
+                if (ModuleUtils.isBlocked) {
+                    setSwapSlot();
+                    swapped = true;
+                    lag = false;
+                }
+                else {
+                    handleInteractAndAttack(distance, true, true, swung);
+                    sendBlockPacket();
+                    releasePackets(); // release
+                    lag = true;
+                }
+                break;
+            case 2:
+                if (swapped) {
+                    setCurrentSlot();
+                    swapped = false;
+                }
+                if (!lag) {
+                    handleInteractAndAttack(distance, true, true, swung);
+                    sendBlockPacket();
+                    releasePackets(); // release
+                    lag = true;
+                }
+                break;
+        }
+    }
+
+    private void getInteractB1(double distance, boolean swung) {
+        if (interactTicks >= 3) {
+            interactTicks = 0;
+        }
+        interactTicks++;
+        if (firstCycle) {
+            switch (interactTicks) {
+                case 1:
+                    blinking.set(true);
+                    if (ModuleUtils.isBlocked) {
+                        if (firstEdge == 1) {
+                            setSwapSlot();
+                            swapped = true;
+                        }
+                        else {
+                            mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, DOWN));
+                        }
+                        firstEdge++;
+                        if (firstEdge > 3) {
+                            firstEdge = 0;
+                        }
+                        lag = false;
+                    }
+                    else {
+                        handleInteractAndAttack(distance, true, true, swung);
+                        sendBlockPacket();
+                        releasePackets(); // release
+                        lag = true;
+                    }
+                    break;
+                case 2:
+                    if (swapped) {
+                        setCurrentSlot();
+                        swapped = false;
+                    }
+                    if (!lag) {
+                        handleInteractAndAttack(distance, true, true, swung);
+                        sendBlockPacket();
+                        releasePackets(); // release
+                        lag = true;
+                    }
+                    break;
+                case 3:
+                    firstCycle = false;
+                    break;
+            }
+        }
+        else {
+            switch (interactTicks) {
+                case 1:
+                    blinking.set(true);
+                    if (ModuleUtils.isBlocked) {
+                        mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, DOWN));
+                        lag = false;
+                    }
+                    else {
+                        handleInteractAndAttack(distance, true, true, swung);
+                        sendBlockPacket();
+                        releasePackets(); // release
+                        lag = true;
+                    }
+                    break;
+                case 2:
+                    if (!lag) {
+                        handleInteractAndAttack(distance, true, true, swung);
+                        sendBlockPacket();
+                        releasePackets(); // release
+                        lag = true;
+                    }
+                    firstCycle = true;
+                    interactTicks = 0;
+                    break;
+            }
         }
     }
 

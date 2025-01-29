@@ -124,6 +124,13 @@ public class Raven {
                 mc.displayGuiScreen(new KeyStrokeConfigGui());
             }
         }
+        else {
+            if (mc.currentScreen == null && Utils.nullCheck()) {
+                for (Profile profile : Raven.profileManager.profiles) {
+                    profile.getModule().onKeyBind();
+                }
+            }
+        }
     }
 
     @SubscribeEvent
