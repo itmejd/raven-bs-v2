@@ -546,7 +546,6 @@ public class Scaffold extends Module {
                 float forwardYaw = (mc.thePlayer.rotationYaw - hardcodedYaw() - 180 - (float) Utils.randomizeInt(-5, 5));
                 e.setYaw(forwardYaw);
                 e.setPitch(10 - (float) Utils.randomizeDouble(1, 5));
-                Utils.print("Forward");
             }
         }
         else {
