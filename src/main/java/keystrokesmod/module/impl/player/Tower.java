@@ -59,7 +59,7 @@ public class Tower extends Module {
 
     @SubscribeEvent
     public void onPreMotion(PreMotionEvent e) {
-        if (canTower()) {
+        if (canTower() && Utils.keysDown()) {
             switch ((int) towerMove.getInput()) {
                 case 1:
 
@@ -71,8 +71,10 @@ public class Tower extends Module {
 
                     break;
                 case 4:
-                    if (ModuleUtils.inAirTicks == 6) {
-                        e.setPosY(e.getPosY() + 0.000383527);
+                    if (tower) {
+                        if (ModuleUtils.inAirTicks == 6) {
+                            e.setPosY(e.getPosY() + 0.000383527);
+                        }
                     }
                     break;
             }
@@ -164,24 +166,28 @@ public class Tower extends Module {
                 case 4:
                     speed = false;
                     int simpleY = (int) Math.round((mc.thePlayer.posY % 1.0D) * 100.0D);
-                    switch(simpleY) {
-                        case 0:
-                            mc.thePlayer.motionY = 0.42f;
-                            if (ModuleUtils.inAirTicks == 6) {
-                                mc.thePlayer.motionY = -0.078400001525879;
-                            }
-                            Utils.setSpeed(getTower25Levels(getSpeedLevel()));
-                            speed = true;
-                            break;
-                        case 42:
-                            mc.thePlayer.motionY = 0.33f;
-                            Utils.setSpeed(getTower25Levels(getSpeedLevel()));
-                            speed = true;
-                            break;
-                        case 75:
-                            mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1;
-                            speed = false;
-                            break;
+                    if (mc.thePlayer.posY % 1 == 0) {
+                        tower = true;
+                    }
+                    if (tower) {
+                        switch (simpleY) {
+                            case 0:
+                                mc.thePlayer.motionY = 0.42f;
+                                if (ModuleUtils.inAirTicks == 6) {
+                                    mc.thePlayer.motionY = -0.078400001525879;
+                                }
+                                Utils.setSpeed(getTowerSpeed(getSpeedLevel()));
+                                speed = true;
+                                break;
+                            case 42:
+                                mc.thePlayer.motionY = 0.33f;
+                                Utils.setSpeed(getTowerSpeed(getSpeedLevel()));
+                                speed = true;
+                                break;
+                            case 75:
+                                mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1f;
+                                break;
+                        }
                     }
                     break;
             }
@@ -218,7 +224,7 @@ public class Tower extends Module {
                             if (!aligning) {
                                 blockX = (int) mc.thePlayer.posX;
 
-                                firstX = mc.thePlayer.posX;
+                                firstX = mc.thePlayer.posX - 10;
                                 firstY = mc.thePlayer.posY;
                                 firstZ = mc.thePlayer.posZ;
                             }
@@ -377,15 +383,6 @@ public class Tower extends Module {
             return towerGroundSpeedLevels[speedLevel];
         }
         return towerGroundSpeedLevels[0];
-    }
-
-    private final double[] tower25Levels = {0.3, 0.34, 0.38, 0.42, 0.42};
-
-    private double getTower25Levels(int speedLevel) {
-        if (speedLevel >= 0) {
-            return tower25Levels[speedLevel];
-        }
-        return tower25Levels[0];
     }
 
 }

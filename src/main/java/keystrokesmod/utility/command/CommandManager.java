@@ -1,5 +1,6 @@
 package keystrokesmod.utility.command;
 
+import keystrokesmod.module.impl.combat.Velocity;
 import keystrokesmod.utility.Utils;
 import keystrokesmod.utility.command.impl.*;
 
@@ -10,6 +11,8 @@ import java.util.List;
 public class CommandManager {
     private List<Command> commands = new ArrayList<>();
     public String[] latestAutoComplete = new String[]{};
+
+    public static Status status;
 
     public CommandManager() {
         registerCommand(new Help());
@@ -22,6 +25,7 @@ public class CommandManager {
         registerCommand(new Enemy());
         registerCommand(new Profiles());
         registerCommand(new Q());
+        registerCommand(new Status());
     }
 
     public void executeCommand(String input) {

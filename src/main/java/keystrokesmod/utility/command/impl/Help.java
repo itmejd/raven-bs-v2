@@ -14,6 +14,7 @@ public class Help extends Command {
         chat(" &b.ping &7Estimate your ping.");
         chat(" &b.friend/enemy [name/clear] &7Adds as enemy/friend.");
         chat(" &b.q [mode] &7Queues a gamemode.");
+        chat(" &b.status [player] &7Checks if a player is online or not. (Bypasses filters)");
         chatWithPrefix("&7Chat commands - &dModules");
         chat(" &b.cname [name] &7Set name hider name.");
         chat(" &b.binds (key) &7List module binds.");

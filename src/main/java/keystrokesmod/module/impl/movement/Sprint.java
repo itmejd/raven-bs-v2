@@ -65,7 +65,7 @@ public class Sprint extends Module {
 
     public boolean disableBackwards() {
         limit = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw - Utils.getLastReportedYaw());
-        double limitVal = 135;
+        double limitVal = 125;
         if (!disableBackwards.isToggled()) {
             return false;
         }

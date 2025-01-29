@@ -6,12 +6,14 @@ import keystrokesmod.event.PreUpdateEvent;
 import keystrokesmod.event.SendPacketEvent;
 import keystrokesmod.module.impl.movement.LongJump;
 import keystrokesmod.module.impl.render.HUD;
+import keystrokesmod.utility.command.CommandManager;
 import net.minecraft.client.Minecraft;
 import keystrokesmod.module.ModuleManager;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.network.play.client.*;
 import net.minecraft.network.play.server.S27PacketExplosion;
 import net.minecraft.util.BlockPos;
+import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -194,7 +196,61 @@ public class ModuleUtils {
             }
         }
 
+        if (CommandManager.status.cooldown != 0) {
+            if (mc.thePlayer.ticksExisted % 20 == 0) {
+                CommandManager.status.cooldown--;
+            }
+        }
+    }
 
+    @SubscribeEvent
+    public void onChat(ClientChatReceivedEvent e) {
+        if (!Utils.nullCheck()) {
+            return;
+        }
+        String stripped = Utils.stripColor(e.message.getUnformattedText());
+
+        //online
+        if (stripped.contains("You tipped ") && stripped.contains(" in") && stripped.contains("!") && CommandManager.status.start) {
+            CommandManager.status.start = false;
+            Utils.print("§a " + CommandManager.status.ign + " is online");
+            e.setCanceled(true);
+        }
+        if ((stripped.contains("You've already tipped someone in the past hour in") && stripped.contains("! Wait a bit and try again!") || stripped.contains("You've already tipped that person today in ")) && CommandManager.status.start) {
+            CommandManager.status.start = false;
+            Utils.print("§a " + CommandManager.status.ign + " is online");
+            //client.print(util.colorSymbol + "7^ if player recently left the server this may be innacurate (rate limited)");
+            e.setCanceled(true);
+        }
+        //offline
+        if (stripped.contains("That player is not online, try another user!") && CommandManager.status.start) {
+            CommandManager.status.start = false;
+            Utils.print("§7 " + CommandManager.status.ign + " is offline");
+            e.setCanceled(true);
+        }
+        //invalid name
+        if (stripped.contains("Can't find a player by the name of '") && CommandManager.status.start) {
+            CommandManager.status.cooldown = 0;
+            CommandManager.status.start = false;
+            CommandManager.status.currentMode = CommandManager.status.lastMode;
+            Utils.print("§7 " + CommandManager.status.ign + " doesn't exist");
+            e.setCanceled(true);
+        }
+        if (stripped.contains("That's not a valid username!") && CommandManager.status.start) {
+            CommandManager.status.cooldown = 0;
+            CommandManager.status.start = false;
+            CommandManager.status.currentMode = CommandManager.status.lastMode;
+            Utils.print("§binvalid username");
+            e.setCanceled(true);
+        }
+        //checking urself
+        if (stripped.contains("You cannot give yourself tips!") && CommandManager.status.start) {
+            CommandManager.status.cooldown = 0;
+            CommandManager.status.start = false;
+            CommandManager.status.currentMode = CommandManager.status.lastMode;
+            Utils.print("§a " + CommandManager.status.ign + " is online");
+            e.setCanceled(true);
+        }
     }
 
     @SubscribeEvent

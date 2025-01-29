@@ -966,13 +966,15 @@ public class KillAura extends Module {
                         case 1:
                             blinking.set(true);
                             if (ModuleUtils.isBlocked) {
-                                if (firstEdge <= 1) {
+                                if (firstEdge == 1) {
                                     setSwapSlot();
                                     swapped = true;
-                                    firstEdge++;
                                 }
                                 else {
                                     mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, DOWN));
+                                }
+                                firstEdge++;
+                                if (firstEdge > 3) {
                                     firstEdge = 0;
                                 }
                                 lag = false;

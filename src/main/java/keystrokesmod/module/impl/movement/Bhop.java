@@ -38,6 +38,9 @@ public class Bhop extends Module {
 
     @SubscribeEvent
     public void onPostPlayerInput(PostPlayerInputEvent e) {
+        if (!mc.thePlayer.onGround || mc.thePlayer.capabilities.isFlying) {
+            return;
+        }
         if (hopping) {
             mc.thePlayer.movementInput.jump = false;
         }

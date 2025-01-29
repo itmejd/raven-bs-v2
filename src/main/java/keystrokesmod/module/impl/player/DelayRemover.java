@@ -30,9 +30,17 @@ public class DelayRemover extends Module {
         if (oldReg.isToggled()) {
             ((IAccessorMinecraft) mc).setLeftClickCounter(0);
         }
-        if (removeJumpTicks.getInput() == 1 || removeJumpTicks.getInput() == 2 && removeJumpDelay()) {
-            ((IAccessorEntityLivingBase) mc.thePlayer).setJumpTicks(0);
+        switch ((int) removeJumpTicks.getInput()) {
+            case 1:
+                ((IAccessorEntityLivingBase) mc.thePlayer).setJumpTicks(0);
+                break;
+            case 2:
+                if (!mc.thePlayer.onGround && mc.thePlayer.isCollidedVertically) {
+                    ((IAccessorEntityLivingBase) mc.thePlayer).setJumpTicks(0);
+                }
+                break;
         }
+
     }
 
     private boolean removeJumpDelay() {
