@@ -50,7 +50,7 @@ public class Tower extends Module {
         super("Tower", category.player);
         this.registerSetting(towerMove = new SliderSetting("Tower Move", 0, towerMoveModes));
         this.registerSetting(verticalTower = new SliderSetting("Vertical Tower", 0, verticalTowerModes));
-        this.registerSetting(slowedSpeed = new SliderSetting("Slowed speed", 2, 0, 9, 0.1));
+        this.registerSetting(slowedSpeed = new SliderSetting("Slowed speed", "%", 0, 0, 100, 1));
         this.registerSetting(slowedTicks = new SliderSetting("Slowed ticks", 1, 0, 20, 1));
         this.registerSetting(disableWhileHurt = new ButtonSetting("Disable while hurt", false));
 
@@ -74,6 +74,7 @@ public class Tower extends Module {
                     if (tower) {
                         if (ModuleUtils.inAirTicks == 6) {
                             e.setPosY(e.getPosY() + 0.000383527);
+                            ModuleManager.scaffold.rotateForward();
                         }
                     }
                     break;
@@ -195,7 +196,8 @@ public class Tower extends Module {
         else {
             if (wasTowering && slowedTicks.getInput() > 0 && modulesEnabled()) {
                 if (slowTicks++ < slowedTicks.getInput()) {
-                    Utils.setSpeed(Math.max(slowedSpeed.getInput() * 0.1 - 0.25, 0));
+                    mc.thePlayer.motionX *= slowedSpeed.getInput() / 100;
+                    mc.thePlayer.motionZ *= slowedSpeed.getInput() / 100;
                 }
                 else {
                     slowTicks = 0;

@@ -166,7 +166,7 @@ public class Scaffold extends Module {
         if (Utils.keysDown() && usingFastScaffold() && fastScaffold.getInput() >= 1 && !ModuleManager.tower.canTower() && !ModuleManager.LongJump.function) { // jump mode
             if (mc.thePlayer.onGround && Utils.isMoving()) {
                 if (scaffoldTicks > 1) {
-                    rotateForward = true;
+                    rotateForward();
                     mc.thePlayer.jump();
                     Utils.setSpeed(getSpeed(getSpeedLevel()) - Utils.randomizeDouble(0.001, 0.0001));
                     if (fastScaffold.getInput() == 5 || fastScaffold.getInput() == 2 && firstKeepYPlace) {
@@ -239,10 +239,6 @@ public class Scaffold extends Module {
             targetBlock = null;
         }
 
-        if (ModuleUtils.inAirTicks >= 1) {
-            rotateForward = false;
-        }
-
         switch ((int) rotation.getInput()) {
             case 1:
                 e.setRotations(mc.thePlayer.rotationYaw - hardcodedYaw(), 81.150F);
@@ -261,12 +257,12 @@ public class Scaffold extends Module {
 
                 float minPitch = 78.650f;
 
-                float firstStraight = 126.50f;
-                float secondStraight = 128.50f;
-                float thirdStraight = 132.50f;
-                float firstDiag = 133.50f;
-                float secondDiag = 134.50f;
-                float thirdDiag = 135.50f;
+                float firstStraight = 127.50f;
+                float secondStraight = 129.50f;
+                float thirdStraight = 133.50f;
+                float firstDiag = 134.50f;
+                float secondDiag = 135.50f;
+                float thirdDiag = 136.50f;
                 float fourthDiag = 138f;
 
                 //first straight
@@ -538,6 +534,9 @@ public class Scaffold extends Module {
         //Utils.print("" + mc.thePlayer.rotationYaw + " " + mc.thePlayer.rotationPitch);
 
         //jump facing forward
+        if (ModuleUtils.inAirTicks >= 1) {
+            rotateForward = false;
+        }
         if (rotateForward && jumpFacingForward.isToggled()) {
             if (rotation.getInput() > 0) {
                 if (!rotatingForward) {
@@ -547,6 +546,7 @@ public class Scaffold extends Module {
                 float forwardYaw = (mc.thePlayer.rotationYaw - hardcodedYaw() - 180 - (float) Utils.randomizeInt(-5, 5));
                 e.setYaw(forwardYaw);
                 e.setPitch(10 - (float) Utils.randomizeDouble(1, 5));
+                Utils.print("Forward");
             }
         }
         else {
@@ -592,13 +592,13 @@ public class Scaffold extends Module {
 
             hasSwapped = true;
             int mode = (int) fastScaffold.getInput();
-            if (rotation.getInput() == 0 || rotation.getInput() == 2 || (rotation.getInput() > 0 && (rotationDelay == 0 && !rotateForward || !jumpFacingForward.isToggled()))) {
+            if (rotation.getInput() == 0 || rotationDelay == 0) {
                 placeBlock(0, 0);
             }
             if (ModuleManager.tower.placeExtraBlock) {
                 placeBlock(0, -1);
             }
-            if (fastScaffoldKeepY && !ModuleManager.tower.canTower()) {
+            if (fastScaffoldKeepY && !ModuleManager.tower.canTower() && rotationDelay == 0) {
                 ++keepYTicks;
                 if ((int) mc.thePlayer.posY > (int) startYPos) {
                     switch (mode) {
@@ -716,6 +716,11 @@ public class Scaffold extends Module {
             difference -= 360.0F;
         }
         return difference;
+    }
+
+    public void rotateForward() {
+        rotateForward = true;
+        rotatingForward = false;
     }
 
     public boolean blockAbove() {
