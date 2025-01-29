@@ -25,7 +25,7 @@ public class Tower extends Module {
     final private SliderSetting slowedTicks;
     final private ButtonSetting disableWhileHurt;
 
-    final private String[] towerMoveModes = new String[]{"None", "Vanilla", "Low", "Watchdog", "2.5 tick"};
+    final private String[] towerMoveModes = new String[]{"None", "Vanilla", "Low", "Edge", "2.5 tick"};
     final private String[] verticalTowerModes = new String[]{"None", "Vanilla", "Extra block"};
     private int slowTicks;
     private boolean wasTowering;
