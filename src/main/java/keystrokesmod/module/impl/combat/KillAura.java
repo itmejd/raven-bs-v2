@@ -70,7 +70,7 @@ public class KillAura extends Module {
 
     private String[] autoBlockModes = new String[] { "Manual", "Vanilla", "Partial", "Interact A", "Interact B" };
     private String[] interactAModes = new String[] { "10", "7" };
-    private String[] interactBModes = new String[] { "10", "8" };
+    private String[] interactBModes = new String[] { "10", "8.5" };
     private String[] rotationModes = new String[] { "Silent", "Lock view", "None" };
     private String[] sortModes = new String[] { "Distance", "Health", "Hurttime", "Yaw" };
 
@@ -125,8 +125,8 @@ public class KillAura extends Module {
         super("KillAura", category.combat);
         this.registerSetting(aps = new SliderSetting("APS", 16.0, 1.0, 20.0, 0.5));
         this.registerSetting(autoBlockMode = new SliderSetting("Autoblock", 0, autoBlockModes));
-        this.registerSetting(interactA = new SliderSetting("APS cap", 0, interactAModes));
-        this.registerSetting(interactB = new SliderSetting("APS cap", 0, interactBModes));
+        this.registerSetting(interactA = new SliderSetting("Interact mode", " aps", 0, interactAModes));
+        this.registerSetting(interactB = new SliderSetting("Interact mode", " aps", 0, interactBModes));
         this.registerSetting(fov = new SliderSetting("FOV", 360.0, 30.0, 360.0, 4.0));
         this.registerSetting(attackRange = new SliderSetting("Range (attack)", 3.0, 3.0, 6.0, 0.05));
         this.registerSetting(swingRange = new SliderSetting("Range (swing)", 3.3, 3.0, 8.0, 0.05));
@@ -227,7 +227,7 @@ public class KillAura extends Module {
         if (!Utils.nullCheck()) {
             return;
         }
-        if (target != null) {
+        if (target != null && Utils.holdingSword()) {
             if (Mouse.isButtonDown(0)) {
                 swingItem();
             }
@@ -239,7 +239,7 @@ public class KillAura extends Module {
             checkUsing = false;
         }
         if (target == null && Utils.tabbedIn()) {
-            if (checkUsing && !sendUnBlock && Mouse.isButtonDown(1) && !blinkAutoBlock()) {
+            if (checkUsing && !sendUnBlock && Mouse.isButtonDown(1) && !blinkAutoBlock() && Utils.holdingSword()) {
                 KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), true);
                 checkUsing = false;
             }

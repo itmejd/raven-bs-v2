@@ -44,6 +44,8 @@ public class ModuleUtils {
     private int attackingTicks;
     private int unTargetTicks;
     public static int profileTicks = -1;
+    public static boolean lastTickOnGround, lastTickPos1;
+    private boolean thisTickOnGround, thisTickPos1;
 
     public static boolean isBlocked;
 
@@ -256,6 +258,12 @@ public class ModuleUtils {
     @SubscribeEvent
     public void onPreMotion(PreMotionEvent e) {
         int simpleY = (int) Math.round((e.posY % 1) * 10000);
+
+        lastTickOnGround = thisTickOnGround;
+        thisTickOnGround = mc.thePlayer.onGround;
+
+        lastTickPos1 = thisTickPos1;
+        thisTickPos1 = mc.thePlayer.posY % 1 == 0;
 
         if (inAirTicks <= 20) {
             inAirTicks = mc.thePlayer.onGround ? 0 : ++inAirTicks;

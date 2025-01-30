@@ -13,9 +13,6 @@ import keystrokesmod.utility.RotationUtils;
 import keystrokesmod.utility.Utils;
 import net.minecraft.network.play.client.*;
 import net.minecraft.potion.PotionEffect;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.Vec3;
-import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public class Tower extends Module {
@@ -29,7 +26,7 @@ public class Tower extends Module {
     final private String[] verticalTowerModes = new String[]{"None", "Vanilla", "Extra block"};
     private int slowTicks;
     private boolean wasTowering;
-    private int offGroundTicks;
+    private int towerTicks;
     private boolean tower;
     private boolean hasTowered, startedTowerInAir, setLowMotion, firstJump;
     private int cMotionTicks, placeTicks;
@@ -60,6 +57,7 @@ public class Tower extends Module {
     @SubscribeEvent
     public void onPreMotion(PreMotionEvent e) {
         if (canTower() && Utils.keysDown()) {
+            towerTicks = mc.thePlayer.onGround ? 0 : ++towerTicks;
             switch ((int) towerMove.getInput()) {
                 case 1:
 
@@ -72,7 +70,7 @@ public class Tower extends Module {
                     break;
                 case 4:
                     if (tower) {
-                        if (ModuleUtils.inAirTicks == 6) {
+                        if (towerTicks == 6) {
                             e.setPosY(e.getPosY() + 0.000383527);
                             ModuleManager.scaffold.rotateForward();
                         }
@@ -85,16 +83,12 @@ public class Tower extends Module {
     @SubscribeEvent
     public void onPreUpdate(PreUpdateEvent e) {
         int valY = (int) Math.round((mc.thePlayer.posY % 1) * 10000);
-        offGroundTicks++;
-        if (mc.thePlayer.onGround) {
-            offGroundTicks = 0;
-        }
         if (canTower() && Utils.keysDown()) {
             wasTowering = true;
             switch ((int) towerMove.getInput()) {
                 case 1:
                     mc.thePlayer.motionY = 0.41965;
-                    switch (offGroundTicks) {
+                    switch (towerTicks) {
                         case 1:
                             mc.thePlayer.motionY = 0.33;
                             break;
@@ -102,15 +96,15 @@ public class Tower extends Module {
                             mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1;
                             break;
                     }
-                    if (offGroundTicks >= 3) {
-                        offGroundTicks = 0;
+                    if (towerTicks >= 3) {
+                        towerTicks = 0;
                     }
                 case 2:
                     if (mc.thePlayer.onGround) {
                         mc.thePlayer.motionY = 0.4196;
                     }
                     else {
-                        switch (offGroundTicks) {
+                        switch (towerTicks) {
                             case 3:
                             case 4:
                                 mc.thePlayer.motionY = 0;
@@ -174,7 +168,7 @@ public class Tower extends Module {
                         switch (simpleY) {
                             case 0:
                                 mc.thePlayer.motionY = 0.42f;
-                                if (ModuleUtils.inAirTicks == 6) {
+                                if (towerTicks == 6) {
                                     mc.thePlayer.motionY = -0.078400001525879;
                                 }
                                 Utils.setSpeed(getTowerSpeed(getSpeedLevel()));
@@ -211,7 +205,7 @@ public class Tower extends Module {
                 slowTicks = 0;
             }
             hasTowered = tower = firstJump = startedTowerInAir = setLowMotion = speed = false;
-            cMotionTicks = placeTicks = 0;
+            cMotionTicks = placeTicks = towerTicks = 0;
             reset();
         }
         if (canTower() && !Utils.keysDown()) {
@@ -317,7 +311,7 @@ public class Tower extends Module {
     }
 
     private void reset() {
-        offGroundTicks = 0;
+        towerTicks = 0;
         tower = false;
         placeTicks = 0;
         setLowMotion = false;

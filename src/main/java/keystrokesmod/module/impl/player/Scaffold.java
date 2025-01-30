@@ -266,36 +266,39 @@ public class Scaffold extends Module {
                 float fourthDiag = 138f;
 
                 //first straight
-                if (quad < 5 || quad >= 85) {
+                if (quad <= 5 || quad >= 85) {
                     yawAngle = firstStraight;
+                }
+                else if (quad > 5 || quad < 85) {
 
-                //second straight
-                } else if (quad >= 80 || quad < 10) {
-                    yawAngle = secondStraight;
+                    //second straight
+                    if (quad >= 80 || quad < 10) {
+                        yawAngle = secondStraight;
 
-                //third straight
-                } else if (quad >= 65 || quad < 25) {
-                    yawAngle = thirdStraight;
+                        //third straight
+                    } else if (quad >= 65 || quad < 25) {
+                        yawAngle = thirdStraight;
 
-                //first diag
-                } else if (quad >= 55 || quad < 35) {
-                    yawAngle = firstDiag;
+                        //first diag
+                    } else if (quad >= 55 || quad < 35) {
+                        yawAngle = firstDiag;
 
-                //second diag
-                } else if (quad >= 15 && quad < 45) {
-                    yawAngle = secondDiag;
-                    if (quad >= 38) {
-                        yawAngle = thirdDiag;
-                        if (quad >= 42) {
-                            yawAngle = fourthDiag;
+                        //second diag
+                    } else if (quad >= 15 && quad < 45) {
+                        yawAngle = secondDiag;
+                        if (quad >= 38) {
+                            yawAngle = thirdDiag;
+                            if (quad >= 42) {
+                                yawAngle = fourthDiag;
+                            }
                         }
-                    }
-                } else {
-                    yawAngle = secondDiag;
-                    if (quad >= 45 && quad < 52) {
-                        yawAngle = thirdDiag;
-                        if (quad < 48) {
-                            yawAngle = fourthDiag;
+                    } else {
+                        yawAngle = secondDiag;
+                        if (quad >= 45 && quad < 52) {
+                            yawAngle = thirdDiag;
+                            if (quad < 48) {
+                                yawAngle = fourthDiag;
+                            }
                         }
                     }
                 }
@@ -312,12 +315,12 @@ public class Scaffold extends Module {
                         //pitch = minPitch;
                     }
                     if (firstStroke == 0) {
-                        strokeDelay = 275;
+                        strokeDelay = 400;
                     }
                 } else {
                     yawOffset = minOffset;
                     pitch = minPitch;
-                    strokeDelay = 575;
+                    strokeDelay = 600;
                 }
 
                 if (!Utils.isMoving() || Utils.getHorizontalSpeed() == 0.0D) {
@@ -335,7 +338,7 @@ public class Scaffold extends Module {
                         lastYaw + MathHelper.wrapAngleTo180_float(newYaw - lastYaw)
                 );
 
-                if (firstStroke == 0 && Utils.scaffoldDiagonal(false)) {
+                if (firstStroke == 0 && (quad > 5 && quad < 85)) {
                     if (quad >= 0 && quad < 45) {
                         if (side >= 0) {
                             set2 = false;
@@ -354,7 +357,7 @@ public class Scaffold extends Module {
 
                 double minSwitch = (!Utils.scaffoldDiagonal(false)) ? 0 : 15;
                 if (side >= 0) {
-                    if (!Utils.scaffoldDiagonal(false) && (quad >= 85 || quad <= 5)) {
+                    if (quad <= 5 || quad >= 85) {
                         if (yawOffset <= -minSwitch && firstStroke == 0) {
                             set2 = false;
                             firstStroke = Utils.time();
@@ -372,7 +375,7 @@ public class Scaffold extends Module {
                         break;
                     }
                 } else if (side <= -0) {
-                    if (!Utils.scaffoldDiagonal(false) && (quad >= 85 || quad <= 5)) {
+                    if (quad <= 5 || quad >= 85) {
                         if (yawOffset >= minSwitch && firstStroke == 0) {
                             set2 = false;
                             firstStroke = Utils.time();

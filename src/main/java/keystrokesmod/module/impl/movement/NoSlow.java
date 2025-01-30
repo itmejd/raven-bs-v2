@@ -9,6 +9,9 @@ import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.DescriptionSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
 import keystrokesmod.utility.*;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockSlab;
+import net.minecraft.block.BlockStairs;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
@@ -35,10 +38,10 @@ public class NoSlow extends Module {
     public static ButtonSetting groundSpeedOption;
     private String[] modes = new String[]{"Vanilla", "Pre", "Post", "Alpha", "Float"};
     private boolean postPlace;
-    private boolean canFloat;
+    public static boolean canFloat;
     private boolean reSendConsume;
-    public static boolean noSlowing;
-    private int offsetDelay;
+    public static boolean noSlowing, offset;
+    private int ticksOffStairs = 30;
     private boolean setCancelled;
 
     public NoSlow() {
@@ -102,7 +105,7 @@ public class NoSlow extends Module {
 
     @SubscribeEvent
     public void onPostPlayerInput(PostPlayerInputEvent e) {
-        if (canFloat && noSlowing && mc.thePlayer.onGround) {
+        if (canFloat && noSlowing && offset && mc.thePlayer.onGround) {
             if (groundSpeedOption.isToggled() && !Utils.jumpDown() && !ModuleManager.bhop.isEnabled() && Utils.keysDown() && !Utils.bowBackwards()) {
                 Utils.setSpeed(getSpeedModifier());
                 //Utils.print("ground speed");
@@ -162,20 +165,25 @@ public class NoSlow extends Module {
 
     @SubscribeEvent
     public void onPreMotion(PreMotionEvent e) {
+        Block blockBelow = BlockUtils.getBlock(new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY - 1, mc.thePlayer.posZ));
+        Block block = BlockUtils.getBlock(new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ));
+        if (block instanceof BlockStairs || block instanceof BlockSlab && ModuleUtils.lastTickOnGround && ModuleUtils.lastTickPos1) {
+            ticksOffStairs = 0;
+        }
+        else {
+            ticksOffStairs++;
+        }
         if (ModuleManager.bedAura.stopAutoblock || mode.getInput() != 4) {
             resetFloat();
             return;
         }
         postPlace = false;
-        if (mc.thePlayer.getHeldItem() != null && holdingConsumable(mc.thePlayer.getHeldItem()) && (!Mouse.isButtonDown(1) || !canFloat)) {
-            KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
-        }
         if (!Mouse.isButtonDown(1) || (mc.thePlayer.getHeldItem() == null || !holdingConsumable(mc.thePlayer.getHeldItem()))) {
             resetFloat();
-            noSlowing = false;
-            offsetDelay = 0;
-            //Utils.print("!Noslowing");
             return;
+        }
+        if (mc.thePlayer.getHeldItem() != null && holdingConsumable(mc.thePlayer.getHeldItem()) && !Mouse.isButtonDown(1)) {
+            KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
         }
         if (reSendConsume) {
             if (ModuleUtils.inAirTicks > 0) {
@@ -184,18 +192,17 @@ public class NoSlow extends Module {
                 canFloat = true;
             }
         }
-        if (!canFloat) {
-            offsetDelay = 0;
+        noSlowing = true;
+
+        if (ticksOffStairs < 30) {
+            offset = false;
             return;
         }
-        /*offsetDelay++;
-        if (offsetDelay < 3) {
-            return;
-        }*/
+        Utils.sendModuleMessage(this, "Offset");
         e.setPosY(e.getPosY() + ModuleUtils.offsetValue);
-        noSlowing = true;
+        offset = true;
         if (groundSpeedOption.isToggled()) {
-            if (!ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !Utils.jumpDown() && mc.thePlayer.moveForward <= -0.5 && mc.thePlayer.moveStrafing == 0 && Utils.isMoving() && mc.thePlayer.onGround) {
+            if (!ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !Utils.jumpDown() && mc.thePlayer.moveForward <= -0.5 && mc.thePlayer.moveStrafing == 0 && offset && Utils.isMoving() && mc.thePlayer.onGround) {
                 float yaw = mc.thePlayer.rotationYaw;
                 e.setYaw(yaw - 55);
             }
@@ -229,7 +236,7 @@ public class NoSlow extends Module {
     }
 
     public static boolean groundSpeed() {
-        return groundSpeedOption.isToggled() && noSlowing && Utils.isMoving() && !Utils.jumpDown();
+        return groundSpeedOption.isToggled() && noSlowing && canFloat && offset && Utils.isMoving() && !Utils.jumpDown();
     }
 
     @Override
@@ -238,8 +245,7 @@ public class NoSlow extends Module {
     }
 
     private void resetFloat() {
-        reSendConsume = false;
-        canFloat = false;
+        reSendConsume = canFloat = noSlowing = offset = false;
     }
 
     public static boolean hasArrows(ItemStack stack) {
