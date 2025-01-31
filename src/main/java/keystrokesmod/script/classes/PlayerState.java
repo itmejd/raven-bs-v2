@@ -37,4 +37,11 @@ public class PlayerState {
     public Object[] asArray() {
         return new Object[] { this.x, this.y, this.z, this.yaw, this.pitch, this.onGround, this.isSprinting, this.isSneaking };
     }
+
+    public boolean equals(PlayerState playerState) {
+        if (playerState == null) {
+            return false;
+        }
+        return this.x == playerState.x && this.y == playerState.y && this.z == playerState.z && this.yaw == playerState.yaw && this.pitch == playerState.pitch && this.onGround == playerState.onGround && this.isSprinting == playerState.isSprinting && this.isSneaking == playerState.isSneaking;
+    }
 }

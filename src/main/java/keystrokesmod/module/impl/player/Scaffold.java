@@ -95,6 +95,8 @@ public class Scaffold extends Module {
     private int disableTicks;
     private int scaffoldTicks;
 
+    private float minOffset;
+
     private long firstStroke, strokeDelay = 575;
     private float lastEdge, lastEdge2, yawAngle;
 
@@ -251,53 +253,81 @@ public class Scaffold extends Module {
 
                 float side = MathHelper.wrapAngleTo180_float(getMotionYaw() - yaw);
                 float offset = yawAngle;//(!Utils.scaffoldDiagonal(false)) ? 125.500F : 143.500F;
-                float minOffset = (!Utils.scaffoldDiagonal(false)) ? 20 : 8;
                 float yawBackwards = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - hardcodedYaw();
                 float blockYawOffset = MathHelper.wrapAngleTo180_float(yawBackwards - blockYaw);
+                int quadVal = 0;
 
-                float minPitch = 78.650f;
+                float minPitch = 77.650f;
 
-                float firstStraight = 127.50f;
-                float secondStraight = 129.50f;
-                float thirdStraight = 133.50f;
-                float firstDiag = 134.50f;
-                float secondDiag = 135.50f;
-                float thirdDiag = 136.50f;
-                float fourthDiag = 138f;
+                float firstStraight = 130.50f;
+                float secondStraight = 132.50f;
+                float thirdStraight = 134.50f;
+                float firstDiag = 135.50f;
+                float secondDiag = 137.50f;
+                float thirdDiag = 139.50f;
+                float fourthDiag = 142.50f;
+
+                float firstOffset = 23;
+                float secondOffset = 20;
+                float thirdOffset = 17;
+                float fourthOffset = 14;
+                float fifthOffset = 11;
+                float sixthOffset = 8;
+                float seventhOffset = 6;
 
                 //first straight
                 if (quad <= 5 || quad >= 85) {
                     yawAngle = firstStraight;
+                    minOffset = firstOffset;
+                    quadVal = 1;
                 }
                 else if (quad > 5 || quad < 85) {
 
                     //second straight
                     if (quad >= 80 || quad < 10) {
                         yawAngle = secondStraight;
+                        minOffset = secondOffset;
+                        quadVal = 2;
 
-                        //third straight
+                    //third straight
                     } else if (quad >= 65 || quad < 25) {
                         yawAngle = thirdStraight;
+                        minOffset = thirdOffset;
+                        quadVal = 3;
 
-                        //first diag
+                    //first diag
                     } else if (quad >= 55 || quad < 35) {
                         yawAngle = firstDiag;
+                        minOffset = fourthOffset;
+                        quadVal = 4;
 
-                        //second diag
+                    //second diag
                     } else if (quad >= 15 && quad < 45) {
                         yawAngle = secondDiag;
+                        minOffset = fifthOffset;
+                        quadVal = 5;
                         if (quad >= 38) {
                             yawAngle = thirdDiag;
+                            minOffset = sixthOffset;
+                            quadVal = 6;
                             if (quad >= 42) {
                                 yawAngle = fourthDiag;
+                                minOffset = seventhOffset;
+                                quadVal = 7;
                             }
                         }
                     } else {
                         yawAngle = secondDiag;
+                        minOffset = fifthOffset;
+                        quadVal = 5;
                         if (quad >= 45 && quad < 52) {
                             yawAngle = thirdDiag;
+                            minOffset = sixthOffset;
+                            quadVal = 6;
                             if (quad < 48) {
                                 yawAngle = fourthDiag;
+                                minOffset = seventhOffset;
+                                quadVal = 7;
                             }
                         }
                     }
@@ -338,7 +368,7 @@ public class Scaffold extends Module {
                         lastYaw + MathHelper.wrapAngleTo180_float(newYaw - lastYaw)
                 );
 
-                if (firstStroke == 0 && (quad > 5 && quad < 85)) {
+                if (firstStroke == 0 && quadVal != 1) {
                     if (quad >= 0 && quad < 45) {
                         if (side >= 0) {
                             set2 = false;
@@ -357,7 +387,7 @@ public class Scaffold extends Module {
 
                 double minSwitch = (!Utils.scaffoldDiagonal(false)) ? 0 : 15;
                 if (side >= 0) {
-                    if (quad <= 5 || quad >= 85) {
+                    if (quadVal == 1) {
                         if (yawOffset <= -minSwitch && firstStroke == 0) {
                             set2 = false;
                             firstStroke = Utils.time();
@@ -375,7 +405,7 @@ public class Scaffold extends Module {
                         break;
                     }
                 } else if (side <= -0) {
-                    if (quad <= 5 || quad >= 85) {
+                    if (quadVal == 1) {
                         if (yawOffset >= minSwitch && firstStroke == 0) {
                             set2 = false;
                             firstStroke = Utils.time();
@@ -568,8 +598,8 @@ public class Scaffold extends Module {
         }
 
         //pitch fix
-        if (e.getPitch() >= 89.9F) {
-            e.setPitch(89.9F);
+        if (e.getPitch() >= 89) {
+            e.setPitch(89);
         }
 
         lastYaw = mc.thePlayer.rotationYaw;
@@ -631,7 +661,7 @@ public class Scaffold extends Module {
         }
 
         if (disabledModule) {
-            if (hasPlaced && (towerEdge || floatStarted && Utils.isMoving() && Utils.isEdgeOfBlock())) {
+            if (hasPlaced && (towerEdge || floatStarted && Utils.isMoving())) {
                 dontDisable = true;
             }
 

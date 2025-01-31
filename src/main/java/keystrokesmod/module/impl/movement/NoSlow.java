@@ -165,14 +165,14 @@ public class NoSlow extends Module {
 
     @SubscribeEvent
     public void onPreMotion(PreMotionEvent e) {
-        Block blockBelow = BlockUtils.getBlock(new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY - 1, mc.thePlayer.posZ));
+        /*Block blockBelow = BlockUtils.getBlock(new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY - 1, mc.thePlayer.posZ));
         Block block = BlockUtils.getBlock(new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ));
         if (block instanceof BlockStairs || block instanceof BlockSlab && ModuleUtils.lastTickOnGround && ModuleUtils.lastTickPos1) {
             ticksOffStairs = 0;
         }
         else {
             ticksOffStairs++;
-        }
+        }*/
         if (ModuleManager.bedAura.stopAutoblock || mode.getInput() != 4) {
             resetFloat();
             return;
@@ -198,7 +198,6 @@ public class NoSlow extends Module {
             offset = false;
             return;
         }
-        Utils.sendModuleMessage(this, "Offset");
         e.setPosY(e.getPosY() + ModuleUtils.offsetValue);
         offset = true;
         if (groundSpeedOption.isToggled()) {
@@ -273,7 +272,7 @@ public class NoSlow extends Module {
                 speedModifier = 0.37;
                 break;
         }
-        return speedModifier;
+        return speedModifier - 0.005;
     }
 
     private boolean holdingConsumable(ItemStack itemStack) {

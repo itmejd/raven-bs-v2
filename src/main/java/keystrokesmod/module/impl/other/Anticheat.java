@@ -1,5 +1,7 @@
 package keystrokesmod.module.impl.other;
 
+import keystrokesmod.event.AntiCheatFlagEvent;
+import keystrokesmod.event.ReceivePacketEvent;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.impl.world.AntiBot;
 import keystrokesmod.module.setting.impl.ButtonSetting;
@@ -9,12 +11,14 @@ import keystrokesmod.utility.BlockUtils;
 import keystrokesmod.utility.PlayerData;
 import keystrokesmod.utility.Utils;
 import net.minecraft.block.BlockAir;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.event.ClickEvent;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatStyle;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
@@ -33,9 +37,13 @@ public class Anticheat extends Module {
     private ButtonSetting noSlow;
     private ButtonSetting scaffold;
     private ButtonSetting legitScaffold;
+
     private HashMap<UUID, HashMap<ButtonSetting, Long>> flags = new HashMap<>();
     private HashMap<UUID, PlayerData> players = new HashMap<>();
+
     private long lastAlert;
+    private long lastClientBoundPacket;
+
     public Anticheat() {
         super("Anticheat", category.other);
         this.registerSetting(new DescriptionSetting("Tries to detect cheaters."));
@@ -52,6 +60,11 @@ public class Anticheat extends Module {
         this.registerSetting(scaffold = new ButtonSetting("Scaffold", true));
         this.registerSetting(legitScaffold = new ButtonSetting("Legit scaffold", true));
         this.closetModule = true;
+    }
+
+    @SubscribeEvent
+    public void onReceivePacket(ReceivePacketEvent e) {
+        lastClientBoundPacket = System.currentTimeMillis();
     }
 
     private void alert(final EntityPlayer entityPlayer, ButtonSetting mode) {
@@ -86,6 +99,7 @@ public class Anticheat extends Module {
         chatStyle.setChatClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/wdr " + entityPlayer.getName()));
         chatComponentText.appendSibling(new ChatComponentText(Utils.formatColor(" §7[§cWDR§7]")).setChatStyle(chatStyle));
         mc.thePlayer.addChatMessage(chatComponentText);
+        postAntiCheatFlagEvent(mode.getName(), entityPlayer);
         if (shouldPing.isToggled() && Utils.timeBetween(lastAlert, currentTimeMillis) >= 1500L) {
             mc.thePlayer.playSound("note.pling", 1.0f, 1.0f);
             lastAlert = currentTimeMillis;
@@ -144,7 +158,7 @@ public class Anticheat extends Module {
             alert(entityPlayer, legitScaffold);
             return;
         }
-        if (noSlow.isToggled() && playerData.noSlowTicks >= 11 && playerData.speed >= 0.08) {
+        if (noSlow.isToggled() && playerData.noSlowTicks == 11 && playerData.speed >= 0.08) {
             alert(entityPlayer, noSlow);
             return;
         }
@@ -163,7 +177,7 @@ public class Anticheat extends Module {
                 return;
             }
         }
-        if (noFall.isToggled() && !entityPlayer.capabilities.isFlying) {
+        if (noFall.isToggled() && !entityPlayer.capabilities.isFlying && Utils.timeBetween(System.currentTimeMillis(), lastClientBoundPacket) <= 150) {
             double serverPosX = entityPlayer.serverPosX / 32;
             double serverPosY = entityPlayer.serverPosY / 32;
             double serverPosZ= entityPlayer.serverPosZ / 32;
@@ -176,5 +190,9 @@ public class Anticheat extends Module {
                 }
             }
         }
+    }
+
+    public void postAntiCheatFlagEvent(String flag, Entity entity) {
+        MinecraftForge.EVENT_BUS.post(new AntiCheatFlagEvent(flag, entity));
     }
 }

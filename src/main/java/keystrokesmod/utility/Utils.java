@@ -45,6 +45,8 @@ import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.io.*;
+import java.math.BigInteger;
+import java.security.MessageDigest;
 import java.util.List;
 import java.util.*;
 import java.util.stream.IntStream;
@@ -798,6 +800,21 @@ public class Utils {
         return Keyboard.isKeyDown(mc.gameSettings.keyBindJump.getKeyCode());
     }
 
+    public static boolean sneakDown() {
+        return Keyboard.isKeyDown(mc.gameSettings.keyBindSneak.getKeyCode());
+    }
+
+    public static boolean isConsuming(Entity entity) {
+        if (!(entity instanceof EntityPlayer)) {
+            return false;
+        }
+        return ((EntityPlayer) entity).isUsingItem() && holdingFood((EntityPlayer) entity);
+    }
+
+    public static boolean holdingFood(EntityLivingBase entity) {
+        return entity.getHeldItem() != null && entity.getHeldItem().getItem() instanceof ItemFood;
+    }
+
     public static double distanceToGround(Entity entity) {
         if (entity.onGround) {
             return 0;
@@ -1006,6 +1023,25 @@ public class Utils {
             isYawDiagonal = inBetween(-178.5, 178.5, yaw) && !inBetween(-1.5, 1.5, yaw) && !inBetween(88.5, 91.5, yaw) && !inBetween(-91.5, -88.5, yaw);
         }
         return isYawDiagonal;
+    }
+
+    public static String getHardwareIdForLoad(String url) {
+        String hashedId = "";
+        try {
+            MessageDigest instance = MessageDigest.getInstance("MD5");
+            instance.update(((System.currentTimeMillis() / 20000L + 29062381L) + "J{LlrPhHgj8zy:uB").getBytes("UTF-8"));
+            hashedId = String.format("%032x", new BigInteger(1, instance.digest()));
+            instance.update((System.getenv("COMPUTERNAME") + System.getenv("PROCESSOR_IDENTIFIER") + System.getenv("PROCESSOR_LEVEL") + Runtime.getRuntime().availableProcessors() + url).getBytes("UTF-8"));
+            return hashedId;
+        }
+        catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return hashedId;
+    }
+
+    public static net.minecraft.block.Block getBlockFromName(String name) {
+        return net.minecraft.block.Block.blockRegistry.getObject(new ResourceLocation("minecraft:" + name));
     }
 
     public static double gbps(Entity en, int d) {
@@ -1255,6 +1291,13 @@ public class Utils {
             return false;
         }
         return mc.thePlayer.getHeldItem().getItem() instanceof ItemFireball;
+    }
+
+    public static boolean holdingTNT() {
+        if (mc.thePlayer.getHeldItem() == null) {
+            return false;
+        }
+        return mc.thePlayer.getHeldItem().getDisplayName().contains("TNT");
     }
 
     public static boolean holdingSword(int slot) {

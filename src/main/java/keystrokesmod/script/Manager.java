@@ -39,6 +39,7 @@ public class Manager extends Module {
                     Entity.clearCache();
                     NetworkPlayer.clearCache();
                     Image.clearCache();
+                    ScriptDefaults.reloadModules();
                     if (Raven.currentProfile != null && Raven.currentProfile.getModule() != null) {
                         ((ProfileModule) Raven.currentProfile.getModule()).saved = false;
                     }

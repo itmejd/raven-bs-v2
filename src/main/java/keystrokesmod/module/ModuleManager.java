@@ -12,7 +12,6 @@ import keystrokesmod.module.impl.other.*;
 import keystrokesmod.module.impl.player.*;
 import keystrokesmod.module.impl.render.*;
 import keystrokesmod.module.impl.world.*;
-import keystrokesmod.utility.ModuleUtils;
 import keystrokesmod.utility.Utils;
 import keystrokesmod.utility.profile.Manager;
 
@@ -71,6 +70,7 @@ public class ModuleManager {
     public static Arrows arrows;
     public static ChatCommands chatCommands;
     public static LongJump LongJump;
+    public static CTWFly ctwFly;
     public static Blink blink;
     public static Velocity velocity;
 
@@ -170,6 +170,7 @@ public class ModuleManager {
         this.addModule(new AutoWho());
         this.addModule(new Gui());
         this.addModule(new Shaders());
+        this.addModule(ctwFly = new CTWFly());
         antiBot.enable();
         Collections.sort(this.modules, Comparator.comparing(Module::getName));
     }

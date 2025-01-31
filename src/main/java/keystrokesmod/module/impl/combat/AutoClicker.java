@@ -1,5 +1,6 @@
 package keystrokesmod.module.impl.combat;
 
+import keystrokesmod.mixin.impl.accessor.IAccessorGuiScreen;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.setting.impl.ButtonSetting;
@@ -9,12 +10,11 @@ import keystrokesmod.utility.Reflection;
 import keystrokesmod.utility.Utils;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockLiquid;
-import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.inventory.GuiInventory;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.init.Blocks;
-import net.minecraft.item.ItemBlock;
+import net.minecraft.item.*;
 import net.minecraft.util.BlockPos;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
@@ -22,8 +22,6 @@ import net.minecraftforge.fml.common.gameevent.TickEvent.RenderTickEvent;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Random;
 
 public class AutoClicker extends Module {
@@ -38,19 +36,20 @@ public class AutoClicker extends Module {
     public ButtonSetting weaponOnly;
     public ButtonSetting blocksOnly;
     public ButtonSetting disableCreative;
+
+    private long nextReleaseTime;
+    private long nextPressTime;
+    private long nextMultiplierUpdateTime;
+    private long nextExtraDelayUpdateTime;
+    private double delayMultiplier;
+    private boolean multiplierActive;
+    private boolean isHoldingBlockBreak;
+    private boolean isBlockHitActive;
+
     private Random rand = null;
-    private Method gs;
-    private long i;
-    private long j;
-    private long k;
-    private long l;
-    private double m;
-    private boolean n;
-    private boolean hol;
-    private boolean blocked;
 
     public AutoClicker() {
-        super("AutoClicker", Module.category.combat, 0);
+        super("AutoClicker", category.combat, 0);
         this.registerSetting(new DescriptionSetting("Best with delay remover."));
         this.registerSetting(minCPS = new SliderSetting("Min CPS", 9.0, 1.0, 20.0, 0.5));
         this.registerSetting(maxCPS = new SliderSetting("Max CPS", 12.0, 1.0, 20.0, 0.5));
@@ -64,35 +63,20 @@ public class AutoClicker extends Module {
         this.registerSetting(blocksOnly = new ButtonSetting("Blocks only", true));
         this.registerSetting(disableCreative = new ButtonSetting("Disable in creative", false));
         this.closetModule = true;
-
-        try {
-            this.gs = GuiScreen.class.getDeclaredMethod("func_73864_a", Integer.TYPE, Integer.TYPE, Integer.TYPE);
-        } catch (Exception var4) {
-            try {
-                this.gs = GuiScreen.class.getDeclaredMethod("mouseClicked", Integer.TYPE, Integer.TYPE, Integer.TYPE);
-            } catch (Exception var3) {
-            }
-        }
-
-        if (this.gs != null) {
-            this.gs.setAccessible(true);
-        }
-
     }
 
+    @Override
     public void onEnable() {
-        if (this.gs == null) {
-            this.disable();
-        }
-        this.blocked = Mouse.isButtonDown(1);
+        this.isBlockHitActive = Mouse.isButtonDown(1);
         this.rand = new Random();
     }
 
+    @Override
     public void onDisable() {
-        this.i = 0L;
-        this.j = 0L;
-        this.hol = false;
-        this.blocked = false;
+        this.nextReleaseTime = 0L;
+        this.nextPressTime = 0L;
+        this.isHoldingBlockBreak = false;
+        this.isBlockHitActive = false;
     }
 
     public void guiUpdate() {
@@ -101,11 +85,8 @@ public class AutoClicker extends Module {
 
     @SubscribeEvent
     public void onRenderTick(RenderTickEvent ev) {
-        if (ev.phase != Phase.END && Utils.nullCheck() && !mc.thePlayer.isEating()) {
+        if (ev.phase != Phase.END && Utils.nullCheck() && !Utils.isConsuming(mc.thePlayer)) {
             if (disableCreative.isToggled() && mc.thePlayer.capabilities.isCreativeMode) {
-                return;
-            }
-            if (ModuleManager.scaffold.isEnabled) {
                 return;
             }
             if (mc.currentScreen == null && mc.inGameHasFocus) {
@@ -114,147 +95,143 @@ public class AutoClicker extends Module {
                 }
 
                 if (leftClick.isToggled() && Mouse.isButtonDown(0)) {
-                    this.dc(mc.gameSettings.keyBindAttack.getKeyCode(), 0);
+                    this.performClick(mc.gameSettings.keyBindAttack.getKeyCode(), 0);
                 }
                 else if (rightClick.isToggled() && Mouse.isButtonDown(1)) {
                     if (blocksOnly.isToggled() && (mc.thePlayer.getCurrentEquippedItem() == null || !(mc.thePlayer.getCurrentEquippedItem().getItem() instanceof ItemBlock))) {
                         return;
                     }
-                    this.dc(mc.gameSettings.keyBindUseItem.getKeyCode(), 1);
+                    if (mc.thePlayer.getHeldItem() != null && mc.thePlayer.getHeldItem().getItem() instanceof ItemBow) {
+                        return;
+                    }
+                    this.performClick(mc.gameSettings.keyBindUseItem.getKeyCode(), 1);
                 }
                 else {
-                    this.i = 0L;
-                    this.j = 0L;
+                    this.nextReleaseTime = 0L;
+                    this.nextPressTime = 0L;
                 }
             }
             else if (inventoryFill.isToggled() && mc.currentScreen instanceof GuiInventory) {
-                if (!Mouse.isButtonDown(0) || !Keyboard.isKeyDown(54) && !Keyboard.isKeyDown(42)) {
-                    this.i = 0L;
-                    this.j = 0L;
-                } else if (this.i != 0L && this.j != 0L) {
-                    if (System.currentTimeMillis() > this.j) {
-                        this.gd();
+                if (!Mouse.isButtonDown(0) || (!Keyboard.isKeyDown(54) && !Keyboard.isKeyDown(42))) {
+                    this.nextReleaseTime = 0L;
+                    this.nextPressTime = 0L;
+                }
+                else if (this.nextReleaseTime != 0L && this.nextPressTime != 0L) {
+                    if (System.currentTimeMillis() > this.nextPressTime) {
+                        this.updateClickDelay();
                         this.inventoryClick(mc.currentScreen);
                     }
-                } else {
-                    this.gd();
+                }
+                else {
+                    this.updateClickDelay();
                 }
             }
-
         }
     }
 
-    public void dc(int key, int mouse) {
+    public void performClick(int key, int mouse) {
         if (breakBlocks.isToggled() && mouse == 0 && mc.objectMouseOver != null) {
-            BlockPos p = mc.objectMouseOver.getBlockPos();
-            if (p != null) {
-                Block bl = mc.theWorld.getBlockState(p).getBlock();
-                if (bl != Blocks.air && !(bl instanceof BlockLiquid)) {
-                    if (!this.hol && (!ModuleManager.killAura.isEnabled() || KillAura.target == null)) {
+            BlockPos pos = mc.objectMouseOver.getBlockPos();
+            if (pos != null) {
+                Block block = mc.theWorld.getBlockState(pos).getBlock();
+                if (block != Blocks.air && !(block instanceof BlockLiquid)) {
+                    if (!this.isHoldingBlockBreak && (!ModuleManager.killAura.isEnabled() || KillAura.target == null)) {
                         KeyBinding.setKeyBindState(key, true);
                         KeyBinding.onTick(key);
-                        this.hol = true;
+                        this.isHoldingBlockBreak = true;
                     }
-
                     return;
                 }
-
-                if (this.hol) {
+                if (this.isHoldingBlockBreak) {
                     KeyBinding.setKeyBindState(key, false);
-                    this.hol = false;
+                    this.isHoldingBlockBreak = false;
                 }
             }
         }
 
         if (jitter.getInput() > 0.0D) {
-            double a = jitter.getInput() * 0.45D;
-            EntityPlayerSP var10000;
+            double jitterAmount = jitter.getInput() * 0.45D;
             if (this.rand.nextBoolean()) {
-                var10000 = mc.thePlayer;
-                var10000.rotationYaw = (float) ((double) var10000.rotationYaw + (double) this.rand.nextFloat() * a);
-            } else {
-                var10000 = mc.thePlayer;
-                var10000.rotationYaw = (float) ((double) var10000.rotationYaw - (double) this.rand.nextFloat() * a);
+                mc.thePlayer.rotationYaw += this.rand.nextFloat() * jitterAmount;
             }
-
+            else {
+                mc.thePlayer.rotationYaw -= this.rand.nextFloat() * jitterAmount;
+            }
             if (this.rand.nextBoolean()) {
-                var10000 = mc.thePlayer;
-                var10000.rotationPitch = (float) ((double) var10000.rotationPitch + (double) this.rand.nextFloat() * a * 0.45D);
-            } else {
-                var10000 = mc.thePlayer;
-                var10000.rotationPitch = (float) ((double) var10000.rotationPitch - (double) this.rand.nextFloat() * a * 0.45D);
+                mc.thePlayer.rotationPitch += this.rand.nextFloat() * jitterAmount * 0.45D;
+            }
+            else {
+                mc.thePlayer.rotationPitch -= this.rand.nextFloat() * jitterAmount * 0.45D;
             }
         }
 
-        if (this.j > 0L && this.i > 0L) {
+        if (this.nextPressTime > 0L && this.nextReleaseTime > 0L) {
             double blockHitC = blockHitChance.getInput();
-            if (System.currentTimeMillis() > this.j && (!ModuleManager.killAura.isEnabled() || KillAura.target == null)) {
+            long currentTime = System.currentTimeMillis();
+            if (currentTime > this.nextPressTime && (!ModuleManager.killAura.isEnabled() || KillAura.target == null)) {
                 KeyBinding.setKeyBindState(key, true);
                 KeyBinding.onTick(key);
                 Reflection.setButton(mouse, true);
                 if (mouse == 0 && blockHitC > 0.0 && Mouse.isButtonDown(1) && Math.random() >= (100.0 - blockHitC) / 100.0) {
-                    final int getKeyCode = mc.gameSettings.keyBindUseItem.getKeyCode();
-                    KeyBinding.setKeyBindState(getKeyCode, true);
-                    KeyBinding.onTick(getKeyCode);
+                    final int useItemKey = mc.gameSettings.keyBindUseItem.getKeyCode();
+                    KeyBinding.setKeyBindState(useItemKey, true);
+                    KeyBinding.onTick(useItemKey);
                     Reflection.setButton(1, true);
-                    blocked = true;
+                    isBlockHitActive = true;
                 }
-                this.gd();
+                // Recalculate the next press and release times.
+                this.updateClickDelay();
             }
-            else if (System.currentTimeMillis() > this.i || blocked) {
+            // If the release time has passed (or a block hit is active), release the key.
+            else if (currentTime > this.nextReleaseTime || isBlockHitActive) {
                 KeyBinding.setKeyBindState(key, false);
                 Reflection.setButton(mouse, false);
                 if (mouse == 0 && blockHitC > 0.0) {
                     KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
                     Reflection.setButton(1, false);
-                    blocked = false;
+                    isBlockHitActive = false;
                 }
             }
         }
         else {
-            this.gd();
+            this.updateClickDelay();
         }
-
     }
 
-    public void gd() {
-        double c = Utils.getRandomValue(minCPS, maxCPS, this.rand) + 0.4D * this.rand.nextDouble();
-        long d = (long) ((int) Math.round(1000.0D / c));
-        if (System.currentTimeMillis() > this.k) {
-            if (!this.n && this.rand.nextInt(100) >= 85) {
-                this.n = true;
-                this.m = 1.1D + this.rand.nextDouble() * 0.15D;
+    public void updateClickDelay() {
+        double cps = Utils.getRandomValue(minCPS, maxCPS, this.rand) + 0.4D * this.rand.nextDouble();
+        long delay = Math.round(1000.0D / cps);
+
+        long currentTime = System.currentTimeMillis();
+        // Updates the delay multiplier periodically.
+        if (currentTime > this.nextMultiplierUpdateTime) {
+            if (!multiplierActive && this.rand.nextInt(100) >= 85) {
+                multiplierActive = true;
+                delayMultiplier = 1.1D + this.rand.nextDouble() * 0.15D;
             } else {
-                this.n = false;
+                multiplierActive = false;
             }
-
-            this.k = System.currentTimeMillis() + 500L + (long) this.rand.nextInt(1500);
+            this.nextMultiplierUpdateTime = currentTime + 500L + this.rand.nextInt(1500);
         }
-
-        if (this.n) {
-            d = (long) ((double) d * this.m);
-        }
-
-        if (System.currentTimeMillis() > this.l) {
+        // Adds extra delay at randomized intervals
+        if (currentTime > this.nextExtraDelayUpdateTime) {
             if (this.rand.nextInt(100) >= 80) {
-                d += 50L + (long) this.rand.nextInt(100);
+                delay += 50L + this.rand.nextInt(100);
             }
-
-            this.l = System.currentTimeMillis() + 500L + (long) this.rand.nextInt(1500);
+            this.nextExtraDelayUpdateTime = currentTime + 500L + this.rand.nextInt(1500);
         }
-
-        this.j = System.currentTimeMillis() + d;
-        this.i = System.currentTimeMillis() + d / 2L - (long) this.rand.nextInt(10);
+        // If the multiplier is active, adjust the delay
+        if (multiplierActive) {
+            delay = (long) (delay * delayMultiplier);
+        }
+        // Schedule the next press and release events
+        this.nextPressTime = currentTime + delay;
+        this.nextReleaseTime = currentTime + delay / 2L - this.rand.nextInt(10);
     }
 
-    private void inventoryClick(GuiScreen s) {
-        int x = Mouse.getX() * s.width / mc.displayWidth;
-        int y = s.height - Mouse.getY() * s.height / mc.displayHeight - 1;
-
-        try {
-            this.gs.invoke(s, x, y, 0);
-        } catch (IllegalAccessException | InvocationTargetException var5) {
-        }
-
+    private void inventoryClick(GuiScreen screen) {
+        int x = Mouse.getX() * screen.width / mc.displayWidth;
+        int y = screen.height - Mouse.getY() * screen.height / mc.displayHeight - 1;
+        ((IAccessorGuiScreen) screen).callMouseClicked(x, y, 0);
     }
 }

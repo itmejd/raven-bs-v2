@@ -236,7 +236,7 @@ public class Tower extends Module {
                     if (aligned) {
                         if (placed) {
                             yaw = 0;
-                            pitch = 89.9F;
+                            pitch = 89;
                         }
                         else {
                             yaw = RotationUtils.getRotations(firstX, firstY, firstZ)[0];

@@ -228,8 +228,8 @@ public class KillAura extends Module {
             return;
         }
         if (target != null && Utils.holdingSword()) {
-            if (Mouse.isButtonDown(0)) {
-                swingItem();
+            if (Mouse.isButtonDown(0) && Utils.tabbedIn()) {
+                mc.thePlayer.swingItem();
             }
             if (blinkAutoBlock() || autoBlockMode.getInput() == 2) {
                 KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
@@ -1011,7 +1011,7 @@ public class KillAura extends Module {
                             mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, DOWN));
                         }
                         firstEdge++;
-                        if (firstEdge > 3) {
+                        if (firstEdge > 1) {
                             firstEdge = 0;
                         }
                         lag = false;

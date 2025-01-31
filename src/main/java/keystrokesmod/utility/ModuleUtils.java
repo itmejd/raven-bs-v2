@@ -39,7 +39,7 @@ public class ModuleUtils {
     public static int fadeEdge;
     public static int lastFaceDifference;
     private int lastFace;
-    public static float offsetValue = 1E-14F;
+    public static float offsetValue = 1E-12F;
     public static boolean isAttacking;
     private int attackingTicks;
     private int unTargetTicks;

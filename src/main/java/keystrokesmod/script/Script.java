@@ -19,7 +19,7 @@ public class Script {
     public String scriptName;
     public String codeStr;
     public boolean error = false;
-    public int extraLines;
+    public int STARTING_LINE;
     public ScriptEvents event;
     public File file;
 
@@ -28,37 +28,12 @@ public class Script {
         this.scriptName = "sc_" + name.replace(" ", "").replace(")", "_").replace("(", "_") + "_" + Utils.generateRandomString(5);
     }
 
-    public float[] getFloat(final String s, final Object... array) {
-        if (this.asClass == null || this.classObject == null) {
-            return null;
-        }
-        Method method = null;
-        for (final Method method2 : this.asClass.getDeclaredMethods()) {
-            if (method2.getName().equalsIgnoreCase(s) && method2.getParameterCount() == array.length && method2.getReturnType().equals(float[].class)) {
-                method = method2;
-                break;
-            }
-        }
-        if (method != null) {
-            try {
-                method.setAccessible(true);
-                final Object invoke = method.invoke(this.classObject, array);
-                if (invoke instanceof float[]) {
-                    return (float[])invoke;
-                }
-            }
-            catch (IllegalAccessException ex) {}
-            catch (InvocationTargetException ex2) {}
-        }
-        return null;
-    }
-
     public boolean run() {
         try {
             if (this.scriptName == null || this.codeStr == null) {
                 return false;
             }
-            final File file = new File(Raven.scriptManager.tempDir);
+            final File file = new File(Raven.scriptManager.COMPILED_DIR);
             if (!file.exists() || !file.isDirectory()) {
                 file.mkdir();
             }
@@ -66,10 +41,10 @@ public class Script {
                 return false;
             }
             final Diagnostic bp = new Diagnostic();
-            final StandardJavaFileManager standardFileManager = Raven.scriptManager.compiler.getStandardFileManager(bp, null, null);
+            final StandardJavaFileManager fileManager = Raven.scriptManager.compiler.getStandardFileManager(bp, null, null);
             final ArrayList<String> compilationOptions = new ArrayList<>();
             compilationOptions.add("-d");
-            compilationOptions.add(Raven.scriptManager.tempDir);
+            compilationOptions.add(Raven.scriptManager.COMPILED_DIR);
             compilationOptions.add("-XDuseUnsharedTable");
             if (!(boolean) Launch.blackboard.get("fml.deobfuscatedEnvironment")) {
                 compilationOptions.add("-classpath");
@@ -80,7 +55,7 @@ public class Script {
                 catch (UnsupportedOperationException ex2) {}
                 compilationOptions.add(s);
             }
-            boolean success = Raven.scriptManager.compiler.getTask(null, standardFileManager, bp, compilationOptions, null, Arrays.asList(new ClassObject(this.scriptName, this.codeStr, this.extraLines))).call();
+            boolean success = Raven.scriptManager.compiler.getTask(null, fileManager, bp, compilationOptions, null, Arrays.asList(new ClassObject(this.scriptName, this.codeStr, this.STARTING_LINE))).call();
             if (!success) {
                 this.error = true;
                 return false;
@@ -90,6 +65,7 @@ public class Script {
                 this.asClass = secureClassLoader.loadClass(this.scriptName);
                 this.classObject = this.asClass.newInstance();
                 secureClassLoader.close();
+                fileManager.close();
             }
             catch (Throwable e) {
                 e.printStackTrace();
@@ -124,8 +100,27 @@ public class Script {
                     return ((boolean)invoke) ? 1 : 0;
                 }
             }
-            catch (Exception e) {
-                printRunTimeError(e, s);
+            catch (IllegalAccessException | InvocationTargetException ex) {
+                ReflectiveOperationException er = ex;
+                Utils.sendMessage("&7Runtime error during script &b" + this.name);
+                if (er.getCause() == null) {
+                    Utils.sendMessage(" &7err: &cThrowable");
+                }
+                else {
+                    Utils.sendMessage(" &7err: &c" + er.getCause().getClass().getSimpleName());
+                    final StackTraceElement[] stArr = er.getCause().getStackTrace();
+                    if (stArr.length > 0) {
+                        StackTraceElement st = stArr[0];
+                        for (final StackTraceElement element : er.getCause().getStackTrace()) {
+                            if (element.getClassName().equalsIgnoreCase(this.scriptName)) {
+                                st = element;
+                                break;
+                            }
+                        }
+                        Utils.sendMessage(" &7line: &c" + (st.getLineNumber() - STARTING_LINE));
+                        Utils.sendMessage(" &7src: &c" + st.getMethodName());
+                    }
+                }
             }
         }
         return -1;
@@ -134,29 +129,29 @@ public class Script {
     public void delete() {
         this.asClass = null;
         this.classObject = null;
-        final File file = new File(Raven.scriptManager.tempDir + File.separator + this.scriptName + ".class");
+        final File file = new File(Raven.scriptManager.COMPILED_DIR + File.separator + this.scriptName + ".class");
         if (file.exists()) {
             file.delete();
         }
     }
 
-    public void createScript(final String s) {
-        extraLines = 0;
+    public void setCode(String code) {
+        STARTING_LINE = 0;
         final StringBuilder sb = new StringBuilder();
         final Iterator<String> iterator = Raven.scriptManager.imports.iterator();
         while (iterator.hasNext()) {
-            extraLines++;
+            STARTING_LINE++;
             sb.append("import ").append(iterator.next()).append(";\n");
         }
         sb.append("import keystrokesmod.script.classes.*;\n");
         sb.append("import keystrokesmod.script.packets.clientbound.*;\n");
         sb.append("import keystrokesmod.script.packets.serverbound.*;\n");
         String name = Utils.extractFileName(this.name);
-        this.codeStr = sb + "public class " + this.scriptName + " extends " + ScriptDefaults.class.getName() + " {public static final " + ScriptDefaults.modules.class.getName().replace("$", ".") + " modules = new " + ScriptDefaults.modules.class.getName().replace("$", ".") + "(\"" + name + "\");public static final String scriptName = \"" + name + "\";\n" + s + "\n}";
-        extraLines += 4;
+        this.codeStr = sb + "public class " + this.scriptName + " extends " + ScriptDefaults.class.getName() + " {public static final " + ScriptDefaults.modules.class.getName().replace("$", ".") + " modules = new " + ScriptDefaults.modules.class.getName().replace("$", ".") + "(\"" + name + "\");public static final String scriptName = \"" + name + "\";\n" + code + "\n}";
+        STARTING_LINE += 4;
     }
 
-    public boolean invokeMethod(final String s, final Object... array) {
+    public boolean invoke(final String s, final Object... array) {
         if (this.asClass == null || this.classObject == null) {
             return false;
         }
@@ -173,26 +168,29 @@ public class Script {
                 method.invoke(this.classObject, array);
                 return true;
             }
-            catch (Exception e) {
-                printRunTimeError(e, s);
+            catch (IllegalAccessException | InvocationTargetException ex) {
+                ReflectiveOperationException er = ex;
+                Utils.sendMessage("&7Runtime error during script &b" + this.name);
+                if (er.getCause() == null) {
+                    Utils.sendMessage(" &7err: &cThrowable");
+                }
+                else {
+                    Utils.sendMessage(" &7err: &c" + er.getCause().getClass().getSimpleName());
+                    final StackTraceElement[] stArr = er.getCause().getStackTrace();
+                    if (stArr.length > 0) {
+                        StackTraceElement st = stArr[0];
+                        for (final StackTraceElement element : er.getCause().getStackTrace()) {
+                            if (element.getClassName().equalsIgnoreCase(this.scriptName)) {
+                                st = element;
+                                break;
+                            }
+                        }
+                        Utils.sendMessage(" &7line: &c" + (st.getLineNumber() - STARTING_LINE));
+                        Utils.sendMessage(" &7src: &c" + st.getMethodName());
+                    }
+                }
             }
         }
         return false;
-    }
-
-    private int getLine(Throwable e, String name) {
-        for (StackTraceElement element : e.getStackTrace()) {
-            if (element.getClassName().equals(name)) {
-                return element.getLineNumber() - extraLines;
-            }
-        }
-        return 0;
-    }
-
-    private void printRunTimeError(Exception e, String methodName) {
-        Utils.sendDebugMessage("§cRuntime error during script §b" + Utils.extractFileName(this.name));
-        Utils.sendDebugMessage(" §7err: §c" + e.getCause().getClass().getSimpleName());
-        Utils.sendDebugMessage(" §7line: §c" + getLine(e.getCause(), this.scriptName));
-        Utils.sendDebugMessage(" §7src: §c" + methodName);
     }
 }

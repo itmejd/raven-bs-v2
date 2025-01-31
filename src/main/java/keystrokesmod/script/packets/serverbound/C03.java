@@ -9,6 +9,18 @@ public class C03 extends CPacket {
     public float pitch;
     public boolean ground;
 
+    protected C03(C03PacketPlayer packet, byte f1, byte f2, byte f3, byte f4, byte f5, byte f6) { // goofy asf but cba to
+        super(packet);
+        if (packet instanceof C03PacketPlayer.C04PacketPlayerPosition || packet instanceof C03PacketPlayer.C06PacketPlayerPosLook) {
+            this.position = new Vec3(packet.getPositionX(), packet.getPositionY(), packet.getPositionZ());
+        }
+        if (packet instanceof C03PacketPlayer.C05PacketPlayerLook || packet instanceof C03PacketPlayer.C06PacketPlayerPosLook) {
+            this.yaw = packet.getYaw();
+            this.pitch = packet.getPitch();
+        }
+        this.ground = packet.isOnGround();
+    }
+
     public C03(boolean ground) {
         super(new C03PacketPlayer(ground));
         this.ground = ground;
@@ -33,17 +45,5 @@ public class C03 extends CPacket {
         this.yaw = yaw;
         this.pitch = pitch;
         this.ground = ground;
-    }
-
-    protected C03(C03PacketPlayer packet, byte f1, byte f2, byte f3, byte f4, byte f5, byte f6) { // goofy asf but cba to
-        super(packet);
-        if (packet instanceof C03PacketPlayer.C04PacketPlayerPosition || packet instanceof C03PacketPlayer.C06PacketPlayerPosLook) {
-            this.position = new Vec3(packet.getPositionX(), packet.getPositionY(), packet.getPositionZ());
-        }
-        if (packet instanceof C03PacketPlayer.C05PacketPlayerLook || packet instanceof C03PacketPlayer.C06PacketPlayerPosLook) {
-            this.yaw = packet.getYaw();
-            this.pitch = packet.getPitch();
-        }
-        this.ground = packet.isOnGround();
     }
 }

@@ -90,6 +90,11 @@ public class ScriptEvents {
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onAntiCheatFlag(AntiCheatFlagEvent e) {
+        Raven.scriptManager.invoke("onAntiCheatFlag", module, e.flag, Entity.convert(e.entity));
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onGuiUpdate(GuiUpdateEvent e) {
         if (e.guiScreen == null) {
             return;

@@ -1,6 +1,7 @@
 package keystrokesmod.script.classes;
 
 import keystrokesmod.utility.BlockUtils;
+import keystrokesmod.utility.Utils;
 import net.minecraft.util.BlockPos;
 
 public class Block {
@@ -30,6 +31,14 @@ public class Block {
 
     public Block(int x, int y, int z) {
         this(BlockUtils.getBlock(x, y, z), new BlockPos(x, y, z));
+    }
+
+    protected Block(String name, Vec3 position) {
+        this(Utils.getBlockFromName(name), Vec3.getBlockPos(position));
+    }
+
+    public Block(String name) {
+        this(name, new Vec3(-1, -1, -1));
     }
 
     public Block(Vec3 position) {

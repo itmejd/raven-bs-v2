@@ -1,5 +1,6 @@
 package keystrokesmod.script.packets.serverbound;
 
+import keystrokesmod.script.packets.PacketMappings;
 import keystrokesmod.script.packets.clientbound.*;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.client.*;
@@ -10,111 +11,53 @@ public class PacketHandler {
         if (packet == null || packet.getClass().getSimpleName().startsWith("S")) {
             return null;
         }
+        Class<? extends CPacket> asClass = PacketMappings.minecraftToScriptC.get(packet);
         CPacket newPacket;
-        try {
-            if (packet instanceof C0APacketAnimation) {
-                newPacket = new C0A((C0APacketAnimation) packet);
-            }
-            else if (packet instanceof C0BPacketEntityAction) {
-                newPacket = new C0B((C0BPacketEntityAction) packet);
+        if (asClass != null) {
+            if (packet instanceof C03PacketPlayer) {
+                newPacket = new C03((C03PacketPlayer)packet, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0);
             }
             else if (packet instanceof C01PacketChatMessage) {
                 newPacket = new C01((C01PacketChatMessage)packet, (byte) 0);
             }
-            else if (packet instanceof C02PacketUseEntity) {
-                newPacket = new C02((C02PacketUseEntity)packet);
-            }
-            else if (packet instanceof C0FPacketConfirmTransaction) {
-                newPacket = new C0F((C0FPacketConfirmTransaction) packet);
-            }
-            else if (packet instanceof C0EPacketClickWindow) {
-                newPacket = new C0E((C0EPacketClickWindow) packet);
-            }
-            else if (packet instanceof C03PacketPlayer) {
-                newPacket = new C03((C03PacketPlayer)packet, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0);
-            }
-            else if (packet instanceof C07PacketPlayerDigging) {
-                newPacket = new C07((C07PacketPlayerDigging)packet);
-            }
-            else if (packet instanceof C08PacketPlayerBlockPlacement) {
-                newPacket = new C08((C08PacketPlayerBlockPlacement)packet);
-            }
             else if (packet instanceof C09PacketHeldItemChange) {
                 newPacket = new C09(((C09PacketHeldItemChange)packet), true);
             }
-            else if (packet instanceof C10PacketCreativeInventoryAction) {
-                newPacket = new C10((C10PacketCreativeInventoryAction) packet);
-            }
-            else if (packet instanceof C13PacketPlayerAbilities) {
-                newPacket = new C13((C13PacketPlayerAbilities) packet);
-            }
-            else if (packet instanceof C16PacketClientStatus) {
-                newPacket = new C16((C16PacketClientStatus) packet);
-            }
-            else if (packet instanceof C0DPacketCloseWindow) {
-                newPacket = new C0D((C0DPacketCloseWindow) packet);
-            }
             else {
-                newPacket = new CPacket(packet);
+                try {
+                    newPacket = asClass.getConstructor(net.minecraft.network.Packet.class).newInstance(packet);
+                }
+                catch (Exception e) {
+                    newPacket = new CPacket(packet);
+                }
             }
         }
-        catch (Exception ex) {
-            ex.printStackTrace();
-            newPacket = null;
+        else {
+            newPacket = new CPacket(packet);
         }
         return newPacket;
     }
 
     public static SPacket convertClientBound(Packet packet) {
-        SPacket sPacket;
-        try {
-            if (packet instanceof S12PacketEntityVelocity) {
-                sPacket = new S12((S12PacketEntityVelocity)packet);
-            }
-            else if (packet instanceof S27PacketExplosion) {
-                sPacket = new S27((S27PacketExplosion)packet);
-            }
-            else if (packet instanceof S3EPacketTeams) {
-                sPacket = new S3E((S3EPacketTeams) packet);
-            }
-            else if (packet instanceof S08PacketPlayerPosLook) {
-                sPacket = new S08((S08PacketPlayerPosLook) packet);
-            }
-            else if (packet instanceof S2APacketParticles) {
-                sPacket = new S2A((S2APacketParticles) packet);
-            }
-            else if (packet instanceof S06PacketUpdateHealth) {
-                sPacket = new S06((S06PacketUpdateHealth) packet);
-            }
-            else if (packet instanceof S23PacketBlockChange) {
-                sPacket = new S23((S23PacketBlockChange) packet);
-            }
-            else if (packet instanceof S29PacketSoundEffect) {
-                sPacket = new S29((S29PacketSoundEffect) packet);
-            }
-            else if (packet instanceof S2FPacketSetSlot) {
-                sPacket = new S2F((S2FPacketSetSlot) packet);
-            }
-            else if (packet instanceof S48PacketResourcePackSend) {
-                sPacket = new S48((S48PacketResourcePackSend) packet);
-            }
-            else if (packet instanceof S3APacketTabComplete) {
-                sPacket = new S3A((S3APacketTabComplete) packet, (byte) 0);
-            }
-            else if (packet instanceof S02PacketChat) {
-                sPacket = new S02((S02PacketChat) packet);
-            }
-            else if (packet instanceof S45PacketTitle) {
-                sPacket = new S45((S45PacketTitle) packet);
+        Class<? extends SPacket> asClass = PacketMappings.minecraftToScriptS.get(packet);
+        SPacket newPacket;
+        if (asClass != null) {
+            if (packet instanceof S3APacketTabComplete) {
+                newPacket = new S3A((S3APacketTabComplete) packet, (byte) 0);
             }
             else {
-                sPacket = new SPacket(packet);
+                try {
+                    newPacket = asClass.getConstructor(net.minecraft.network.Packet.class).newInstance(packet);
+                }
+                catch (Exception e) {
+                    newPacket = new SPacket(packet);
+                }
             }
         }
-        catch (Exception ex) {
-            sPacket = null;
+        else {
+            newPacket = new SPacket(packet);
         }
-        return sPacket;
+        return newPacket;
     }
 
     public static Packet convertCPacket(CPacket cPacket) {

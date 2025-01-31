@@ -37,6 +37,8 @@
     "accessor.IAccessorEntityRenderer",
     "accessor.IAccessorItemFood",
     "accessor.IAccessorGuiScreenBook",
+    "accessor.IAccessorGuiScreen",
+    "accessor.IAccessorS14PacketEntity",
     "accessor.IAccessorEntityPlayer"
   ]
 }

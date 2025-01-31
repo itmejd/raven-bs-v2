@@ -23,7 +23,7 @@ public class NoFall extends Module {
     private SliderSetting minFallDistance;
     private ButtonSetting disableAdventure;
     private ButtonSetting ignoreVoid;
-    private String[] modes = new String[]{"Spoof", "NoGround", "Packet A", "Packet B"};
+    private String[] modes = new String[]{"Spoof", "NoGround", "Packet A", "Packet B", "CTW Packet"};
 
     private double initialY;
     private double dynamic;
@@ -56,18 +56,19 @@ public class NoFall extends Module {
 
         double predictedY = mc.thePlayer.posY + mc.thePlayer.motionY;
         double distanceFallen = initialY - predictedY;
-        if (mc.thePlayer.motionY >= -2.0) {
+        if (mc.thePlayer.motionY >= -1.0) {
             dynamic = 3.0;
         }
-        if (mc.thePlayer.motionY < -2.0) {
+        if (mc.thePlayer.motionY < -1.0) {
             dynamic = 4.0;
         }
-        if (mc.thePlayer.motionY < -3.0) {
+        if (mc.thePlayer.motionY < -2.0) {
             dynamic = 5.0;
         }
         if (isFalling && mode.getInput() == 2) {
+            Utils.getTimer().timerSpeed = (float) 1;
             if (distanceFallen >= dynamic) {
-                Utils.getTimer().timerSpeed = (0.6799789F + (float) Utils.randomizeDouble(-0.012, 0.012));
+                Utils.getTimer().timerSpeed = (0.7199789F + (float) Utils.randomizeDouble(-0.012, 0.012));
                 mc.getNetHandler().addToSendQueue(new C03PacketPlayer(true));
                 initialY = mc.thePlayer.posY;
             }
@@ -81,6 +82,14 @@ public class NoFall extends Module {
                 Utils.getTimer().timerSpeed = (float) 1;
             }
             if (distanceFallen >= 3) {
+                mc.getNetHandler().addToSendQueue(new C03PacketPlayer(true));
+                initialY = mc.thePlayer.posY;
+            }
+        }
+        if (isFalling && mode.getInput() == 4) {
+            Utils.getTimer().timerSpeed = (float) 1;
+            if (distanceFallen >= 8) {
+                Utils.getTimer().timerSpeed = (float) Utils.randomizeDouble(0.7, 0.70201);
                 mc.getNetHandler().addToSendQueue(new C03PacketPlayer(true));
                 initialY = mc.thePlayer.posY;
             }

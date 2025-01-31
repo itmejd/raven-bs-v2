@@ -9,9 +9,7 @@ import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.combat.KillAura;
 import keystrokesmod.module.setting.Setting;
-import keystrokesmod.module.setting.impl.ButtonSetting;
-import keystrokesmod.module.setting.impl.DescriptionSetting;
-import keystrokesmod.module.setting.impl.SliderSetting;
+import keystrokesmod.module.setting.impl.*;
 import keystrokesmod.script.classes.*;
 import keystrokesmod.script.classes.Vec3;
 import keystrokesmod.script.packets.clientbound.SPacket;
@@ -21,8 +19,7 @@ import keystrokesmod.utility.*;
 import keystrokesmod.utility.shader.BlurUtils;
 import keystrokesmod.utility.shader.RoundedUtils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiScreenBook;
-import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.client.gui.*;
 import net.minecraft.client.gui.inventory.*;
 import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.client.renderer.*;
@@ -37,6 +34,7 @@ import net.minecraft.init.Blocks;
 import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.network.Packet;
+import net.minecraft.realms.RealmsBridge;
 import net.minecraft.scoreboard.Team;
 import net.minecraft.util.*;
 import org.lwjgl.input.Keyboard;
@@ -58,6 +56,17 @@ public class ScriptDefaults {
     private static ExecutorService cachedExecutor;
     private static final Minecraft mc = Minecraft.getMinecraft();
     public static final Bridge bridge = new Bridge();
+    private static final LinkedHashMap<String, Module> modulesMap = new LinkedHashMap<>();
+
+    public static void reloadModules() {
+        modulesMap.clear();
+        for (Module module : Raven.getModuleManager().getModules()) {
+            modulesMap.put(module.getName(), module);
+        }
+        for (Module module : Raven.scriptManager.scripts.values()) {
+            modulesMap.put(module.getName(), module);
+        }
+    }
 
     public static class client {
         public static boolean allowFlying() {
@@ -174,6 +183,22 @@ public class ScriptDefaults {
         public static void setRenderArmPitch(float pitch) {
             mc.thePlayer.prevRenderArmPitch = pitch;
             mc.thePlayer.renderArmPitch = pitch;
+        }
+
+        public static void disconnect() {
+            boolean isLocal = mc.isIntegratedServerRunning();
+            boolean isRealms = mc.isConnectedToRealms();
+            mc.theWorld.sendQuittingDisconnectingPacket();
+            mc.loadWorld(null);
+            if (isLocal) {
+                mc.displayGuiScreen(new GuiMainMenu());
+                return;
+            }
+            if (isRealms) {
+                new RealmsBridge().switchToRealms(new GuiMainMenu());
+                return;
+            }
+            mc.displayGuiScreen(new GuiMultiplayer(new GuiMainMenu()));
         }
 
         public static float getRenderArmPitch() {
@@ -564,36 +589,37 @@ public class ScriptDefaults {
             this.superName = superName;
         }
 
-        private Module getModule(String moduleName) {
-            for (Module module : Raven.getModuleManager().getModules()) {
-                if (module.getName().equals(moduleName)) {
-                    return module;
-                }
-            }
-            for (Module module : Raven.scriptManager.scripts.values()) {
-                if (module.getName().equals(moduleName)) {
-                    return module;
-                }
-            }
-            return null;
+        private static Module getModule(String moduleName) {
+            return modulesMap.get(moduleName);
         }
 
-        private Module getScript(String name) {
-            for (Module module : Raven.scriptManager.scripts.values()) {
-                if (module.getName().equals(name)) {
-                    return module;
-                }
-            }
-            return null;
+        private static Module getScript(String name) {
+            return modulesMap.get(name);
         }
 
-        private Setting getSetting(Module module, String settingName) {
+        private static Setting getSetting(Module module, String settingName) {
             if (module == null) {
                 return null;
             }
             for (Setting setting : module.getSettings()) {
                 if (setting.getName().equals(settingName)) {
                     return setting;
+                }
+            }
+            return null;
+        }
+
+        private GroupSetting getGroupForString(String group) {
+            if (group.isEmpty()) {
+                return null;
+            }
+            List<Setting> settings = getScript(this.superName).getSettings();
+            for (Setting setting : settings) {
+                if (!(setting instanceof GroupSetting)) {
+                    continue;
+                }
+                if (setting.getName().equals(group)) {
+                    return (GroupSetting) setting;
                 }
             }
             return null;
@@ -664,6 +690,14 @@ public class ScriptDefaults {
             return new Vec3(blockPos.getX(), blockPos.getY(), blockPos.getZ());
         }
 
+        public boolean isScaffolding() {
+            return ModuleManager.scaffold.isEnabled();
+        }
+
+        public boolean isTowering() {
+            return ModuleManager.tower.canTower();
+        }
+
         public boolean isHidden(String moduleName) {
             Module module = getModule(moduleName);
             if (module != null) {
@@ -679,24 +713,52 @@ public class ScriptDefaults {
             return new float[]{0, 0};
         }
 
+        public void registerGroup(String name) {
+            getScript(this.superName).registerSetting(new GroupSetting(name));
+        }
+
         public void registerButton(String name, boolean defaultValue) {
             getScript(this.superName).registerSetting(new ButtonSetting(name, defaultValue));
         }
 
+        public void registerButton(String group, String name, boolean defaultValue) {
+            getScript(this.superName).registerSetting(new ButtonSetting(getGroupForString(group), name, defaultValue));
+        }
+
+        public void registerKey(String group, String name, int defaultKey) {
+            getScript(this.superName).registerSetting(new KeySetting(getGroupForString(group), name, defaultKey));
+        }
+
+        public void registerKey(String name, int defaultKey) {
+            getScript(this.superName).registerSetting(new KeySetting(name, defaultKey));
+        }
+
+        // main slider constructors
+
+        public void registerSlider(String group, String name, String suffix, double defaultValue, double minimum, double maximum, double interval) {
+            getScript(this.superName).registerSetting(new SliderSetting(getGroupForString(group), name, suffix, defaultValue, minimum, maximum, interval));
+        }
+
+        public void registerSlider(String group, String name, String suffix, int defaultValue, String[] stringArray) {
+            getScript(this.superName).registerSetting(new SliderSetting(getGroupForString(group), name, suffix, defaultValue, stringArray));
+        }
+
+        // rest
+
         public void registerSlider(String name, double defaultValue, double minimum, double maximum, double interval) {
-            this.registerSlider(name, "", defaultValue, minimum, maximum, interval);
+            this.registerSlider("", name, "", defaultValue, minimum, maximum, interval);
         }
 
         public void registerSlider(String name,  int defaultValue, String[] stringArray) {
-            this.registerSlider(name, "", defaultValue, stringArray);
+            this.registerSlider("", name, "", defaultValue, stringArray);
         }
 
         public void registerSlider(String name, String suffix, double defaultValue, double minimum, double maximum, double interval) {
-            getScript(this.superName).registerSetting(new SliderSetting(name, defaultValue, minimum, maximum, interval));
+            this.registerSlider("", name, suffix, defaultValue, minimum, maximum, interval);
         }
 
         public void registerSlider(String name, String suffix, int defaultValue, String[] stringArray) {
-            getScript(this.superName).registerSetting(new SliderSetting(name, defaultValue, stringArray));
+            this.registerSlider("", name, suffix, defaultValue, stringArray);
         }
 
         public void registerDescription(String description) {
@@ -721,6 +783,14 @@ public class ScriptDefaults {
             return sliderValue;
         }
 
+        public boolean getKeyPressed(String moduleName, String name) {
+            KeySetting setting = ((KeySetting) getSetting(getModule(moduleName), name));
+            if (setting == null) {
+                return false;
+            }
+            return setting.isPressed();
+        }
+
         public void setButton(String moduleName, String name, boolean value) {
             ButtonSetting setting = (ButtonSetting) getSetting(getModule(moduleName), name);
             if (setting == null) {
@@ -735,6 +805,14 @@ public class ScriptDefaults {
                 return;
             }
             setting.setValue(value);
+        }
+
+        public void setKey(String moduleName, String name, int code) {
+            KeySetting setting = ((KeySetting) getSetting(getModule(moduleName), name));
+            if (setting == null) {
+                return;
+            }
+            setting.setKey(code);
         }
     }
 
@@ -1013,10 +1091,16 @@ public class ScriptDefaults {
             RenderUtils.drawTracerLine(entity.entity, color, lineWidth, partialTicks);
         }
 
+        public static void showGui() {
+            mc.displayGuiScreen(new EmptyGuiScreen());
+        }
+
+        private static class EmptyGuiScreen extends GuiScreen {
+        }
+
         public static void item(ItemStack item, float x, float y, float scale) {
-            GlStateManager.pushMatrix();
-            ((IAccessorEntityRenderer) mc.entityRenderer).callSetupCameraTransform(((IAccessorMinecraft) mc).getTimer().renderPartialTicks, 0);
             mc.entityRenderer.setupOverlayRendering();
+            GlStateManager.pushMatrix();
             if (scale != 1.0f) {
                 GlStateManager.scale(scale, scale, scale);
             }
@@ -1108,8 +1192,8 @@ public class ScriptDefaults {
         }
 
         public static void text2d(String text, float x, float y, float scale, int color, boolean shadow) {
+            GlStateManager.pushMatrix();
             if (scale != 1.0f) {
-                GlStateManager.pushMatrix();
                 GlStateManager.scale(scale, scale, scale);
             }
             GlStateManager.enableBlend();
@@ -1118,24 +1202,55 @@ public class ScriptDefaults {
             GlStateManager.disableBlend();
             if (scale != 1.0f) {
                 GlStateManager.scale(1.0f, 1.0f, 1.0f);
-                GlStateManager.popMatrix();
             }
+            GlStateManager.popMatrix();
         }
 
-        public static void text3d(String text, float x, float y, float scale, int color, boolean shadow) {
-            GlStateManager.pushMatrix();
+        public static void text3d(String text, Vec3 position, float scale, boolean shadow, boolean depth, boolean background, int color) {
             ((IAccessorEntityRenderer) mc.entityRenderer).callSetupCameraTransform(((IAccessorMinecraft) mc).getTimer().renderPartialTicks, 0);
-            mc.entityRenderer.setupOverlayRendering();
-            if (scale != 1.0f) {
-                GlStateManager.scale(scale, scale, scale);
+            GlStateManager.pushMatrix();
+            float partialTicks = ((IAccessorMinecraft) mc).getTimer().renderPartialTicks;
+            double px = mc.thePlayer.prevPosX + (mc.thePlayer.posX - mc.thePlayer.prevPosX) * partialTicks;
+            double py = mc.thePlayer.prevPosY + (mc.thePlayer.posY - mc.thePlayer.prevPosY) * partialTicks;
+            double pz = mc.thePlayer.prevPosZ + (mc.thePlayer.posZ - mc.thePlayer.prevPosZ) * partialTicks;
+            GlStateManager.translate((float)position.x - px, (float)position.y - py, (float)position.z - pz);
+            GL11.glNormal3f(0.0F, 1.0F, 0.0F);
+            GlStateManager.rotate(-mc.getRenderManager().playerViewY, 0.0F, 1.0F, 0.0F);
+            GlStateManager.rotate(mc.getRenderManager().playerViewX, 1.0f, 0.0f, 0.0f);
+            float f1 = 0.02666667F;
+            GlStateManager.scale(-f1, -f1, f1);
+            if (depth) {
+                GlStateManager.depthMask(false);
+                GlStateManager.disableDepth();
             }
             GlStateManager.enableBlend();
             GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
-            mc.fontRendererObj.drawString(text, x, y, color, shadow);
-            GlStateManager.disableBlend();
-            if (scale != 1.0f) {
-                GlStateManager.scale(1.0f, 1.0f, 1.0f);
+            if (background) {
+                GlStateManager.disableTexture2D();
+                int width = mc.fontRendererObj.getStringWidth(text);
+                Tessellator tessellator = Tessellator.getInstance();
+                WorldRenderer worldrenderer = tessellator.getWorldRenderer();
+                worldrenderer.begin(7, DefaultVertexFormats.POSITION_COLOR);
+                worldrenderer.pos(-1, -1.0, 0.0).color(0.0f, 0.0f, 0.0f, 0.25f).endVertex();
+                worldrenderer.pos(-1, 8.0, 0.0).color(0.0f, 0.0f, 0.0f, 0.25f).endVertex();
+                worldrenderer.pos(width + 1, 8.0, 0.0).color(0.0f, 0.0f, 0.0f, 0.25f).endVertex();
+                worldrenderer.pos(width + 1, -1.0, 0.0).color(0.0f, 0.0f, 0.0f, 0.25f).endVertex();
+                tessellator.draw();
+                GlStateManager.enableTexture2D();
             }
+            if (scale != 1) {
+                GlStateManager.scale(scale, scale, scale);
+            }
+            mc.fontRendererObj.drawString(text, 0, 0, color, shadow);
+            if (scale != 1) {
+                GlStateManager.scale(1, 1, 1);
+            }
+            if (depth) {
+                GlStateManager.enableDepth();
+                GlStateManager.depthMask(true);
+            }
+            GlStateManager.disableBlend();
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             GlStateManager.popMatrix();
         }
 
@@ -1401,6 +1516,10 @@ public class ScriptDefaults {
 
         public static void leftClick() {
             ((IAccessorMinecraft) mc).callClickMouse();
+        }
+
+        public static int getScroll() {
+            return Mouse.getDWheel();
         }
     }
 

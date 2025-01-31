@@ -234,9 +234,9 @@ public class SkyWars extends Module {
         return -1;
     }
 
-    private static class SpawnEggInfo {
-        Vec3 spawnPos;
-        int tickSpawned;
+    public static class SpawnEggInfo {
+        public Vec3 spawnPos;
+        public int tickSpawned;
 
         public SpawnEggInfo(BlockPos spawnPos, int tickSpawned) {
             this.spawnPos = new Vec3(spawnPos.getX(), spawnPos.getY(), spawnPos.getZ());

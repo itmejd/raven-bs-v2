@@ -3,7 +3,6 @@ package keystrokesmod.script.packets.clientbound;
 import keystrokesmod.script.classes.Block;
 import keystrokesmod.script.classes.Vec3;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.Packet;
 import net.minecraft.network.play.server.S23PacketBlockChange;
 import net.minecraft.util.BlockPos;
 

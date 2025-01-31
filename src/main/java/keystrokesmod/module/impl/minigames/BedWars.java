@@ -1,21 +1,34 @@
 package keystrokesmod.module.impl.minigames;
 
+import keystrokesmod.event.ReceivePacketEvent;
+import keystrokesmod.event.SendPacketEvent;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.impl.world.AntiBot;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.DescriptionSetting;
+import keystrokesmod.utility.BlockUtils;
 import keystrokesmod.utility.RenderUtils;
 import keystrokesmod.utility.Utils;
+import net.minecraft.block.BlockBed;
 import net.minecraft.block.BlockObsidian;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityList;
+import net.minecraft.entity.monster.EntityIronGolem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemEnderPearl;
 import net.minecraft.item.ItemFireball;
+import net.minecraft.item.ItemMonsterPlacer;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
+import net.minecraft.network.play.server.S23PacketBlockChange;
 import net.minecraft.util.BlockPos;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.Vec3;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import java.awt.*;
@@ -30,13 +43,19 @@ public class BedWars extends Module {
     private ButtonSetting enderPearl;
     private ButtonSetting obsidian;
     private ButtonSetting shouldPing;
+
     private BlockPos spawnPos;
     private boolean check;
+
     public static boolean outsideSpawn = true;
+
     private List<String> armoredPlayer = new ArrayList<>();
     private Map<String, String> lastHeldMap = new ConcurrentHashMap<>();
-    private Set<BlockPos> obsidianPos = new HashSet<>();
-    private int obsidianColor = new Color(0, 0,0).getRGB();
+    private Map<BlockPos, Long> obsidianPos = new HashMap<>(); // blockPos, time received
+    public List<SkyWars.SpawnEggInfo> entitySpawnQueue = new ArrayList<>();
+    public List<Integer> spawnedMobs = new ArrayList<>(); // entity id
+
+    private int obsidianColor = new Color(106, 13, 173).getRGB();
 
     public BedWars() {
         super("Bed Wars", category.minigames);
@@ -57,24 +76,30 @@ public class BedWars extends Module {
 
     public void onDisable() {
         outsideSpawn = true;
+        entitySpawnQueue.clear();
+        spawnedMobs.clear();
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onRenderWorld(RenderWorldLastEvent e) {
         if (Utils.nullCheck()) {
             if (this.obsidianPos.isEmpty()) {
                 return;
             }
             try {
-                Iterator<BlockPos> iterator = this.obsidianPos.iterator();
+                Iterator<Map.Entry<BlockPos, Long>> iterator = this.obsidianPos.entrySet().iterator();
                 while (iterator.hasNext()) {
-                    BlockPos blockPos = iterator.next();
-                    if (!(mc.theWorld.getBlockState(blockPos).getBlock() instanceof BlockObsidian)) {
+                    Map.Entry<BlockPos, Long> entry = iterator.next();
+                    BlockPos blockPos = entry.getKey();
+                    Long receivedMs = entry.getValue();
+
+                    if (!(mc.theWorld.getBlockState(blockPos).getBlock() instanceof BlockObsidian) && Utils.timeBetween(System.currentTimeMillis(), receivedMs) >= 500) {
                         iterator.remove();
                         continue;
                     }
                     RenderUtils.renderBlock(blockPos, obsidianColor, false, true);
                 }
+
             }
             catch (Exception exception) {}
         }
@@ -82,13 +107,29 @@ public class BedWars extends Module {
 
     @SubscribeEvent
     public void onEntityJoinWorld(EntityJoinWorldEvent e) {
-        if (!Utils.nullCheck() || e.entity == null) {
-            return;
-        }
         if (e.entity == mc.thePlayer) {
             armoredPlayer.clear();
             lastHeldMap.clear();
             obsidianPos.clear();
+            entitySpawnQueue.clear();
+            spawnedMobs.clear();
+        }
+        else {
+            if (e.entity != null && e.entity instanceof EntityIronGolem) {
+                if (Utils.getBedwarsStatus() != 2) {
+                    return;
+                }
+                Vec3 spawnPosition = new Vec3(e.entity.posX, e.entity.posY, e.entity.posZ);
+                for (SkyWars.SpawnEggInfo eggInfo : entitySpawnQueue) {
+                    if (eggInfo.spawnPos.distanceTo(spawnPosition) > 3 || Utils.timeBetween(mc.thePlayer.ticksExisted, eggInfo.tickSpawned) > 60) { // 3 seconds or not at spawn point then not own mob
+                        return;
+                    }
+                    if (!entitySpawnQueue.remove(eggInfo)) {
+                        return;
+                    }
+                    spawnedMobs.add(e.entity.getEntityId());
+                }
+            }
         }
     }
 
@@ -120,7 +161,7 @@ public class BedWars extends Module {
                         if (itemType != null) {
                             lastHeldMap.put(name, itemType);
                             double distance = Math.round(mc.thePlayer.getDistanceToEntity(p));
-                            handleAlert(itemType, p.getDisplayName().getFormattedText(), Utils.isWholeNumber(distance) ? (int) distance + "" : String.valueOf(distance));
+                            handleAlert(itemType, p.getDisplayName().getFormattedText(), Utils.asWholeNum(distance));
                         }
                     } else if (lastHeldMap.containsKey(name)) {
                         String itemType = lastHeldMap.get(name);
@@ -146,6 +187,41 @@ public class BedWars extends Module {
                 outsideSpawn = true;
             }
         }
+    }
+
+    @SubscribeEvent
+    public void onSendPacket(SendPacketEvent e) {
+        if (e.getPacket() instanceof C08PacketPlayerBlockPlacement) {
+            C08PacketPlayerBlockPlacement p = (C08PacketPlayerBlockPlacement) e.getPacket();
+            if (p.getPlacedBlockDirection() != 255 && p.getStack() != null && p.getStack().getItem() != null) {
+                if (p.getStack().getItem() instanceof ItemMonsterPlacer) {
+                    Class<? extends Entity> oclass = EntityList.stringToClassMapping.get(ItemMonsterPlacer.getEntityName(p.getStack()));
+                    if (oclass.getSimpleName().equals("EntityIronGolem")) {
+                        entitySpawnQueue.add(new SkyWars.SpawnEggInfo(p.getPosition(), mc.thePlayer.ticksExisted));
+                    }
+                }
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void onReceivePacket(ReceivePacketEvent e) {
+        if (e.getPacket() instanceof S23PacketBlockChange) {
+            S23PacketBlockChange p = (S23PacketBlockChange) e.getPacket();
+            if (p.getBlockState() != null && p.getBlockState().getBlock() instanceof BlockObsidian && isNextToBed(p.getBlockPosition())) {
+                this.obsidianPos.put(p.getBlockPosition(), System.currentTimeMillis());
+            }
+        }
+    }
+
+    private boolean isNextToBed(BlockPos blockPos) {
+        for (EnumFacing enumFacing : EnumFacing.values()) {
+            BlockPos offset = blockPos.offset(enumFacing);
+            if (BlockUtils.getBlock(offset) instanceof BlockBed) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @SubscribeEvent

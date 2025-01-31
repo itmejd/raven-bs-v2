@@ -6,7 +6,7 @@ import com.google.gson.JsonParser;
 public class ProfileUtils {
     public static String getMojangProfile(String n) {
         String result = "";
-        String response = NetworkUtils.getTextFromURL("https://api.mojang.com/users/profiles/minecraft/" + n, false);
+        String response = NetworkUtils.getTextFromURL("https://api.mojang.com/users/profiles/minecraft/" + n, false, false);
         if (!response.isEmpty()) {
             try {
                 result = response.split("d\":\"")[1].split("\"")[0];
@@ -24,7 +24,7 @@ public class ProfileUtils {
             s[0] = -1;
             return s;
         } else {
-            String c = NetworkUtils.getTextFromURL("https://api.hypixel.net/player?key=" + NetworkUtils.API_KEY + "&uuid=" + u, false);
+            String c = NetworkUtils.getTextFromURL("https://api.hypixel.net/player?key=" + NetworkUtils.API_KEY + "&uuid=" + u, false, false);
             if (c.isEmpty()) {
                 return null;
             } else if (c.equals("{\"success\":true,\"player\":null}")) {
