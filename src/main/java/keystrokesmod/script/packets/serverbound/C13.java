@@ -21,7 +21,7 @@ public class C13 extends CPacket {
         this.walkSpeed = walkSpeed;
     }
 
-    protected C13(C13PacketPlayerAbilities packet) {
+    public C13(C13PacketPlayerAbilities packet) {
         super(packet);
     }
 

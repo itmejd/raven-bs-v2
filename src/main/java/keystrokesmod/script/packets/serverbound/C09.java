@@ -10,7 +10,7 @@ public class C09 extends CPacket {
         this.slot = slot;
     }
 
-    protected C09(C09PacketHeldItemChange packet, boolean identifier) {
+    public C09(C09PacketHeldItemChange packet, boolean identifier) {
         super(packet);
         this.slot = packet.getSlotId();
     }

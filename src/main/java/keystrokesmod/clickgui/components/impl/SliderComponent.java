@@ -22,34 +22,47 @@ public class SliderComponent extends Component {
     public int x;
     private int y;
     private boolean heldDown = false;
-    private double w;
+    private double width;
     public int xOffset;
     public boolean renderLine;
+
+    private double targetValue;
+    private double displayedValue;
+    private static final double SLIDER_SPEED = 0.6;
 
     public SliderComponent(SliderSetting sliderSetting, ModuleComponent moduleComponent, int o) {
         this.sliderSetting = sliderSetting;
         this.moduleComponent = moduleComponent;
-        this.x = moduleComponent.categoryComponent.getX() + moduleComponent.categoryComponent.getWidth();
-        this.y = moduleComponent.categoryComponent.getY() + moduleComponent.yPos;
         this.o = o;
+
+        double initial = (sliderSetting.getInput() == -1 && sliderSetting.canBeDisabled) ? -1 : sliderSetting.getInput();
+
+        this.targetValue = initial;
+        this.displayedValue = initial;
+        this.width = this.sliderSetting.getInput() == -1 ? 0 : (double) (this.moduleComponent.categoryComponent.getWidth() - 8) * (this.sliderSetting.getInput() - this.sliderSetting.getMin()) / (this.sliderSetting.getMax() - this.sliderSetting.getMin());
     }
 
+    @Override
     public void render() {
         RenderUtils.drawRoundedRectangle(this.moduleComponent.categoryComponent.getX() + 4 + (xOffset / 2), this.moduleComponent.categoryComponent.getY() + this.o + 11, this.moduleComponent.categoryComponent.getX() + 4 + this.moduleComponent.categoryComponent.getWidth() - 8, this.moduleComponent.categoryComponent.getY() + this.o + 15, 4, -12302777);
-        int l = this.moduleComponent.categoryComponent.getX() + 4;
-        int r = this.moduleComponent.categoryComponent.getX() + 4 + (int) this.w;
-        if (r - l > 84) {
-            r = l + 84;
+        int left = this.moduleComponent.categoryComponent.getX() + 4 + (xOffset / 2);
+        int right = left + (int) this.width;
+
+        if (right - left > 84) {
+            right = left + 84;
         }
 
-        RenderUtils.drawRoundedRectangle(l + (xOffset / 2), this.moduleComponent.categoryComponent.getY() + this.o + 11, r, this.moduleComponent.categoryComponent.getY() + this.o + 15, 4, Color.getHSBColor((float) (System.currentTimeMillis() % 11000L) / 11000.0F, 0.75F, 0.9F).getRGB());
+        RenderUtils.drawRoundedRectangle(left, this.moduleComponent.categoryComponent.getY() + this.o + 11, right, this.moduleComponent.categoryComponent.getY() + this.o + 15, 4, Color.getHSBColor((float) (System.currentTimeMillis() % 11000L) / 11000.0F, 0.75F, 0.9F).getRGB());
+
         GL11.glPushMatrix();
-        GL11.glScaled(0.5D, 0.5D, 0.5D);
-        String value;
+        GL11.glScaled(0.5, 0.5, 0.5);
+
         double input = this.sliderSetting.getInput();
         String suffix = this.sliderSetting.getSuffix();
+        String valueText;
+
         if (input == -1 && this.sliderSetting.canBeDisabled) {
-            value = "§cDisabled";
+            valueText = "§cDisabled";
             suffix = "";
         }
         else {
@@ -57,36 +70,49 @@ public class SliderComponent extends Component {
                 suffix += "s";
             }
             if (this.sliderSetting.isString) {
-                value = this.sliderSetting.getOptions()[(int) this.sliderSetting.getInput()];
+                int idx = (int) Math.round(input);
+                idx = Math.max(0, Math.min(idx, this.sliderSetting.getOptions().length - 1));
+                valueText = this.sliderSetting.getOptions()[idx];
             }
             else {
-                value = Utils.asWholeNum(input);
+                valueText = Utils.asWholeNum(input);
             }
         }
-        Minecraft.getMinecraft().fontRendererObj.drawStringWithShadow(this.sliderSetting.getName() + ": " + (this.sliderSetting.isString ? "§e" : "§b") +value + suffix, (float) ((int) ((float) (this.moduleComponent.categoryComponent.getX() + 4) * 2.0F)) + xOffset, (float) ((int) ((float) (this.moduleComponent.categoryComponent.getY() + this.o + 3) * 2.0F)), -1);
-        GL11.glScaled(1, 1, 1);
-        if (renderLine) {
-            //RenderUtils.drawRectangleGL((float) ((this.moduleComponent.categoryComponent.getX() + 4) * 2), (float) ((this.moduleComponent.categoryComponent.getY() + this.o) * 2), (float) ((this.moduleComponent.categoryComponent.getX() + 4) * 2) + 1, (float) ((this.moduleComponent.categoryComponent.getY() + this.o + 4) * 2) + 22, new Color(192, 192, 192).getRGB());
-        }
+
+        Minecraft.getMinecraft().fontRendererObj.drawStringWithShadow(this.sliderSetting.getName() + ": " + (this.sliderSetting.isString ? "§e" : "§b") + valueText + suffix, (float) ((this.moduleComponent.categoryComponent.getX() + 4) * 2) + xOffset, (float) ((this.moduleComponent.categoryComponent.getY() + this.o + 3) * 2), -1);
         GL11.glPopMatrix();
     }
 
-    public void updateHeight(int n) {
-        this.o = n;
-    }
-
-    public void drawScreen(int x, int y) {
+    @Override
+    public void drawScreen(int mouseX, int mouseY) {
         this.y = this.moduleComponent.categoryComponent.getModuleY() + this.o;
         this.x = this.moduleComponent.categoryComponent.getX();
-        double d = Math.min(this.moduleComponent.categoryComponent.getWidth() - 8, Math.max(0, x - this.x));
+
         if (this.heldDown) {
-            this.moduleComponent.mod.onSlide(this.sliderSetting);
-            if (d == 0.0D && this.sliderSetting.canBeDisabled) {
-                this.sliderSetting.setValueRaw(-1);
+            double d = Math.min(this.moduleComponent.categoryComponent.getWidth() - 8, Math.max(0, mouseX - this.x));
+            if (d == 0.0 && this.sliderSetting.canBeDisabled) {
+                this.targetValue = -1;
             }
             else {
                 double n = roundToInterval(d / (double) (this.moduleComponent.categoryComponent.getWidth() - 8) * (this.sliderSetting.getMax() - this.sliderSetting.getMin()) + this.sliderSetting.getMin(), 4);
-                this.sliderSetting.setValue(n);
+                this.targetValue = n;
+            }
+            this.displayedValue = displayedValue + (targetValue - displayedValue) * SLIDER_SPEED;
+
+            if (targetValue == -1) {
+                sliderSetting.setValueRaw(-1);
+            }
+            else {
+                sliderSetting.setValue(this.targetValue);
+            }
+
+            if (this.displayedValue == -1) {
+                this.width = 0;
+            }
+            else {
+                double range = (sliderSetting.getMax() - sliderSetting.getMin());
+                double fraction = (this.displayedValue - sliderSetting.getMin()) / range;
+                this.width = (this.moduleComponent.categoryComponent.getWidth() - 8) * fraction;
             }
 
             if (this.sliderSetting.getInput() != this.sliderSetting.getMin() && ModuleManager.hud != null && ModuleManager.hud.isEnabled() && !ModuleManager.organizedModules.isEmpty()) {
@@ -97,41 +123,54 @@ public class SliderComponent extends Component {
                 ((ProfileModule) Raven.currentProfile.getModule()).saved = false;
             }
         }
-
-        this.w = this.sliderSetting.getInput() == -1 ? 0 : (double) (this.moduleComponent.categoryComponent.getWidth() - 8) * (this.sliderSetting.getInput() - this.sliderSetting.getMin()) / (this.sliderSetting.getMax() - this.sliderSetting.getMin());
     }
 
-    private static double roundToInterval(double v, int p) {
-        if (p < 0) {
+    public void onProfileLoad() {
+        double initial = (sliderSetting.getInput() == -1 && sliderSetting.canBeDisabled) ? -1 : sliderSetting.getInput();
+
+        this.targetValue = initial;
+        this.displayedValue = initial;
+        this.width = this.sliderSetting.getInput() == -1 ? 0 : (double) (this.moduleComponent.categoryComponent.getWidth() - 8) * (this.sliderSetting.getInput() - this.sliderSetting.getMin()) / (this.sliderSetting.getMax() - this.sliderSetting.getMin());
+    }
+
+    private static double roundToInterval(double value, int places) {
+        if (places < 0) {
             return 0.0D;
-        } else {
-            BigDecimal bd = new BigDecimal(v);
-            bd = bd.setScale(p, RoundingMode.HALF_UP);
+        }
+        else {
+            BigDecimal bd = new BigDecimal(value);
+            bd = bd.setScale(places, RoundingMode.HALF_UP);
             return bd.doubleValue();
         }
     }
 
-    public boolean onClick(int x, int y, int b) {
-        if ((this.u(x, y) || this.i(x, y)) && b == 0 && this.moduleComponent.isOpened) {
+    @Override
+    public boolean onClick(int mouseX, int mouseY, int button) {
+        if ((u(mouseX, mouseY) || i(mouseX, mouseY)) && button == 0 && this.moduleComponent.isOpened) {
             this.heldDown = true;
         }
         return false;
     }
 
-    public void mouseReleased(int x, int y, int m) {
+    @Override
+    public void mouseReleased(int mouseX, int mouseY, int button) {
         this.heldDown = false;
     }
 
-    public boolean u(int x, int y) {
-        return x > this.x && x < this.x + this.moduleComponent.categoryComponent.getWidth() / 2 + 1 && y > this.y && y < this.y + 16;
+    public boolean u(int mouseX, int mouseY) {
+        return mouseX > this.x && mouseX < this.x + this.moduleComponent.categoryComponent.getWidth() / 2 + 1 && mouseY > this.y && mouseY < this.y + 16;
     }
 
-    public boolean i(int x, int y) {
-        return x > this.x + this.moduleComponent.categoryComponent.getWidth() / 2 && x < this.x + this.moduleComponent.categoryComponent.getWidth() && y > this.y && y < this.y + 16;
+    public boolean i(int mouseX, int mouseY) {
+        return mouseX > this.x + this.moduleComponent.categoryComponent.getWidth() / 2 && mouseX < this.x + this.moduleComponent.categoryComponent.getWidth() && mouseY > this.y && mouseY < this.y + 16;
     }
 
     @Override
     public void onGuiClosed() {
         this.heldDown = false;
+    }
+
+    public void updateHeight(int n) {
+        this.o = n;
     }
 }

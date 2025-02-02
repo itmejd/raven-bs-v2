@@ -18,6 +18,7 @@ import keystrokesmod.script.packets.serverbound.PacketHandler;
 import keystrokesmod.utility.*;
 import keystrokesmod.utility.shader.BlurUtils;
 import keystrokesmod.utility.shader.RoundedUtils;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
 import net.minecraft.client.gui.inventory.*;
@@ -495,21 +496,20 @@ public class ScriptDefaults {
     }
 
     public static class world {
-
         public static Block getBlockAt(int x, int y, int z) {
-            net.minecraft.block.Block block = BlockUtils.getBlock(new BlockPos(x, y, z));
-            if (block == null) {
+            IBlockState state = BlockUtils.getBlockState(new BlockPos(x, y, z));
+            if (state == null) {
                 return new Block(Blocks.air, new BlockPos(x, y, z));
             }
-            return new Block(block, new BlockPos(x, y, z));
+            return new Block(state, new BlockPos(x, y, z));
         }
 
         public static Block getBlockAt(Vec3 pos) {
-            net.minecraft.block.Block block = BlockUtils.getBlock(new BlockPos(pos.x, pos.y, pos.z));
-            if (block == null) {
+            IBlockState state = BlockUtils.getBlockState(new BlockPos(pos.x, pos.y, pos.z));
+            if (state == null) {
                 return new Block(Blocks.air, new BlockPos(pos.x, pos.y, pos.z));
             }
-            return new Block(block, new BlockPos(pos.x, pos.y, pos.z));
+            return new Block(state, new BlockPos(pos.x, pos.y, pos.z));
         }
 
         public static String getDimension() {

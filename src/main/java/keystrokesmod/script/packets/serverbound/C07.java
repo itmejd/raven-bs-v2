@@ -18,7 +18,7 @@ public class C07 extends CPacket {
         this.facing = facing;
     }
 
-    protected C07(C07PacketPlayerDigging packet) {
+    public C07(C07PacketPlayerDigging packet) {
         super(packet);
         this.position = Vec3.convert(packet.getPosition());
         this.status = packet.getStatus().name();

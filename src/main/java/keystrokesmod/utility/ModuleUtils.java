@@ -1,16 +1,15 @@
 package keystrokesmod.utility;
 
-import keystrokesmod.event.NoEventPacketEvent;
-import keystrokesmod.event.PreMotionEvent;
-import keystrokesmod.event.PreUpdateEvent;
-import keystrokesmod.event.SendPacketEvent;
+import keystrokesmod.event.*;
 import keystrokesmod.module.impl.movement.LongJump;
 import keystrokesmod.module.impl.render.HUD;
 import keystrokesmod.utility.command.CommandManager;
 import net.minecraft.client.Minecraft;
 import keystrokesmod.module.ModuleManager;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.network.Packet;
 import net.minecraft.network.play.client.*;
+import net.minecraft.network.play.server.S12PacketEntityVelocity;
 import net.minecraft.network.play.server.S27PacketExplosion;
 import net.minecraft.util.BlockPos;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
@@ -48,6 +47,9 @@ public class ModuleUtils {
     private boolean thisTickOnGround, thisTickPos1;
 
     public static boolean isBlocked;
+
+    public static boolean damage;
+    private int damageTicks;
 
     @SubscribeEvent
     public void onSendPacketNoEvent(NoEventPacketEvent e) {
@@ -156,7 +158,27 @@ public class ModuleUtils {
     }
 
     @SubscribeEvent
+    public void onReceivePacket(ReceivePacketEvent e) {
+        if (!Utils.nullCheck()) {
+            return;
+        }
+        if (e.getPacket() instanceof S12PacketEntityVelocity) {
+            if (((S12PacketEntityVelocity) e.getPacket()).getEntityID() == mc.thePlayer.getEntityId()) {
+
+                damage = true;
+                damageTicks = 0;
+
+            }
+        }
+    }
+
+    @SubscribeEvent
     public void onPreUpdate(PreUpdateEvent e) {
+
+        if (damage && ++damageTicks >= 8) {
+            damage = false;
+            damageTicks = 0;
+        }
 
         profileTicks++;
 

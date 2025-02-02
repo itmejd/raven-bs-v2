@@ -27,7 +27,7 @@ public class Tower extends Module {
     private int slowTicks;
     private boolean wasTowering;
     private int towerTicks;
-    private boolean tower;
+    public boolean tower;
     private boolean hasTowered, startedTowerInAir, setLowMotion, firstJump;
     private int cMotionTicks, placeTicks;
     public int dCount;
@@ -57,7 +57,9 @@ public class Tower extends Module {
     @SubscribeEvent
     public void onPreMotion(PreMotionEvent e) {
         if (canTower() && Utils.keysDown()) {
-            towerTicks = mc.thePlayer.onGround ? 0 : ++towerTicks;
+            if (tower) {
+                towerTicks = mc.thePlayer.onGround ? 0 : ++towerTicks;
+            }
             switch ((int) towerMove.getInput()) {
                 case 1:
 
@@ -236,7 +238,7 @@ public class Tower extends Module {
                     if (aligned) {
                         if (placed) {
                             yaw = 0;
-                            pitch = 89;
+                            pitch = 89.9F;
                         }
                         else {
                             yaw = RotationUtils.getRotations(firstX, firstY, firstZ)[0];
@@ -268,12 +270,12 @@ public class Tower extends Module {
             if (!firstJump) {
                 if (!mc.thePlayer.onGround) {
                     if (!startedTowerInAir) {
-                        //Utils.setSpeed(getTowerGroundSpeed(getSpeedLevel()) - 0.04);
+                        Utils.setSpeed(getTowerGroundSpeed(getSpeedLevel()) - 0.04);
                     }
                     startedTowerInAir = true;
                 }
                 else if (mc.thePlayer.onGround) {
-                    //Utils.setSpeed(getTowerGroundSpeed(getSpeedLevel()));
+                    Utils.setSpeed(getTowerGroundSpeed(getSpeedLevel()));
                     firstJump = true;
                 }
             }
@@ -321,7 +323,7 @@ public class Tower extends Module {
         if (!Utils.nullCheck() || !Utils.jumpDown()) {
             return false;
         }
-        else if (disableWhileHurt.isToggled() && mc.thePlayer.hurtTime > 0) {
+        else if (disableWhileHurt.isToggled() && ModuleUtils.damage) {
             return false;
         }
         else if (mc.thePlayer.isCollidedHorizontally) {

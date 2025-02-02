@@ -9,7 +9,7 @@ public class C0D extends CPacket {
         this.windowId = windowId;
     }
 
-    protected C0D(C0DPacketCloseWindow packet) {
+    public C0D(C0DPacketCloseWindow packet) {
         super(packet);
     }
 

@@ -10,10 +10,10 @@ public class S23 extends SPacket {
     public Vec3 position;
     public Block block;
 
-    public S23(S23PacketBlockChange packet) {
+    public S23(S23PacketBlockChange packet, byte f) {
         super(packet);
         this.position = Vec3.convert(packet.getBlockPosition());
-        this.block = new Block(packet.getBlockState().getBlock(), new BlockPos(position.x, position.y, position.z));
+        this.block = new Block(packet.getBlockState(), new BlockPos(position.x, position.y, position.z));
     }
 
     public S23(Vec3 position) {

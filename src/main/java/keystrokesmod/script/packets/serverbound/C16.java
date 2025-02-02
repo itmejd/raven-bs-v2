@@ -11,7 +11,7 @@ public class C16 extends CPacket {
         this.status = status;
     }
 
-    protected C16(C16PacketClientStatus packet) {
+    public C16(C16PacketClientStatus packet) {
         super(packet);
         this.status = packet.getStatus().name();
     }

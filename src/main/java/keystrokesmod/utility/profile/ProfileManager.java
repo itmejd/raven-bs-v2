@@ -4,6 +4,7 @@ import com.google.gson.*;
 import keystrokesmod.Raven;
 import keystrokesmod.clickgui.ClickGui;
 import keystrokesmod.clickgui.components.impl.CategoryComponent;
+import keystrokesmod.event.PostProfileLoadEvent;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.client.Gui;
@@ -18,6 +19,7 @@ import keystrokesmod.module.setting.impl.SliderSetting;
 import keystrokesmod.script.Manager;
 import keystrokesmod.utility.Utils;
 import net.minecraft.client.Minecraft;
+import net.minecraftforge.common.MinecraftForge;
 
 import java.io.File;
 import java.io.FileReader;
@@ -259,7 +261,9 @@ public class ProfileManager {
 
                     Raven.currentProfile = getProfile(name);
                 }
-            } catch (Exception e) {
+                MinecraftForge.EVENT_BUS.post(new PostProfileLoadEvent(Raven.currentProfile.getName()));
+            }
+            catch (Exception e) {
                 failedMessage("load", name);
                 e.printStackTrace();
             }

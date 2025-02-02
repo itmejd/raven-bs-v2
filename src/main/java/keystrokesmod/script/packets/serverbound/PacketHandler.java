@@ -11,7 +11,7 @@ public class PacketHandler {
         if (packet == null || packet.getClass().getSimpleName().startsWith("S")) {
             return null;
         }
-        Class<? extends CPacket> asClass = PacketMappings.minecraftToScriptC.get(packet);
+        Class<? extends CPacket> asClass = PacketMappings.minecraftToScriptC.get(packet.getClass());
         CPacket newPacket;
         if (asClass != null) {
             if (packet instanceof C03PacketPlayer) {
@@ -25,7 +25,7 @@ public class PacketHandler {
             }
             else {
                 try {
-                    newPacket = asClass.getConstructor(net.minecraft.network.Packet.class).newInstance(packet);
+                    newPacket = asClass.getConstructor(packet.getClass()).newInstance(packet);
                 }
                 catch (Exception e) {
                     newPacket = new CPacket(packet);
@@ -39,15 +39,18 @@ public class PacketHandler {
     }
 
     public static SPacket convertClientBound(Packet packet) {
-        Class<? extends SPacket> asClass = PacketMappings.minecraftToScriptS.get(packet);
+        Class<? extends SPacket> asClass = PacketMappings.minecraftToScriptS.get(packet.getClass());
         SPacket newPacket;
         if (asClass != null) {
             if (packet instanceof S3APacketTabComplete) {
                 newPacket = new S3A((S3APacketTabComplete) packet, (byte) 0);
             }
+            else if (packet instanceof S23PacketBlockChange) {
+                newPacket = new S23((S23PacketBlockChange) packet, (byte) 0);
+            }
             else {
                 try {
-                    newPacket = asClass.getConstructor(net.minecraft.network.Packet.class).newInstance(packet);
+                    newPacket = asClass.getConstructor(packet.getClass()).newInstance(packet);
                 }
                 catch (Exception e) {
                     newPacket = new SPacket(packet);

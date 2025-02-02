@@ -66,9 +66,8 @@ public class NoFall extends Module {
             dynamic = 5.0;
         }
         if (isFalling && mode.getInput() == 2) {
-            Utils.getTimer().timerSpeed = (float) 1;
             if (distanceFallen >= dynamic) {
-                Utils.getTimer().timerSpeed = (0.7199789F + (float) Utils.randomizeDouble(-0.012, 0.012));
+                Utils.getTimer().timerSpeed = (0.7399789F + (float) Utils.randomizeDouble(-0.012, 0.012));
                 mc.getNetHandler().addToSendQueue(new C03PacketPlayer(true));
                 initialY = mc.thePlayer.posY;
             }

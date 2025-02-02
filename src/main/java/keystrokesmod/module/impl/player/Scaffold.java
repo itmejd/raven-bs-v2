@@ -257,23 +257,23 @@ public class Scaffold extends Module {
                 float blockYawOffset = MathHelper.wrapAngleTo180_float(yawBackwards - blockYaw);
                 int quadVal = 0;
 
-                float minPitch = 77.650f;
+                float minPitch = 70.650f;
 
-                float firstStraight = 130.50f;
-                float secondStraight = 132.50f;
-                float thirdStraight = 134.50f;
-                float firstDiag = 135.50f;
+                float firstStraight = 133.50f;
+                float secondStraight = 134.50f;
+                float thirdStraight = 135.50f;
+                float firstDiag = 136.50f;
                 float secondDiag = 137.50f;
                 float thirdDiag = 139.50f;
                 float fourthDiag = 142.50f;
 
-                float firstOffset = 23;
-                float secondOffset = 20;
-                float thirdOffset = 17;
-                float fourthOffset = 14;
-                float fifthOffset = 11;
-                float sixthOffset = 8;
-                float seventhOffset = 6;
+                float firstOffset = 19;
+                float secondOffset = 15;
+                float thirdOffset = 10;
+                float fourthOffset = 8;
+                float fifthOffset = 7;
+                float sixthOffset = 6;
+                float seventhOffset = 5;
 
                 //first straight
                 if (quad <= 5 || quad >= 85) {
@@ -342,15 +342,15 @@ public class Scaffold extends Module {
                     pitch = blockRotations[1];
                     yawOffset = blockYawOffset;
                     if (pitch < minPitch && Utils.getHorizontalSpeed() < 0.6) {
-                        //pitch = minPitch;
+                        pitch = minPitch;
                     }
                     if (firstStroke == 0) {
-                        strokeDelay = 400;
+                        strokeDelay = 325;
                     }
                 } else {
                     yawOffset = minOffset;
                     pitch = minPitch;
-                    strokeDelay = 600;
+                    strokeDelay = 400;
                 }
 
                 if (!Utils.isMoving() || Utils.getHorizontalSpeed() == 0.0D) {
@@ -598,8 +598,8 @@ public class Scaffold extends Module {
         }
 
         //pitch fix
-        if (e.getPitch() >= 89) {
-            e.setPitch(89);
+        if (e.getPitch() > 89.9F) {
+            e.setPitch(89.9F);
         }
 
         lastYaw = mc.thePlayer.rotationYaw;
@@ -835,6 +835,9 @@ public class Scaffold extends Module {
         locateAndPlaceBlock(yOffset, xOffset);
         int input = (int) multiPlace.getInput();
         if (sprint.getInput() == 0 && mc.thePlayer.onGround && !ModuleManager.tower.canTower() && !usingFastScaffold()) {
+            return;
+        }
+        if (ModuleManager.tower.canTower() && !ModuleManager.tower.tower) {
             return;
         }
         if (input >= 1) {

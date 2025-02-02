@@ -4,6 +4,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
+import keystrokesmod.event.PostProfileLoadEvent;
 import keystrokesmod.keystroke.KeySrokeRenderer;
 import keystrokesmod.keystroke.KeyStrokeConfigGui;
 import keystrokesmod.keystroke.keystrokeCommand;
@@ -143,6 +144,11 @@ public class Raven {
             Entity.clearCache();
             NetworkPlayer.clearCache();
         }
+    }
+
+    @SubscribeEvent
+    public void onPostProfileLoad(PostProfileLoadEvent e) {
+        clickGui.onProfileLoad();
     }
 
     public static ModuleManager getModuleManager() {

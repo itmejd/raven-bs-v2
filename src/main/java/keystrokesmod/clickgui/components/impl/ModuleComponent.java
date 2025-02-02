@@ -114,9 +114,6 @@ public class ModuleComponent extends Component {
             }
             RenderUtils.drawRoundedRectangle(this.categoryComponent.getX(), this.categoryComponent.getY() + yPos, this.categoryComponent.getX() + this.categoryComponent.getWidth(), this.categoryComponent.getY() + 16 + this.yPos, 8, Utils.mergeAlpha(hoverColor, (int) hoverAlpha));
         }
-
-        GL11.glPushMatrix();
-
         int button_rgb = this.mod.isEnabled() ? enabledColor : disabledColor;
         if (this.mod.script != null && this.mod.script.error) {
             button_rgb = invalidColor;
@@ -146,8 +143,6 @@ public class ModuleComponent extends Component {
         }
 
         Minecraft.getMinecraft().fontRendererObj.drawStringWithShadow(this.mod.getName(), (float) (this.categoryComponent.getX() + this.categoryComponent.getWidth() / 2 - Minecraft.getMinecraft().fontRendererObj.getStringWidth(this.mod.getName()) / 2), (float) (this.categoryComponent.getY() + this.yPos + 4), button_rgb);
-
-        GL11.glPopMatrix();
         boolean scissorRequired = smoothTimer != null;
         if (scissorRequired) {
             GL11.glPushMatrix();
@@ -200,6 +195,14 @@ public class ModuleComponent extends Component {
         }
     }
 
+    public void onProfileLoad() {
+        for (Component c : this.settings) {
+            if (c instanceof SliderComponent) {
+                ((SliderComponent) c).onProfileLoad();
+            }
+        }
+    }
+
     public int getModuleHeight() {
         int h = 16;
         Iterator var2 = this.settings.iterator();
@@ -223,10 +226,8 @@ public class ModuleComponent extends Component {
     }
 
     public void drawScreen(int x, int y) {
-        if (!this.settings.isEmpty()) {
-            for (Component c : this.settings) {
-                c.drawScreen(x, y);
-            }
+        for (Component c : this.settings) {
+            c.drawScreen(x, y);
         }
         if (overModuleName(x, y) && this.categoryComponent.opened) {
             hovering = true;

@@ -208,7 +208,7 @@ public class Entity {
     }
 
     public boolean isConsuming() {
-        return this.entity.isEating();
+        return Utils.isConsuming(this.entity);
     }
 
     public Vec3 getLastPosition() {

@@ -58,6 +58,22 @@ public class Utils {
     public static HashSet<String> enemies = new HashSet<>();
     public static final Logger log = LogManager.getLogger();
 
+    private static int darkRed = new Color(189, 0, 1).getRGB();
+    private static int red = new Color(253, 63, 63).getRGB();
+    private static int gold = new Color(215, 162, 50).getRGB();
+    private static int yellow = new Color(254, 254, 62).getRGB();
+    private static int darkGreen = new Color(0, 191, 4).getRGB();
+    private static int green = new Color(64, 253, 62).getRGB();
+    private static int aqua = new Color(65, 255, 254).getRGB();
+    private static int darkAqua = new Color(0, 190, 189).getRGB();
+    private static int darkBlue = new Color(1, 1, 187).getRGB();
+    private static int blue = new Color(61, 64, 255).getRGB();
+    private static int lightPurple = new Color(254, 63, 255).getRGB();
+    private static int darkPurple = new Color(190, 0, 190).getRGB();
+    private static int gray = new Color(190, 190, 190).getRGB();
+    private static int darkGray = new Color(63, 63, 63).getRGB();
+    private static int black = new Color(17, 17, 17).getRGB();
+
     public static boolean addEnemy(String name) {
         if (enemies.add(name.toLowerCase())) {
             Utils.sendMessage("&7Added &cenemy&7: &b" + name);
@@ -1356,35 +1372,35 @@ public class Utils {
         }
         switch (displayName.charAt(1)) {
             case '0':
-                return -16777216;
+                return black;
             case '1':
-                return -16777046;
+                return darkBlue;
             case '2':
-                return -16733696;
+                return darkGreen;
             case '3':
-                return -16733526;
+                return darkAqua;
             case '4':
-                return -5636096;
+                return darkRed;
             case '5':
-                return -5635926;
+                return darkPurple;
             case '6':
-                return -22016;
+                return gold;
             case '7':
-                return -5592406;
+                return gray;
             case '8':
-                return -11184811;
+                return darkGray;
             case '9':
-                return -11184641;
+                return blue;
             case 'a':
-                return -11141291;
+                return green;
             case 'b':
-                return -11141121;
+                return aqua;
             case 'c':
-                return -43691;
+                return red;
             case 'd':
-                return -43521;
+                return lightPurple;
             case 'e':
-                return -171;
+                return yellow;
         }
         return -1;
     }

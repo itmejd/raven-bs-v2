@@ -13,7 +13,7 @@ public class C10 extends CPacket {
         this.itemStack = itemStack;
     }
 
-    protected C10(C10PacketCreativeInventoryAction packet) {
+    public C10(C10PacketCreativeInventoryAction packet) {
         super(packet);
         this.slot = packet.getSlotId();
         this.itemStack = ItemStack.convert(packet.getStack());

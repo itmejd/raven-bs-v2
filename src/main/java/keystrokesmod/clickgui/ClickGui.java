@@ -323,4 +323,12 @@ public class ClickGui extends GuiScreen {
         }
         return false;
     }
+
+    public void onProfileLoad() {
+        for (CategoryComponent c : categories) {
+            for (ModuleComponent m : c.getModules()) {
+                m.onProfileLoad();
+            }
+        }
+    }
 }

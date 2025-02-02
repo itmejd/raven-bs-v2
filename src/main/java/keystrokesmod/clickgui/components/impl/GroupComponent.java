@@ -27,7 +27,7 @@ public class GroupComponent extends Component {
         GL11.glScaled(0.5D, 0.5D, 0.5D);
         float strX = (float) ((this.component.categoryComponent.getX() + 4) * 2) + 1;
         float strY = (float) ((this.component.categoryComponent.getY() + this.o + 4) * 2);
-        if (!this.opened) {
+        if (this.opened) {
             drawString("[", strX, strY);
 
             int firstBracketWidth = Minecraft.getMinecraft().fontRendererObj.getStringWidth("[");
@@ -39,16 +39,12 @@ public class GroupComponent extends Component {
 
             float arrowX = firstBracketWidth - 2;
             GL11.glTranslatef(arrowX + (arrowWidth / 2F), (fontHeight / 2F), 0F);
-
             GL11.glRotatef(90F, 0F, 0F, 1F);
-
             GL11.glTranslatef(-(arrowWidth / 2F), -(fontHeight / 2F), 0F);
 
             drawString(">", 0, 0);
             GL11.glPopMatrix();
-            drawString("]  " + this.setting.getName(),
-                    strX + firstBracketWidth + arrowWidth,
-                    strY);
+            drawString("]  " + this.setting.getName(), strX + firstBracketWidth + arrowWidth, strY);
         } else {
             drawString("[>]  " + this.setting.getName(), strX, strY);
         }

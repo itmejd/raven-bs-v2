@@ -91,7 +91,7 @@ public class BedAura extends Module {
 
     @Override
     public void onDisable() {
-        reset(true);
+        reset(true, true);
         previousBlockBroken = null;
     }
 
@@ -101,14 +101,14 @@ public class BedAura extends Module {
             return;
         }
         if (ModuleManager.bedwars != null && ModuleManager.bedwars.isEnabled() && BedWars.whitelistOwnBed.isToggled() && !BedWars.outsideSpawn) {
-            reset(true);
+            reset(true, true);
             return;
         }
         if (Utils.isBedwarsPractice()) {
             return;
         }
         if (!mc.thePlayer.capabilities.allowEdit || mc.thePlayer.isSpectator()) {
-            reset(true);
+            reset(true, true);
             return;
         }
         if (bedPos == null) {
@@ -117,28 +117,22 @@ public class BedAura extends Module {
                 bedPos = getBedPos();
             }
             if (bedPos == null) {
-                reset(true);
+                reset(true, true);
                 return;
             }
         }
         else {
             if (!(BlockUtils.getBlock(bedPos[0]) instanceof BlockBed) || (currentBlock != null && BlockUtils.replaceable(currentBlock))) {
-                reset(true);
+                reset(true, true);
                 return;
             }
         }
         switch (noAutoBlockTicks) {
             case -1:
+                resetSlot();
                 noAutoBlockTicks = -2;
                 break;
             case -2:
-                resetSlot();
-                noAutoBlockTicks = -3;
-                break;
-            case -3:
-                noAutoBlockTicks = -4;
-                break;
-            case -4:
                 stopAutoblock = false;
                 noAutoBlockTicks = 0;
                 break;
@@ -175,7 +169,7 @@ public class BedAura extends Module {
         aiming = false;
         if ((rotate || breakProgress >= 1 || breakProgress == 0) && (currentBlock != null || rotateLastBlock != null)) {
             float[] rotations = RotationUtils.getRotations(currentBlock == null ? rotateLastBlock : currentBlock, e.getYaw(), e.getPitch());
-            if (currentBlock == null || !RotationUtils.inRange(currentBlock, range.getInput())) {
+            if (currentBlock != null && !RotationUtils.inRange(currentBlock, range.getInput())) {
                 return;
             }
             e.setYaw(RotationUtils.applyVanilla(rotations[0]));
@@ -321,7 +315,7 @@ public class BedAura extends Module {
         return efficiency;
     }
 
-    private void reset(boolean resetSlot) {
+    private void reset(boolean resetSlot, boolean stopAutoblock) {
         if (resetSlot) {
             resetSlot();
         }
@@ -335,10 +329,11 @@ public class BedAura extends Module {
         lastSlot = -1;
         vanillaProgress = 0;
         lastProgress = 0;
-        stopAutoblock = false;
-        noAutoBlockTicks = 0;
+        if (stopAutoblock) {
+            this.stopAutoblock = false;
+            noAutoBlockTicks = 0;
+        }
         rotateLastBlock = null;
-        previousBlockBroken = null;
     }
 
     public void setPacketSlot(int slot) {
@@ -353,7 +348,6 @@ public class BedAura extends Module {
             Utils.sendModuleMessage(this, "sending c07 &astart &7break &7(&b" + mc.thePlayer.ticksExisted + "&7)");
         }
         mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.START_DESTROY_BLOCK, blockPos, EnumFacing.UP));
-        stopAutoblock = true;
     }
 
     private void stopBreak(BlockPos blockPos) {
@@ -361,7 +355,6 @@ public class BedAura extends Module {
             Utils.sendModuleMessage(this, "sending c07 &cstop &7break &7(&b" + mc.thePlayer.ticksExisted + "&7)");
         }
         mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.STOP_DESTROY_BLOCK, blockPos, EnumFacing.UP));
-        stopAutoblock = false;
     }
 
     private void swing() {
@@ -383,7 +376,7 @@ public class BedAura extends Module {
             return;
         }
         if (BlockUtils.replaceable(currentBlock == null ? blockPos : currentBlock)) {
-            reset(true);
+            reset(true, true);
             return;
         }
         currentBlock = blockPos;
@@ -417,7 +410,7 @@ public class BedAura extends Module {
                 }
                 stopBreak(blockPos);
                 previousBlockBroken = currentBlock;
-                reset(false);
+                reset(false, false);
                 Iterator<Map.Entry<BlockPos, Float>> iterator = breakProgressMap.entrySet().iterator();
                 while (iterator.hasNext()) {
                     Map.Entry<BlockPos, Float> entry = iterator.next();
@@ -428,6 +421,7 @@ public class BedAura extends Module {
                 if (!disableBreakEffects.isToggled()) {
                     mc.playerController.onPlayerDestroyBlock(blockPos, EnumFacing.UP);
                 }
+                rotate = true;
                 rotateLastBlock = previousBlockBroken;
                 return;
             }
@@ -450,7 +444,7 @@ public class BedAura extends Module {
                     stopAutoblock = true; // if blocking then return and stop autoblocking
                 }
                 if (breakProgress >= lastProgress) {
-
+                    rotate = true;
                 }
             }
             breakProgress += progress;
