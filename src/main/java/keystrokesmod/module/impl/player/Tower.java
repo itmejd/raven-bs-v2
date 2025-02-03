@@ -124,7 +124,7 @@ public class Tower extends Module {
                     }
                     break;
                 case 3:
-                    if (mc.thePlayer.posY % 1 == 0 && !setLowMotion) {
+                    if (mc.thePlayer.posY % 1 == 0 && mc.thePlayer.onGround && !setLowMotion) {
                         tower = true;
                     }
                     if (tower) {
@@ -163,7 +163,7 @@ public class Tower extends Module {
                 case 4:
                     speed = false;
                     int simpleY = (int) Math.round((mc.thePlayer.posY % 1.0D) * 100.0D);
-                    if (mc.thePlayer.posY % 1 == 0) {
+                    if (mc.thePlayer.posY % 1 == 0 && mc.thePlayer.onGround) {
                         tower = true;
                     }
                     if (tower) {
@@ -214,7 +214,7 @@ public class Tower extends Module {
             wasTowering = true;
             switch ((int) verticalTower.getInput()) {
                 case 1:
-                    //lazy
+                    mc.thePlayer.motionY = 0.42f;
                     break;
                 case 2:
                     if (!aligned) {

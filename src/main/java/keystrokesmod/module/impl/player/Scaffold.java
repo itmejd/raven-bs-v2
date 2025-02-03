@@ -95,6 +95,8 @@ public class Scaffold extends Module {
     private int disableTicks;
     private int scaffoldTicks;
 
+    private boolean was451, was452;
+
     private float minOffset;
 
     private long firstStroke, strokeDelay = 575;
@@ -170,7 +172,7 @@ public class Scaffold extends Module {
                 if (scaffoldTicks > 1) {
                     rotateForward();
                     mc.thePlayer.jump();
-                    Utils.setSpeed(getSpeed(getSpeedLevel()) - Utils.randomizeDouble(0.001, 0.0001));
+                    Utils.setSpeed(getSpeed(getSpeedLevel()) - Utils.randomizeDouble(0.0003, 0.0001));
                     if (fastScaffold.getInput() == 5 || fastScaffold.getInput() == 2 && firstKeepYPlace) {
                         lowhop = true;
                     }
@@ -210,6 +212,7 @@ public class Scaffold extends Module {
                     floatKeepY = true;
                     startYPos = e.posY;
                     mc.thePlayer.jump();
+                    Utils.setSpeed(Utils.getHorizontalSpeed() - 0.1);
                     floatJumped = true;
                 } else if (onGroundTicks <= 8 && mc.thePlayer.onGround) {
                     floatStarted = true;
@@ -260,20 +263,20 @@ public class Scaffold extends Module {
                 float minPitch = 70.650f;
 
                 float firstStraight = 133.50f;
-                float secondStraight = 134.50f;
-                float thirdStraight = 135.50f;
-                float firstDiag = 136.50f;
-                float secondDiag = 137.50f;
-                float thirdDiag = 139.50f;
-                float fourthDiag = 143.50f;
+                float secondStraight = 133.50f;
+                float thirdStraight = 134.50f;
+                float firstDiag = 135.50f;
+                float secondDiag = 136.50f;
+                float thirdDiag = 138.50f;
+                float fourthDiag = 140.50f;
 
-                float firstOffset = 19;
-                float secondOffset = 15;
+                float firstOffset = 16;
+                float secondOffset = 14;
                 float thirdOffset = 10;
-                float fourthOffset = 8;
-                float fifthOffset = 7;
-                float sixthOffset = 6;
-                float seventhOffset = 5;
+                float fourthOffset = 9;
+                float fifthOffset = 8;
+                float sixthOffset = 5;
+                float seventhOffset = 2;
 
                 //first straight
                 if (quad <= 5 || quad >= 85) {
@@ -345,12 +348,13 @@ public class Scaffold extends Module {
                         pitch = minPitch;
                     }
                     if (firstStroke == 0) {
-                        strokeDelay = 325;
+                        strokeDelay = 400;
                     }
                 } else {
-                    yawOffset = minOffset;
+                    firstStroke = Utils.time();
+                    yawOffset = 0;
                     pitch = minPitch;
-                    strokeDelay = 400;
+                    strokeDelay = 200;
                 }
 
                 if (!Utils.isMoving() || Utils.getHorizontalSpeed() == 0.0D) {
@@ -368,33 +372,50 @@ public class Scaffold extends Module {
                         lastYaw + MathHelper.wrapAngleTo180_float(newYaw - lastYaw)
                 );
 
-                if (firstStroke == 0 && quadVal != 1) {
-                    if (quad >= 0 && quad < 45) {
-                        if (side >= 0) {
-                            set2 = false;
-                        } else {
-                            set2 = true;
+                if (quadVal != 1) {
+                    if (quad >= 0 && quad < 45F) {
+                        if (firstStroke == 0) {
+                            if (side >= 0) {
+                                set2 = false;
+                            } else {
+                                set2 = true;
+                            }
                         }
+                        if (was452) {
+                            firstStroke = Utils.time();
+                        }
+                        was451 = true;
+                        was452 = false;
                     } else {
-                        if (side >= 0) {
-                            set2 = true;
-                        } else {
-                            set2 = false;
+                        if (firstStroke == 0) {
+                            if (side >= 0) {
+                                set2 = true;
+                            } else {
+                                set2 = false;
+                            }
                         }
+                        if (was451) {
+                            firstStroke = Utils.time();
+                        }
+                        was452 = true;
+                        was451 = false;
                     }
-                    firstStroke = Utils.time();
                 }
 
                 double minSwitch = (!Utils.scaffoldDiagonal(false)) ? 0 : 15;
                 if (side >= 0) {
                     if (quadVal == 1) {
                         if (yawOffset <= -minSwitch && firstStroke == 0) {
+                            if (set2) {
+                                firstStroke = Utils.time();
+                            }
                             set2 = false;
-                            firstStroke = Utils.time();
                         } else if (yawOffset >= 0 && firstStroke == 0) {
                             if (yawOffset >= minSwitch) {
+                                if (!set2) {
+                                    firstStroke = Utils.time();
+                                }
                                 set2 = true;
-                                firstStroke = Utils.time();
                             }
                         }
                     }
@@ -407,12 +428,16 @@ public class Scaffold extends Module {
                 } else if (side <= -0) {
                     if (quadVal == 1) {
                         if (yawOffset >= minSwitch && firstStroke == 0) {
+                            if (set2) {
+                                firstStroke = Utils.time();
+                            }
                             set2 = false;
-                            firstStroke = Utils.time();
                         } else if (yawOffset <= 0 && firstStroke == 0) {
                             if (yawOffset <= -minSwitch) {
+                                if (!set2) {
+                                    firstStroke = Utils.time();
+                                }
                                 set2 = true;
-                                firstStroke = Utils.time();
                             }
                         }
                     }
@@ -561,7 +586,7 @@ public class Scaffold extends Module {
         //get yaw - player yaw offset
         float yv = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - hardcodedYaw();
         if (Raven.debug) {
-            Utils.sendModuleMessage(this, "" + MathHelper.wrapAngleTo180_float(yv - e.getYaw()));
+            Utils.sendModuleMessage(this, "" + MathHelper.wrapAngleTo180_float(yv - e.getYaw()) + " " + minOffset);
         }
 
         //Utils.print("" + mc.thePlayer.rotationYaw + " " + mc.thePlayer.rotationPitch);
@@ -703,7 +728,8 @@ public class Scaffold extends Module {
                 targetBlock = null;
                 blockInfo = null;
                 blockRotations = null;
-                fastScaffoldKeepY = firstKeepYPlace = rotateForward = rotatingForward = lowhop = floatStarted = floatJumped = floatWasEnabled = towerEdge = false;
+                fastScaffoldKeepY = firstKeepYPlace = rotateForward = rotatingForward = lowhop = floatStarted = floatJumped = floatWasEnabled = towerEdge =
+                was451 = was452 = false;
                 rotationDelay = keepYTicks = scaffoldTicks = 0;
                 firstStroke = 0;
                 startYPos = -1;
