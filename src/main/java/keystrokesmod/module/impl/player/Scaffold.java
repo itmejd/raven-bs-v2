@@ -737,7 +737,7 @@ public class Scaffold extends Module {
             info = Mouse.isButtonDown(1) && Utils.tabbedIn() ? fastScaffoldModes[(int) fastScaffold.getInput()] : sprintModes[(int) sprint.getInput()];
         }
         else {
-            info = fastScaffoldModes[(int) fastScaffold.getInput()];
+            info = fastScaffold.getInput() > 0 ? fastScaffoldModes[(int) fastScaffold.getInput()] : sprintModes[(int) sprint.getInput()];
         }
         return info;
     }
