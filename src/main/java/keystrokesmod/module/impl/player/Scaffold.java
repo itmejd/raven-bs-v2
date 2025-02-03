@@ -48,7 +48,7 @@ public class Scaffold extends Module {
 
     private String[] rotationModes = new String[] { "None", "Simple", "Offset", "Precise" };
     private String[] sprintModes = new String[] { "None", "Vanilla", "Float" };
-    private String[] fastScaffoldModes = new String[] { "None", "Jump B", "Jump B Low", "Jump E", "Keep-Y", "Keep-Y Low" };
+    private String[] fastScaffoldModes = new String[] { "None", "Jump B", "Jump B Low", "Jump E", "Keep-Y", "Keep-Y Low", "Jump Nigger" };
     private String[] multiPlaceModes = new String[] { "Disabled", "1 extra", "2 extra" };
 
     public Map<BlockPos, Timer> highlight = new HashMap<>();
@@ -265,7 +265,7 @@ public class Scaffold extends Module {
                 float firstDiag = 136.50f;
                 float secondDiag = 137.50f;
                 float thirdDiag = 139.50f;
-                float fourthDiag = 142.50f;
+                float fourthDiag = 143.50f;
 
                 float firstOffset = 19;
                 float secondOffset = 15;
@@ -630,7 +630,7 @@ public class Scaffold extends Module {
             if (ModuleManager.tower.placeExtraBlock) {
                 placeBlock(0, -1);
             }
-            if (fastScaffoldKeepY && !ModuleManager.tower.canTower() && rotationDelay == 0) {
+            if (fastScaffoldKeepY && !ModuleManager.tower.canTower()) {
                 ++keepYTicks;
                 if ((int) mc.thePlayer.posY > (int) startYPos) {
                     switch (mode) {
@@ -647,7 +647,13 @@ public class Scaffold extends Module {
                             }
                             break;
                         case 3:
-                            if (!firstKeepYPlace && keepYTicks == 8) {
+                            if (!firstKeepYPlace && keepYTicks == 7) {
+                                placeBlock(1, 0);
+                                firstKeepYPlace = true;
+                            }
+                            break;
+                        case 6:
+                            if (!firstKeepYPlace && keepYTicks == 3) {
                                 placeBlock(1, 0);
                                 firstKeepYPlace = true;
                             }
@@ -771,7 +777,7 @@ public class Scaffold extends Module {
             return Mouse.isButtonDown(1) && Utils.tabbedIn() ? (int) fastScaffold.getInput() : (int) sprint.getInput();
         }
         else {
-            return (int) fastScaffold.getInput();
+            return fastScaffold.getInput() > 0 ? (int) fastScaffold.getInput() : (int) sprint.getInput();
         }
     }
 
