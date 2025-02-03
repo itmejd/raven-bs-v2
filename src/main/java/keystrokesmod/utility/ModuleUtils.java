@@ -307,7 +307,6 @@ public class ModuleUtils {
                         mc.thePlayer.motionY = mc.thePlayer.motionY - 0.13;
                         ModuleManager.bhop.lowhop = false;
                         ModuleManager.bhop.didMove = false;
-                        Utils.print("7 tick");
                         break;
                     /*case 2031:
                         mc.thePlayer.motionY = mc.thePlayer.motionY - 0.2;
