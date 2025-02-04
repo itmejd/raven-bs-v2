@@ -265,10 +265,10 @@ public class Scaffold extends Module {
                 float firstStraight = 123.50f;
                 float secondStraight = 125.50f;
                 float thirdStraight = 127.50f;
-                float firstDiag = 129.50f;
-                float secondDiag = 131.50f;
-                float thirdDiag = 133.50f;
-                float fourthDiag = 137.50f;
+                float firstDiag = 128.50f;
+                float secondDiag = 130.50f;
+                float thirdDiag = 132.50f;
+                float fourthDiag = 138f;
 
                 float firstOffset = 16;
                 float secondOffset = 14;
