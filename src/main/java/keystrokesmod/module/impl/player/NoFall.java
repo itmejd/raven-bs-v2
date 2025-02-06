@@ -67,7 +67,7 @@ public class NoFall extends Module {
         }
         if (isFalling && mode.getInput() == 2) {
             if (distanceFallen >= dynamic) {
-                Utils.getTimer().timerSpeed = (0.7399789F + (float) Utils.randomizeDouble(-0.012, 0.012));
+                Utils.getTimer().timerSpeed = 0.7199789F;
                 mc.getNetHandler().addToSendQueue(new C03PacketPlayer(true));
                 initialY = mc.thePlayer.posY;
             }
@@ -75,10 +75,10 @@ public class NoFall extends Module {
         //Utils.print("" + dynamic);
         if (isFalling && mode.getInput() == 3) {
             if (mc.thePlayer.ticksExisted % 2 == 0) {
-                Utils.getTimer().timerSpeed = (float) Utils.randomizeDouble(0.5, 0.50201);
+                Utils.getTimer().timerSpeed = 0.5F;
             }
             else {
-                Utils.getTimer().timerSpeed = (float) 1;
+                Utils.getTimer().timerSpeed = 1F;
             }
             if (distanceFallen >= 3) {
                 mc.getNetHandler().addToSendQueue(new C03PacketPlayer(true));
@@ -86,9 +86,9 @@ public class NoFall extends Module {
             }
         }
         if (isFalling && mode.getInput() == 4) {
-            Utils.getTimer().timerSpeed = (float) 1;
+            Utils.getTimer().timerSpeed = 1F;
             if (distanceFallen >= 8) {
-                Utils.getTimer().timerSpeed = (float) Utils.randomizeDouble(0.7, 0.70201);
+                Utils.getTimer().timerSpeed = 0.7F;
                 mc.getNetHandler().addToSendQueue(new C03PacketPlayer(true));
                 initialY = mc.thePlayer.posY;
             }

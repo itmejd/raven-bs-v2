@@ -12,6 +12,7 @@ import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
 import keystrokesmod.utility.*;
 import keystrokesmod.utility.Timer;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockAir;
 import net.minecraft.block.BlockTNT;
 import net.minecraft.client.settings.KeyBinding;
@@ -45,6 +46,7 @@ public class Scaffold extends Module {
     public ButtonSetting safeWalk;
     public ButtonSetting showBlockCount;
     private ButtonSetting silentSwing;
+    private ButtonSetting limitMotionWhileKeepY;
 
     private String[] rotationModes = new String[] { "None", "Simple", "Offset", "Precise" };
     private String[] sprintModes = new String[] { "None", "Vanilla", "Float" };
@@ -102,6 +104,11 @@ public class Scaffold extends Module {
     private long firstStroke, strokeDelay = 575;
     private float lastEdge, lastEdge2, yawAngle;
 
+    private int speedEdge;
+
+    private EnumFacing[] facings = { EnumFacing.EAST, EnumFacing.WEST, EnumFacing.NORTH, EnumFacing.SOUTH, EnumFacing.UP };
+    private BlockPos[] offsets = { new BlockPos(-1, 0, 0), new BlockPos(1, 0, 0), new BlockPos(0, 0, 1), new BlockPos(0, 0, -1), new BlockPos(0, -1, 0) };
+
     public Scaffold() {
         super("Scaffold", category.player);
         this.registerSetting(motion = new SliderSetting("Motion", "x", 1.0, 0.5, 1.2, 0.01));
@@ -117,6 +124,7 @@ public class Scaffold extends Module {
         this.registerSetting(safeWalk = new ButtonSetting("Safewalk", true));
         this.registerSetting(showBlockCount = new ButtonSetting("Show block count", true));
         this.registerSetting(silentSwing = new ButtonSetting("Silent swing", false));
+        this.registerSetting(limitMotionWhileKeepY = new ButtonSetting("Limit motion while Keep Y", false));
 
         this.alwaysOn = true;
     }
@@ -173,6 +181,7 @@ public class Scaffold extends Module {
                     rotateForward();
                     mc.thePlayer.jump();
                     Utils.setSpeed(getSpeed(getSpeedLevel()) - Utils.randomizeDouble(0.0003, 0.0001));
+                    speedEdge++;
                     if (fastScaffold.getInput() == 5 || fastScaffold.getInput() == 2 && firstKeepYPlace) {
                         lowhop = true;
                     }
@@ -187,7 +196,7 @@ public class Scaffold extends Module {
         else if (fastScaffoldKeepY) {
             fastScaffoldKeepY = firstKeepYPlace = false;
             startYPos = -1;
-            keepYTicks = 0;
+            keepYTicks = speedEdge = 0;
         }
         if (lowhop) {
             switch (simpleY) {
@@ -212,7 +221,7 @@ public class Scaffold extends Module {
                     floatKeepY = true;
                     startYPos = e.posY;
                     mc.thePlayer.jump();
-                    Utils.setSpeed(Utils.getHorizontalSpeed() - 0.1);
+                    Utils.setSpeed(Utils.getHorizontalSpeed() - Utils.randomizeDouble(0.0001, 0.001));
                     floatJumped = true;
                 } else if (onGroundTicks <= 8 && mc.thePlayer.onGround) {
                     floatStarted = true;
@@ -235,6 +244,17 @@ public class Scaffold extends Module {
                 startYPos = -1;
             }
             floatStarted = floatJumped = floatKeepY = floatWasEnabled = false;
+        }
+
+        if (limitMotionWhileKeepY.isToggled()) {
+            if (startYPos != -1) {
+                if (hasPlaced && !mc.thePlayer.onGround) {
+                    if (ModuleUtils.inAirTicks > 4) {
+                        mc.thePlayer.motionX *= 0.965;
+                        mc.thePlayer.motionZ *= 0.965;
+                    }
+                }
+            }
         }
 
 
@@ -262,13 +282,13 @@ public class Scaffold extends Module {
 
                 float minPitch = 78.650f;
 
-                float firstStraight = 123.50f;
-                float secondStraight = 125.50f;
-                float thirdStraight = 127.50f;
-                float firstDiag = 128.50f;
-                float secondDiag = 130.50f;
-                float thirdDiag = 132.50f;
-                float fourthDiag = 138f;
+                float firstStraight = 128.50f;
+                float secondStraight = 129.50f;
+                float thirdStraight = 130.50f;
+                float firstDiag = 130.50f;
+                float secondDiag = 131.50f;
+                float thirdDiag = 134.50f;
+                float fourthDiag = 139f;
 
                 float firstOffset = 16;
                 float secondOffset = 14;
@@ -344,8 +364,8 @@ public class Scaffold extends Module {
                     blockYaw = blockRotations[0];
                     pitch = blockRotations[1];
                     yawOffset = blockYawOffset;
-                    if (pitch < minPitch && Utils.getHorizontalSpeed() < 0.6) {
-                        //pitch = minPitch;
+                    if (Utils.getHorizontalSpeed() < 0.6) {
+                        //pitch = 80F;
                     }
                     if (firstStroke == 0) {
                         strokeDelay = 300;
@@ -473,7 +493,7 @@ public class Scaffold extends Module {
         //get yaw - player yaw offset
         float yv = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - hardcodedYaw();
         if (Raven.debug) {
-            Utils.sendModuleMessage(this, "" + MathHelper.wrapAngleTo180_float(yv - e.getYaw()) + " " + minOffset);
+            Utils.sendModuleMessage(this, "" + MathHelper.wrapAngleTo180_float(yv - e.getYaw()) + " " + e.getPitch() + " " + minOffset);
         }
 
         //Utils.print("" + mc.thePlayer.rotationYaw + " " + mc.thePlayer.rotationPitch);
@@ -488,9 +508,9 @@ public class Scaffold extends Module {
                     rotationDelay = 2;
                     rotatingForward = true;
                 }
-                float forwardYaw = (mc.thePlayer.rotationYaw - hardcodedYaw() - 180 - (float) Utils.randomizeInt(-5, 5));
+                float forwardYaw = (mc.thePlayer.rotationYaw - hardcodedYaw() - 180);
                 e.setYaw(forwardYaw);
-                e.setPitch(10 - (float) Utils.randomizeDouble(1, 5));
+                e.setPitch(10);
             }
         }
         else {
@@ -617,7 +637,7 @@ public class Scaffold extends Module {
                 blockRotations = null;
                 fastScaffoldKeepY = firstKeepYPlace = rotateForward = rotatingForward = lowhop = floatStarted = floatJumped = floatWasEnabled = towerEdge =
                 was451 = was452 = false;
-                rotationDelay = keepYTicks = scaffoldTicks = 0;
+                rotationDelay = keepYTicks = scaffoldTicks = speedEdge = 0;
                 firstStroke = 0;
                 startYPos = -1;
                 lookVec = null;
@@ -826,6 +846,97 @@ public class Scaffold extends Module {
         }
         return 0;
     }
+
+    /*private List<PlaceData> findBlocks(int yOffset, int xOffset) {
+        List<PlaceData> possibleBlocks = new ArrayList<>();
+        int x = (int) Math.floor(mc.thePlayer.posX + xOffset);
+        int y = (int) Math.floor(((startYPos != -1) ? startYPos : (mc.thePlayer.posY)) + yOffset);
+        int z = (int) Math.floor(mc.thePlayer.posZ);
+
+        BlockPos pos = new BlockPos(x, y - 1, z);
+
+        for (int lastCheck = 0; lastCheck < 2; lastCheck++) {
+            for (int i = 0; i < offsets.length; i++) {
+                BlockPos newPos = pos.add(offsets[i]);
+                Block block = BlockUtils.getBlock(newPos);
+                if (lastCheck == 0) {
+                    continue;
+                }
+                if (!block.getMaterial().isReplaceable() && !BlockUtils.isInteractable(block)) {
+                    possibleBlocks.add(new PlaceData(facings[i], newPos));
+                }
+            }
+        }
+        BlockPos[] additionalOffsets = { // adjust these for perfect placement
+                pos.add(-1, 0, 0),
+                pos.add(1, 0, 0),
+                pos.add(0, 0, 1),
+                pos.add(0, 0, -1),
+                pos.add(0, -1, 0),
+
+                pos.add(-2, 0, 0),
+                pos.add(2, 0, 0),
+                pos.add(0, 0, 2),
+                pos.add(0, 0, -2),
+                pos.add(0, -2, 0),
+
+                pos.add(-3, 0, 0),
+                pos.add(3, 0, 0),
+                pos.add(0, 0, 3),
+                pos.add(0, 0, -3),
+                pos.add(0, -3, 0),
+        };
+        for (int lastCheck = 0; lastCheck < 2; lastCheck++) {
+            for (BlockPos additionalPos : additionalOffsets) {
+                for (int i = 0; i < offsets.length; i++) {
+                    BlockPos newPos = additionalPos.add(offsets[i]);
+                    Block block = BlockUtils.getBlock(newPos);
+                    if (lastCheck == 0) {
+                        continue;
+                    }
+                    if (!block.getMaterial().isReplaceable() && !BlockUtils.isInteractable(block)) {
+                        possibleBlocks.add(new PlaceData(facings[i], newPos));
+                    }
+                }
+            }
+        }
+        BlockPos[] additionalOffsets2 = { // adjust these for perfect placement
+                new BlockPos(-1, 0, 0),
+                new BlockPos(1, 0, 0),
+                new BlockPos(0, 0, 1),
+                new BlockPos(0, 0, -1),
+                new BlockPos(0, -1, 0),
+
+                new BlockPos(-2, 0, 0),
+                new BlockPos(2, 0, 0),
+                new BlockPos(0, 0, 2),
+                new BlockPos(0, 0, -2),
+                new BlockPos(0, -2, 0),
+
+                new BlockPos(-3, 0, 0),
+                new BlockPos(3, 0, 0),
+                new BlockPos(0, 0, 3),
+                new BlockPos(0, 0, -3),
+                new BlockPos(0, -3, 0),
+        };
+        for (int lastCheck = 0; lastCheck < 2; lastCheck++) {
+            for (BlockPos additionalPos2 : additionalOffsets2) {
+                for (BlockPos additionalPos : additionalOffsets) {
+                    for (int i = 0; i < offsets.length; i++) {
+                        BlockPos newPos = additionalPos2.add(additionalPos.add(offsets[i]));
+                        Block block = BlockUtils.getBlock(newPos);
+                        if (lastCheck == 0) {
+                            continue;
+                        }
+                        if (!block.getMaterial().isReplaceable() && !BlockUtils.isInteractable(block)) {
+                            possibleBlocks.add(new PlaceData(facings[i], newPos));
+                        }
+                    }
+                }
+            }
+        }
+        return possibleBlocks.isEmpty() ? null : possibleBlocks;
+    }*/
 
     private List<PlaceData> findBlocks(int yOffset, int xOffset) {
         List<PlaceData> possibleBlocks = new ArrayList<>();
@@ -1075,6 +1186,11 @@ public class Scaffold extends Module {
         Vec3 hitVec;
 
         PlaceData(BlockPos blockPos, EnumFacing enumFacing) {
+            this.enumFacing = enumFacing;
+            this.blockPos = blockPos;
+        }
+
+        public PlaceData(EnumFacing enumFacing, BlockPos blockPos) {
             this.enumFacing = enumFacing;
             this.blockPos = blockPos;
         }

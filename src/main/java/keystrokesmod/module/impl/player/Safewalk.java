@@ -14,32 +14,36 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.input.Keyboard;
 
 public class Safewalk extends Module {
-    private SliderSetting shiftDelay;
+    private SliderSetting sneakDelay;
     private SliderSetting motion;
-    public static ButtonSetting shift, blocksOnly, pitchCheck, disableOnForward;
+    private ButtonSetting sneak;
+    public static ButtonSetting blocksOnly, pitchCheck, disableOnForward;
+
+    private int unsneakDelayTicks = 0;
     private boolean isSneaking;
-    private long lastShift = 0L;
 
     public Safewalk() {
         super("Safewalk", Module.category.player, 0);
-        this.registerSetting(shift = new ButtonSetting("Shift", false));
-        this.registerSetting(shiftDelay = new SliderSetting("Delay until next shift", 0.0, 0.0, 800.0, 10.0));
-        this.registerSetting(motion = new SliderSetting("Motion", 1.0, 0.5, 1.2, 0.01));
+        this.registerSetting(sneakDelay = new SliderSetting("Sneak delay", " tick", 0, 0, 20, 1));
+        this.registerSetting(motion = new SliderSetting("Motion", "x", 1.0, 0.5, 1.2, 0.01));
         this.registerSetting(blocksOnly = new ButtonSetting("Blocks only", true));
         this.registerSetting(disableOnForward = new ButtonSetting("Disable on forward", false));
         this.registerSetting(pitchCheck = new ButtonSetting("Pitch check", false));
+        this.registerSetting(sneak = new ButtonSetting("Sneak", false));
     }
 
+    @Override
     public void onDisable() {
-        if (shift.isToggled() && Utils.isEdgeOfBlock()) {
+        if (sneak.isToggled() && Utils.isEdgeOfBlock()) {
             this.setSneakState(false);
         }
         isSneaking = false;
-        lastShift = 0L;
+        unsneakDelayTicks = 0;
     }
 
+    @Override
     public void onUpdate() {
-        if (motion.getInput() != 1.0 && mc.thePlayer.onGround && Utils.isMoving() && (!pitchCheck.isToggled() || mc.thePlayer.rotationPitch >= 70.0f)) {
+        if (motion.getInput() != 1.0 && mc.thePlayer.onGround && Utils.isMoving() && settingsMet()) {
             mc.thePlayer.motionX *= motion.getInput();
             mc.thePlayer.motionZ *= motion.getInput();
         }
@@ -50,66 +54,59 @@ public class Safewalk extends Module {
         if (e.phase != TickEvent.Phase.END) {
             return;
         }
-        if (!shift.isToggled() || !Utils.nullCheck()) {
+        if (!sneak.isToggled() || !Utils.nullCheck()) {
             return;
         }
-        if (mc.thePlayer.onGround && Utils.isEdgeOfBlock()) {
-            if (blocksOnly.isToggled()) {
-                final ItemStack getHeldItem = mc.thePlayer.getHeldItem();
-                if (getHeldItem == null || !(getHeldItem.getItem() instanceof ItemBlock)) {
+        boolean edge = mc.thePlayer.onGround && Utils.isEdgeOfBlock();
+        if (edge) {
+            if (!settingsMet()) {
+                this.setSneakState(false);
+                return;
+            }
+            if (!this.isSneaking) {
+                this.setSneakState(true);
+                unsneakDelayTicks = (int) sneakDelay.getInput();
+            }
+        }
+        else {
+            if (this.isSneaking) {
+                if (!settingsMet()) {
                     this.setSneakState(false);
                     return;
                 }
-            }
-            if (disableOnForward.isToggled() && Keyboard.isKeyDown(mc.gameSettings.keyBindForward.getKeyCode())) {
+                if (unsneakDelayTicks > 0) {
+                    unsneakDelayTicks--;
+                    return;
+                }
                 this.setSneakState(false);
-                return;
             }
-            if (pitchCheck.isToggled() && mc.thePlayer.rotationPitch < 70.0f) {
-                this.setSneakState(false);
-                return;
-            }
-            this.setSneakState(true);
-        } else if (this.isSneaking) {
-            this.setSneakState(false);
         }
-        if (this.isSneaking && mc.thePlayer.capabilities.isFlying) {
+        if (this.isSneaking && (mc.thePlayer.capabilities.isFlying || !settingsMet())) {
             this.setSneakState(false);
         }
     }
 
     @SubscribeEvent
-    public void onGuiOpen(final GuiOpenEvent guiOpenEvent) {
-        if (shift.isToggled() && guiOpenEvent.gui == null) {
+    public void onGuiOpen(GuiOpenEvent e) {
+        if (sneak.isToggled() && e.gui == null) {
             this.isSneaking = mc.thePlayer.isSneaking();
         }
     }
 
-    private void setSneakState(boolean shift) {
-        if (this.isSneaking) {
-            if (shift) {
-                return;
-            }
+    private void setSneakState(boolean sneakState) {
+        if (!sneakState) {
+            unsneakDelayTicks = 0;
         }
-        else if (!shift) {
+        if (this.isSneaking == sneakState) {
             return;
         }
-        if (shift) {
-            final long targetShiftDelay = (long) shiftDelay.getInput();
-            if (targetShiftDelay > 0L) {
-                if (Utils.timeBetween(this.lastShift, System.currentTimeMillis()) < targetShiftDelay) {
-                    return;
-                }
-                this.lastShift = System.currentTimeMillis();
-            }
+
+        if (!sneakState && Keyboard.isKeyDown(mc.gameSettings.keyBindSneak.getKeyCode())) {
+            return;
         }
-        else {
-            if (Keyboard.isKeyDown(mc.gameSettings.keyBindSneak.getKeyCode())) {
-                return;
-            }
-            this.lastShift = System.currentTimeMillis();
-        }
-        KeyBinding.setKeyBindState(mc.gameSettings.keyBindSneak.getKeyCode(), this.isSneaking = shift);
+
+        KeyBinding.setKeyBindState(mc.gameSettings.keyBindSneak.getKeyCode(), sneakState);
+        this.isSneaking = sneakState;
     }
 
     public static boolean canSafeWalk() {
@@ -120,14 +117,30 @@ public class Safewalk extends Module {
             if (pitchCheck.isToggled() && mc.thePlayer.rotationPitch < 70) {
                 return false;
             }
-            if (blocksOnly.isToggled() && (mc.thePlayer.getHeldItem() == null || !(mc.thePlayer.getHeldItem().getItem() instanceof ItemBlock))) {
-                return false;
-            }
-            if (ModuleManager.scaffold.moduleEnabled) {
-                return false;
+            if (blocksOnly.isToggled()) {
+                ItemStack held = mc.thePlayer.getHeldItem();
+                if (held == null || !(held.getItem() instanceof ItemBlock)) {
+                    return false;
+                }
             }
             return true;
         }
         return false;
+    }
+
+    private boolean settingsMet() {
+        if (blocksOnly.isToggled()) {
+            ItemStack held = mc.thePlayer.getHeldItem();
+            if (held == null || !(held.getItem() instanceof ItemBlock)) {
+                return false;
+            }
+        }
+        if (disableOnForward.isToggled() && Keyboard.isKeyDown(mc.gameSettings.keyBindForward.getKeyCode())) {
+            return false;
+        }
+        if (pitchCheck.isToggled() && mc.thePlayer.rotationPitch < 70.0f) {
+            return false;
+        }
+        return true;
     }
 }
