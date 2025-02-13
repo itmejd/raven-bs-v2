@@ -38,6 +38,7 @@ public class ProfileModule extends Module {
 
             if (Settings.sendMessage.isToggled()) {
                 Utils.sendMessage("&7Enabled profile: &b" + this.getName());
+                ModuleUtils.profileTicks = 0;
             }
             saved = true;
         }

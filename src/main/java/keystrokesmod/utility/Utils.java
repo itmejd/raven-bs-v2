@@ -82,6 +82,45 @@ public class Utils {
         return false;
     }
 
+    public static double getPosDirectionX(double posOffset) {
+        if (!isMoving()) {
+            return mc.thePlayer.posX;
+        }
+        float yaw = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw);
+        if (yaw > 45 && yaw <= 90) {
+            return mc.thePlayer.posX + posOffset;
+        } else if (yaw > 90 && yaw <= 135) {
+            return mc.thePlayer.posX + posOffset;
+        } else if (yaw > 135 && yaw <= 180) {
+            return mc.thePlayer.posX + posOffset;
+        } else if (yaw < -90 && yaw >= -135) {
+            return mc.thePlayer.posX - posOffset;
+        } else if (yaw < -45 && yaw >= -90) {
+            return mc.thePlayer.posX - posOffset;
+        } else if (yaw <= -0 && yaw > -45) {
+            return mc.thePlayer.posX - posOffset;
+        }
+        return 0;
+    }
+
+    public static double getPosDirectionZ(double posOffset) {
+        if (!isMoving()) {
+            return mc.thePlayer.posX;
+        }
+        float yaw = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw);
+        if (yaw >= 0 && yaw <= 45) {
+            return mc.thePlayer.posZ - posOffset;
+        } else if (yaw > 135 && yaw <= 180) {
+            return mc.thePlayer.posZ + 1;
+        } else if (yaw < -135 && yaw >= -180) {
+            return mc.thePlayer.posZ + posOffset;
+        } else if (yaw <= -0 && yaw > -45) {
+            return mc.thePlayer.posZ - posOffset;
+        }
+        return 0;
+    }
+
+
     public static boolean holdingEdible(ItemStack stack) {
         if (stack.getItem() instanceof ItemFood && mc.thePlayer.getFoodStats().getFoodLevel() == 20) {
             ItemFood food = (ItemFood) stack.getItem();
@@ -679,7 +718,7 @@ public class Utils {
             return false;
         }
         final ScoreObjective objective = scoreboard.getObjectiveInDisplaySlot(1);
-        if (objective != null || stripString(objective.getDisplayName()).contains("SKYWARS")) {
+        if (stripString(objective.getDisplayName()).contains("SKYWARS")) {
             Utils.print("Skywars");
             return true;
         }
@@ -1454,6 +1493,9 @@ public class Utils {
         }
         if (ModuleManager.autoTool.isEnabled() && ModuleManager.autoTool.spoofItem.isToggled()) {
             return mc.thePlayer.inventory.getStackInSlot(ModuleManager.autoTool.previousSlot == -1 ? mc.thePlayer.inventory.currentItem : ModuleManager.autoTool.previousSlot);
+        }
+        if (ModuleManager.LongJump.isEnabled() && ModuleManager.LongJump.spoofItem.isToggled()) {
+            return mc.thePlayer.inventory.getStackInSlot(ModuleManager.LongJump.lastSlot == -1 ? mc.thePlayer.inventory.currentItem : ModuleManager.LongJump.lastSlot);
         }
         return original;
     }

@@ -11,6 +11,7 @@ import keystrokesmod.module.setting.impl.SliderSetting;
 import keystrokesmod.utility.ModuleUtils;
 import keystrokesmod.utility.RotationUtils;
 import keystrokesmod.utility.Utils;
+import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.network.play.client.*;
 import net.minecraft.potion.PotionEffect;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -60,6 +61,9 @@ public class Tower extends Module {
             if (tower) {
                 towerTicks = mc.thePlayer.onGround ? 0 : ++towerTicks;
             }
+            if (disableWhileHurt.isToggled() && ModuleUtils.damage) {
+                return;
+            }
             switch ((int) towerMove.getInput()) {
                 case 1:
 
@@ -87,6 +91,9 @@ public class Tower extends Module {
         int valY = (int) Math.round((mc.thePlayer.posY % 1) * 10000);
         if (canTower() && Utils.keysDown()) {
             wasTowering = true;
+            if (disableWhileHurt.isToggled() && ModuleUtils.damage) {
+                return;
+            }
             switch ((int) towerMove.getInput()) {
                 case 1:
                     mc.thePlayer.motionY = 0.41965;
@@ -124,7 +131,7 @@ public class Tower extends Module {
                     }
                     break;
                 case 3:
-                    if (mc.thePlayer.posY % 1 == 0 && mc.thePlayer.onGround && !setLowMotion) {
+                    if (mc.thePlayer.posY % 1 == 0 && !setLowMotion) {
                         tower = true;
                     }
                     if (tower) {
@@ -150,9 +157,10 @@ public class Tower extends Module {
                     else if (setLowMotion) {
                         ++cMotionTicks;
                         if (cMotionTicks == 1) {
-                            mc.thePlayer.motionY = 0.06F;
+                            mc.thePlayer.motionY = 0.08F;
+                            Utils.setSpeed(getTowerSpeed(getSpeedLevel()));
                         }
-                        else if (cMotionTicks == 3) {
+                        else if (cMotionTicks == 4) {
                             cMotionTicks = 0;
                             setLowMotion = false;
                             tower = true;
@@ -163,7 +171,7 @@ public class Tower extends Module {
                 case 4:
                     speed = false;
                     int simpleY = (int) Math.round((mc.thePlayer.posY % 1.0D) * 100.0D);
-                    if (mc.thePlayer.posY % 1 == 0 && mc.thePlayer.onGround) {
+                    if (mc.thePlayer.posY % 1 == 0) {
                         tower = true;
                     }
                     if (tower) {
@@ -190,12 +198,15 @@ public class Tower extends Module {
             }
         }
         else {
-            if (wasTowering && slowedTicks.getInput() > 0 && modulesEnabled()) {
-                if (slowTicks++ < slowedTicks.getInput()) {
+            if (wasTowering && modulesEnabled()) {
+                if (slowedTicks.getInput() > 0 && slowedTicks.getInput() != 100 && slowTicks++ < slowedTicks.getInput()) {
                     mc.thePlayer.motionX *= slowedSpeed.getInput() / 100;
                     mc.thePlayer.motionZ *= slowedSpeed.getInput() / 100;
                 }
                 else {
+                    ModuleUtils.handleSlow();
+                }
+                if (slowTicks >= slowedTicks.getInput()) {
                     slowTicks = 0;
                     wasTowering = false;
                 }
@@ -320,10 +331,7 @@ public class Tower extends Module {
     }
 
     public boolean canTower() {
-        if (!Utils.nullCheck() || !Utils.jumpDown()) {
-            return false;
-        }
-        else if (disableWhileHurt.isToggled() && ModuleUtils.damage) {
+        if (!Utils.nullCheck() || !Utils.jumpDown() || !Utils.tabbedIn()) {
             return false;
         }
         else if (mc.thePlayer.isCollidedHorizontally) {

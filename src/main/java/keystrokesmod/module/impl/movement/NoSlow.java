@@ -5,13 +5,12 @@ import keystrokesmod.event.*;
 import keystrokesmod.mixin.impl.accessor.IAccessorItemFood;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
+import keystrokesmod.module.impl.player.Safewalk;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.DescriptionSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
 import keystrokesmod.utility.*;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockSlab;
-import net.minecraft.block.BlockStairs;
+import net.minecraft.block.*;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
@@ -22,6 +21,7 @@ import net.minecraft.network.play.client.C02PacketUseEntity;
 import net.minecraft.network.play.client.C07PacketPlayerDigging;
 import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
 import net.minecraft.network.play.client.C09PacketHeldItemChange;
+import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.BlockPos;
 import net.minecraftforge.client.event.MouseEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
@@ -39,10 +39,11 @@ public class NoSlow extends Module {
     private String[] modes = new String[]{"Vanilla", "Pre", "Post", "Alpha", "Float"};
     private boolean postPlace;
     public static boolean canFloat;
-    private boolean reSendConsume;
-    public static boolean noSlowing, offset;
+    private boolean reSendConsume, requireJump;
+    public static boolean noSlowing, offset, fix;
     private int ticksOffStairs = 30;
-    private boolean setCancelled;
+    private boolean setCancelled, didC;
+    private int grounded;
 
     public NoSlow() {
         super("NoSlow", category.movement, 0);
@@ -107,7 +108,7 @@ public class NoSlow extends Module {
     public void onPostPlayerInput(PostPlayerInputEvent e) {
         if (canFloat && noSlowing && offset && mc.thePlayer.onGround) {
             if (groundSpeedOption.isToggled() && !Utils.jumpDown() && !ModuleManager.bhop.isEnabled() && Utils.keysDown() && !Utils.bowBackwards()) {
-                Utils.setSpeed(getSpeedModifier());
+                Utils.setSpeed(getFloatSpeed(getSpeedLevel()));
                 //Utils.print("ground speed");
             }
         }
@@ -126,7 +127,7 @@ public class NoSlow extends Module {
     }
 
     private void handleFloatSetup() {
-        if (mode.getInput() != 4 || canFloat || reSendConsume || getSlowed() == 0.2f) {
+        if (mode.getInput() != 4 || canFloat || reSendConsume || requireJump || getSlowed() == 0.2f || BlockUtils.isInteractable(mc.objectMouseOver) || !Utils.tabbedIn()) {
             return;
         }
         if (!Mouse.isButtonDown(1) || (mc.thePlayer.getHeldItem() == null || !holdingConsumable(mc.thePlayer.getHeldItem()))) {
@@ -153,7 +154,7 @@ public class NoSlow extends Module {
         }
 
         if (e.getPacket() instanceof C08PacketPlayerBlockPlacement) {
-            if (mode.getInput() != 4 || canFloat || reSendConsume || !mc.thePlayer.onGround || getSlowed() == 0.2f) {
+            if (mode.getInput() != 4 || canFloat || reSendConsume || requireJump || getSlowed() == 0.2f || BlockUtils.isInteractable(mc.objectMouseOver) || !Utils.tabbedIn()) {
                 return;
             }
             if (!Mouse.isButtonDown(1) || (mc.thePlayer.getHeldItem() == null || !holdingConsumable(mc.thePlayer.getHeldItem()))) {
@@ -173,20 +174,34 @@ public class NoSlow extends Module {
         else {
             ticksOffStairs++;
         }*/
+
+        if (ModuleUtils.inAirTicks > 1) {
+            requireJump = false;
+        }
         if (ModuleManager.bedAura.stopAutoblock || mode.getInput() != 4) {
             resetFloat();
             return;
         }
         postPlace = false;
         if (!Mouse.isButtonDown(1) || (mc.thePlayer.getHeldItem() == null || !holdingConsumable(mc.thePlayer.getHeldItem()))) {
+            if (mc.thePlayer.getHeldItem() != null && holdingConsumable(mc.thePlayer.getHeldItem())) {
+                KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
+            }
             resetFloat();
             return;
         }
-        if (mc.thePlayer.getHeldItem() != null && holdingConsumable(mc.thePlayer.getHeldItem()) && !Mouse.isButtonDown(1)) {
-            KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
+        if (!floatConditions()) {
+            grounded = 0;
+            didC = true;
+        }
+        else if (didC) {
+            grounded++;
+            if (grounded > 30) {
+                fix = true;
+            }
         }
         if (reSendConsume) {
-            if (ModuleUtils.inAirTicks > 0) {
+            if (ModuleUtils.inAirTicks > 1) {
                 KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), true);
                 reSendConsume = false;
                 canFloat = true;
@@ -194,7 +209,8 @@ public class NoSlow extends Module {
         }
         noSlowing = true;
 
-        if (ticksOffStairs < 30) {
+        if (!floatConditions() || requireJump) {
+            requireJump = true;
             offset = false;
             return;
         }
@@ -229,13 +245,40 @@ public class NoSlow extends Module {
             else if (mc.thePlayer.getHeldItem().getItem() instanceof ItemPotion && !ItemPotion.isSplash(mc.thePlayer.getHeldItem().getItemDamage()) && disablePotions.isToggled()) {
                 return 0.2f;
             }
+            else if (fix) {
+                return 0.2f;
+            }
         }
         float val = (100.0F - (float) slowed.getInput()) / 100.0F;
         return val;
     }
 
+    private boolean floatConditions() {
+        Block block = BlockUtils.getBlock(new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ));
+        int edgeY = (int) Math.round((mc.thePlayer.posY % 1.0D) * 100.0D);
+        if (mc.thePlayer.posY % 1 == 0) {
+            return true;
+        }
+        if (edgeY < 10) {
+            return true;
+        }
+        if (!mc.thePlayer.onGround) {
+            return true;
+        }
+        if (block instanceof BlockSnow) {
+            return true;
+        }
+        if (block instanceof BlockCarpet) {
+            return true;
+        }
+        if (block instanceof BlockSlab) {
+            return true;
+        }
+        return false;
+    }
+
     public static boolean groundSpeed() {
-        return groundSpeedOption.isToggled() && noSlowing && canFloat && offset && Utils.isMoving() && !Utils.jumpDown();
+        return groundSpeedOption.isToggled() && noSlowing && canFloat && offset && Utils.isMoving() && !Utils.jumpDown() && !Utils.noSlowingBackWithBow();
     }
 
     @Override
@@ -244,7 +287,8 @@ public class NoSlow extends Module {
     }
 
     private void resetFloat() {
-        reSendConsume = canFloat = noSlowing = offset = false;
+        reSendConsume = canFloat = noSlowing = offset = didC = fix = requireJump = false;
+        grounded = 0;
     }
 
     public static boolean hasArrows(ItemStack stack) {
@@ -252,27 +296,25 @@ public class NoSlow extends Module {
         return flag || mc.thePlayer.inventory.hasItem(Items.arrow);
     }
 
-    private double getSpeedModifier() {
-        double speedModifier = 0.2;
-        final int speedAmplifier = Utils.getSpeedAmplifier();
-        switch (speedAmplifier) {
-            case 0:
-                speedModifier = 0.2;
-                break;
-            case 1:
-                speedModifier = 0.23;
-                break;
-            case 2:
-                speedModifier = 0.28;
-                break;
-            case 3:
-                speedModifier = 0.32;
-                break;
-            case 4:
-                speedModifier = 0.37;
-                break;
+    double[] floatSpeedLevels = {0.2, 0.23, 0.28, 0.32, 0.37};
+
+    double getFloatSpeed(int speedLevel) {
+        double min = 0;
+        if (mc.thePlayer.moveStrafing != 0 && mc.thePlayer.moveForward != 0) min = 0.003;
+        if (speedLevel >= 0) {
+            return floatSpeedLevels[speedLevel] - min;
         }
-        return speedModifier - 0.005;
+        return floatSpeedLevels[0] - min;
+    }
+
+    private int getSpeedLevel() {
+        for (PotionEffect potionEffect : mc.thePlayer.getActivePotionEffects()) {
+            if (potionEffect.getEffectName().equals("potion.moveSpeed")) {
+                return potionEffect.getAmplifier() + 1;
+            }
+            return 0;
+        }
+        return 0;
     }
 
     private boolean holdingConsumable(ItemStack itemStack) {

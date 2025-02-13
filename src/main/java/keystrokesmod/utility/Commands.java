@@ -375,6 +375,7 @@ public class Commands {
                                 print(name, 0);
                                 if (Settings.sendMessage.isToggled()) {
                                     Utils.sendMessage("&7Enabled profile: &b" + name);
+                                    ModuleUtils.profileTicks = 0;
                                 }
                                 return;
                             }

@@ -1,18 +1,23 @@
 package keystrokesmod.module.impl.movement;
 
+import keystrokesmod.Raven;
 import keystrokesmod.event.PrePlayerInputEvent;
 import keystrokesmod.event.*;
 import keystrokesmod.mixin.impl.accessor.IAccessorMinecraft;
+import keystrokesmod.mixin.interfaces.IMixinItemRenderer;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.KeySetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
 import keystrokesmod.utility.ModuleUtils;
+import keystrokesmod.utility.PacketUtils;
 import keystrokesmod.utility.Utils;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.Packet;
+import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
+import net.minecraft.network.play.client.C09PacketHeldItemChange;
 import net.minecraft.network.play.server.*;
 import net.minecraft.potion.PotionEffect;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
@@ -35,6 +40,7 @@ public class LongJump extends Module {
     private ButtonSetting invertYaw;
     private ButtonSetting stopMovement;
     private ButtonSetting hideExplosion;
+    public ButtonSetting spoofItem;
 
     private KeySetting temporaryFlightKey;
     private SliderSetting pitchVal;
@@ -48,10 +54,10 @@ public class LongJump extends Module {
 
     private boolean notMoving;
     private boolean enabled;
-    public boolean function;
+    public static boolean function;
 
     private int boostTicks;
-    private int lastSlot = -1;
+    public int lastSlot = -1;
     private int stopTime;
     private int rotateTick;
     private int motionDecayVal;
@@ -64,6 +70,8 @@ public class LongJump extends Module {
     public static boolean stopModules;
     public static boolean slotReset;
     public static int slotResetTicks;
+
+    private int firstSlot = -1;
 
     public LongJump() {
         super("Long Jump", category.movement);
@@ -80,6 +88,7 @@ public class LongJump extends Module {
         this.registerSetting(invertYaw = new ButtonSetting("Invert yaw", true));
         this.registerSetting(stopMovement = new ButtonSetting("Stop movement", false));
         this.registerSetting(hideExplosion = new ButtonSetting("Hide explosion", false));
+        this.registerSetting(spoofItem = new ButtonSetting("Spoof item", false));
 
         this.registerSetting(temporaryFlightKey = new KeySetting("Vertical key", Keyboard.KEY_SPACE));
     }
@@ -98,6 +107,11 @@ public class LongJump extends Module {
             return;
         }
         if (!manual.isToggled()) {
+            if (mc.thePlayer.getHealth() <= 3) {
+                Utils.print("&7[&dR&7] &cPrevented throwing fireball due to low health");
+                disable();
+                return;
+            }
             enabled();
         }
     }
@@ -144,6 +158,11 @@ public class LongJump extends Module {
             return;
         }
 
+        if (spoofItem.isToggled()) {
+            ((IMixinItemRenderer) mc.getItemRenderer()).setCancelUpdate(true);
+            ((IMixinItemRenderer) mc.getItemRenderer()).setCancelReset(true);
+        }
+
         if (enabled) {
             if (!Utils.isMoving()) notMoving = true;
             if (boostSetting.getInput() == 0 && verticalMotion.getInput() == 0) {
@@ -155,7 +174,10 @@ public class LongJump extends Module {
             if (fireballSlot != -1) {
                 if (!manual.isToggled()) {
                     lastSlot = mc.thePlayer.inventory.currentItem;
-                    mc.thePlayer.inventory.currentItem = fireballSlot;
+                    if (mc.thePlayer.inventory.currentItem != fireballSlot) {
+                        mc.thePlayer.inventory.currentItem = fireballSlot;
+                    }
+
                 }
                 //("Set fireball slot");
                 rotateTick = 1;
@@ -201,6 +223,10 @@ public class LongJump extends Module {
         if (mc.thePlayer.onGround && boostTicks > 2) {
             disabled();
         }
+
+        if (firstSlot != -1) {
+            mc.thePlayer.inventory.currentItem = firstSlot;
+        }
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
@@ -227,10 +253,10 @@ public class LongJump extends Module {
             rotateTick = 0;
             int fireballSlot = setupFireballSlot(false);
             if (fireballSlot != -1) {
+                fireballTime = System.currentTimeMillis();
                 if (!manual.isToggled()) {
-                    mc.thePlayer.inventory.currentItem = fireballSlot; // we are probably already on the slot but make sure
-                    fireballTime = System.currentTimeMillis();
-                    ((IAccessorMinecraft) mc).callRightClickMouse();
+                    mc.getNetHandler().addToSendQueue(new C08PacketPlayerBlockPlacement(mc.thePlayer.getHeldItem()));
+                    //((IAccessorMinecraft) mc).callRightClickMouse();
                 }
                 mc.thePlayer.swingItem();
                 mc.getItemRenderer().resetEquippedProgress();
@@ -319,7 +345,6 @@ public class LongJump extends Module {
         slotReset = false;
         slotResetTicks = 0;
         enabled = function = true;
-        ModuleManager.bhop.disable();
 
         stopModules = true;
     }
@@ -350,8 +375,13 @@ public class LongJump extends Module {
 
     private void resetSlot() {
         if (lastSlot != -1 && !manual.isToggled()) {
+            if (spoofItem.isToggled()) {
+                ((IMixinItemRenderer) mc.getItemRenderer()).setCancelUpdate(false);
+                ((IMixinItemRenderer) mc.getItemRenderer()).setCancelReset(false);
+            }
             mc.thePlayer.inventory.currentItem = lastSlot;
             lastSlot = -1;
+            firstSlot = -1;
         }
         slotReset = true;
     }

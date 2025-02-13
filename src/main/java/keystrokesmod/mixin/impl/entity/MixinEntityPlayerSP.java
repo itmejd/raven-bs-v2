@@ -8,6 +8,7 @@ import keystrokesmod.event.PreUpdateEvent;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.combat.WTap;
 import keystrokesmod.module.impl.movement.NoSlow;
+import keystrokesmod.utility.ModuleUtils;
 import keystrokesmod.utility.RotationUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.PositionedSoundRecord;
@@ -286,7 +287,7 @@ public abstract class MixinEntityPlayerSP extends AbstractClientPlayer {
             this.setSprinting(true);
         }
 
-        if (this.isSprinting() && (!ModuleManager.sprint.omniSprint() && !NoSlow.groundSpeed() && !ModuleManager.scaffold.sprint() && (this.movementInput.moveForward < f || !flag3)) || this.isCollidedHorizontally || ModuleManager.sprint.disableBackwards() || (this.movementInput.moveForward == 0 && this.movementInput.moveStrafe == 0) || this.mc.gameSettings.keyBindSneak.isKeyDown() || (ModuleManager.scaffold != null && ModuleManager.scaffold.isEnabled && (!ModuleManager.scaffold.sprint() || ModuleManager.tower.canTower())) || (ModuleManager.wTap.isEnabled() && WTap.stopSprint)) {
+        if (this.isSprinting() && (!ModuleManager.sprint.omniSprint() && !NoSlow.groundSpeed() && !ModuleManager.scaffold.sprint() && (this.movementInput.moveForward < f || !flag3)) || this.isCollidedHorizontally || ModuleManager.sprint.disableBackwards() || ModuleUtils.setSlow || (this.movementInput.moveForward == 0 && this.movementInput.moveStrafe == 0) || this.mc.gameSettings.keyBindSneak.isKeyDown() || (ModuleManager.scaffold != null && ModuleManager.scaffold.isEnabled && (!ModuleManager.scaffold.sprint() || ModuleManager.tower.canTower())) || (ModuleManager.wTap.isEnabled() && WTap.stopSprint) || ModuleManager.sprint.isEnabled() && ModuleManager.sprint.omniDirectional.getInput() > 0 && !ModuleManager.sprint.omniSprint()) {
             this.setSprinting(false);
             WTap.stopSprint = false;
         }

@@ -1378,9 +1378,13 @@ public class ScriptDefaults {
         public static List<String> getBookContents() {
             if (mc.currentScreen instanceof GuiScreenBook) {
                 List<String> contents = new ArrayList<>();
-                int max = Math.min(128 / mc.fontRendererObj.FONT_HEIGHT, ((IAccessorGuiScreenBook) mc.currentScreen).getBookContents().size());
+                List<IChatComponent> bookContents = ((IAccessorGuiScreenBook) mc.currentScreen).getBookContents();
+                if (bookContents == null) {
+                    return contents;
+                }
+                int max = Math.min(128 / mc.fontRendererObj.FONT_HEIGHT, bookContents.size());
                 for (int line = 0; line < max; ++line) {
-                    IChatComponent lineStr = ((IAccessorGuiScreenBook) mc.currentScreen).getBookContents().get(line);
+                    IChatComponent lineStr = bookContents.get(line);
                     contents.add(lineStr.getUnformattedText());
                 }
                 if (!contents.isEmpty()) {

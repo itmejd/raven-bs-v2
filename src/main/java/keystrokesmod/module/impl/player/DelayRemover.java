@@ -35,7 +35,7 @@ public class DelayRemover extends Module {
                 ((IAccessorEntityLivingBase) mc.thePlayer).setJumpTicks(0);
                 break;
             case 2:
-                if (!mc.thePlayer.onGround && mc.thePlayer.isCollidedVertically) {
+                if (!mc.thePlayer.onGround && mc.thePlayer.isCollidedVertically || Utils.isMoving()) {
                     ((IAccessorEntityLivingBase) mc.thePlayer).setJumpTicks(0);
                 }
                 break;

@@ -1,35 +1,48 @@
 package keystrokesmod.module.impl.movement;
 
+import keystrokesmod.event.PostMotionEvent;
+import keystrokesmod.event.PreMotionEvent;
+import keystrokesmod.event.PrePlayerInputEvent;
 import keystrokesmod.module.Module;
+import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
 import keystrokesmod.utility.RenderUtils;
 import keystrokesmod.utility.Utils;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.apache.commons.lang3.RandomUtils;
 
 public class Fly extends Module {
-    private SliderSetting mode;
+    public SliderSetting mode;
     public static SliderSetting horizontalSpeed;
     private SliderSetting verticalSpeed;
     private ButtonSetting showBPS;
     private ButtonSetting stopMotion;
     private boolean d;
     private boolean a = false;
-    private String[] modes = new String[]{"Vanilla", "Fast", "Fast 2"};
+    private float firstYaw, firstPitch;
+    private String[] modes = new String[]{"Vanilla", "Fast", "Fast 2", "Freeze"};
 
     public Fly() {
         super("Fly", category.movement);
         this.registerSetting(mode = new SliderSetting("Fly", 0, modes));
-        this.registerSetting(horizontalSpeed = new SliderSetting("Horizontal speed", 2.0, 1.0, 9.0, 0.1));
-        this.registerSetting(verticalSpeed = new SliderSetting("Vertical speed", 2.0, 1.0, 9.0, 0.1));
+        this.registerSetting(horizontalSpeed = new SliderSetting("Horizontal speed", 2.0, 0.0, 9.0, 0.1));
+        this.registerSetting(verticalSpeed = new SliderSetting("Vertical speed", 2.0, 0.0, 9.0, 0.1));
         this.registerSetting(showBPS = new ButtonSetting("Show BPS", false));
         this.registerSetting(stopMotion = new ButtonSetting("Stop motion", false));
     }
 
+    public void guiUpdate() {
+        horizontalSpeed.setVisible(mode.getInput() < 3, this);
+        this.verticalSpeed.setVisible(mode.getInput() < 3, this);
+    }
+
     public void onEnable() {
         this.d = mc.thePlayer.capabilities.isFlying;
+        firstYaw = mc.thePlayer.rotationYaw;
+        firstPitch = mc.thePlayer.rotationPitch;
     }
 
     public void onUpdate() {
@@ -70,8 +83,30 @@ public class Fly extends Module {
                 mc.thePlayer.motionY = 0.0;
                 setSpeed(0.4 * horizontalSpeed.getInput());
                 break;
+            case 3:
+                mc.thePlayer.motionX = 0;
+                mc.thePlayer.motionY = 0;
+                mc.thePlayer.motionZ = 0;
+                Utils.setSpeed(0);
+                break;
         }
 
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST) // called last in order to apply fix
+    public void onMoveInput(PrePlayerInputEvent e) {
+        if (mode.getInput() == 3) {
+            e.setForward(0);
+            e.setStrafe(0);
+        }
+    }
+
+    @SubscribeEvent
+    public void onPreMotion(PreMotionEvent e) {
+        if (mode.getInput() == 3) {
+            e.setYaw(firstYaw);
+            e.setPitch(firstPitch);
+        }
     }
 
     public void onDisable() {

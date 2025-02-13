@@ -5,20 +5,28 @@ import keystrokesmod.event.PreUpdateEvent;
 import keystrokesmod.mixin.impl.accessor.IAccessorEntityPlayerSP;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
+import keystrokesmod.module.impl.player.Safewalk;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.DescriptionSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
+import keystrokesmod.utility.BlockUtils;
 import keystrokesmod.utility.ModuleUtils;
 import keystrokesmod.utility.RenderUtils;
 import keystrokesmod.utility.Utils;
+import net.minecraft.block.*;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.item.ItemBlock;
+import net.minecraft.potion.PotionEffect;
+import net.minecraft.util.BlockPos;
 import net.minecraft.util.MathHelper;
 import net.minecraftforge.fml.client.config.GuiButtonExt;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
 
 import java.io.IOException;
 
@@ -31,8 +39,9 @@ public class Sprint extends Module {
     public float posX = 5;
     public float posY = 5;
     private float limit;
+    private boolean canFloat, requireJump;
 
-    private String[] omniDirectionalModes = new String[] { "Disabled", "Vanilla", "Hypixel" };
+    private String[] omniDirectionalModes = new String[] { "Disabled", "Vanilla", "Hypixel", "Float" };
 
     public Sprint() {
         super("Sprint", category.movement, 0);
@@ -49,23 +58,116 @@ public class Sprint extends Module {
 
     @SubscribeEvent
     public void onPreMotion(PreMotionEvent e) {
+
+        if (ModuleUtils.groundTicks <= 8 || floatConditions()) {
+            canFloat = true;
+        }
+        if (!floatConditions()) {
+            canFloat = false;
+        }
+        if (!mc.thePlayer.onGround) {
+            requireJump = false;
+        }
+
+        if (canFloat && floatConditions() && !requireJump && omniSprint()) {
+            e.setPosY(e.getPosY() + ModuleUtils.offsetValue);
+            if (Utils.isMoving()) Utils.setSpeed(getFloatSpeed(getSpeedLevel()));
+        }
+
+        if (rotationConditions()) {
+            float yaw = mc.thePlayer.rotationYaw;
+            e.setYaw(yaw - 55);
+        }
+    }
+
+    private boolean floatConditions() {
+        int edgeY = (int) Math.round((mc.thePlayer.posY % 1.0D) * 100.0D);
+        if (ModuleUtils.stillTicks > 20) {
+            requireJump = true;
+            return false;
+        }
+        if (!(mc.thePlayer.posY % 1 == 0) && edgeY >= 10 && !allowedBlocks()) {
+            requireJump = true;
+            return false;
+        }
+        if (Safewalk.canSafeWalk()) {
+            requireJump = true;
+            return false;
+        }
+        if (ModuleManager.scaffold.isEnabled || ModuleManager.bhop.isEnabled()) {
+            requireJump = true;
+            return false;
+        }
+        if (ModuleManager.sprint.omniDirectional.getInput() != 3) {
+            return false;
+        }
+        if (!mc.thePlayer.onGround) {
+            return false;
+        }
+        if (Utils.jumpDown()) {
+            return false;
+        }
+        if (ModuleManager.LongJump.function) {
+            return false;
+        }
+        if (Keyboard.isKeyDown(mc.gameSettings.keyBindSneak.getKeyCode())) {
+            return false;
+        }
+        return true;
+    }
+
+    private boolean allowedBlocks() {
+        Block block = BlockUtils.getBlock(new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ));
+        if (block instanceof BlockSnow) {
+            return true;
+        }
+        if (block instanceof BlockCarpet) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean rotationConditions() {
         if (Utils.noSlowingBackWithBow()) {
             ModuleManager.bhop.setRotation = false;
-            return;
+            return false;
         }
-        if (ModuleManager.sprint.isEnabled() && ModuleManager.sprint.omniDirectional.getInput() == 2) {
-            if (mc.thePlayer.onGround && mc.thePlayer.moveForward <= -0.5 && mc.thePlayer.moveStrafing == 0 && !Utils.jumpDown()) {
-                if (!ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !ModuleManager.safeWalk.canSafeWalk() && !ModuleManager.scaffold.isEnabled && !ModuleManager.bhop.isEnabled() && !mc.thePlayer.isCollidedHorizontally) {
-                    float yaw = mc.thePlayer.rotationYaw;
-                    e.setYaw(yaw - 55);
-                }
-            }
+        if (omniDirectional.getInput() < 2) {
+            return false;
         }
+        if (!mc.thePlayer.onGround) {
+            return false;
+        }
+        if (mc.thePlayer.moveForward >= 0 || mc.thePlayer.moveStrafing != 0) {
+            return false;
+        }
+        if (Utils.jumpDown()) {
+            return false;
+        }
+        if (ModuleManager.killAura.isTargeting) {
+            return false;
+        }
+        if (Safewalk.canSafeWalk()) {
+            return false;
+        }
+        if (ModuleManager.scaffold.isEnabled || ModuleManager.bhop.isEnabled()) {
+            return false;
+        }
+        if (Utils.holdingFireball() && mc.thePlayer.moveStrafing == 0 && mc.thePlayer.moveForward <= -0.5) {
+            return false;
+        }
+        if (mc.thePlayer.getHeldItem() != null && mc.thePlayer.getHeldItem().getItem() instanceof ItemBlock && Mouse.isButtonDown(1) && mc.thePlayer.moveStrafing == 0 && mc.thePlayer.moveForward <= -0.8) {
+            return false;
+        }
+        if (Keyboard.isKeyDown(mc.gameSettings.keyBindSneak.getKeyCode())) {
+            return false;
+        }
+        return true;
     }
 
     public boolean disableBackwards() {
         limit = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw - Utils.getLastReportedYaw());
-        double limitVal = 125;
+        double limitVal = 145;
         if (!disableBackwards.isToggled()) {
             return false;
         }
@@ -99,16 +201,52 @@ public class Sprint extends Module {
     }
 
     public boolean omniSprint() {
-        if (Utils.noSlowingBackWithBow() || Utils.safeWalkBackwards() || !Utils.isMoving()) {
+        if (!this.isEnabled()) {
+            return false;
+        }
+        if (Utils.safeWalkBackwards()) {
+            return false;
+        }
+        if (!Utils.isMoving()) {
             return false;
         }
         if (mc.thePlayer.moveForward <= 0.5 && Utils.jumpDown()) {
             return false;
         }
-        if (ModuleManager.sprint.omniDirectional.getInput() > 0) {
+        if (Utils.noSlowingBackWithBow()) {
+            return false;
+        }
+        if (Utils.holdingFireball() && mc.thePlayer.moveStrafing == 0 && mc.thePlayer.moveForward <= -0.5) {
+            return false;
+        }
+        if (mc.thePlayer.getHeldItem() != null && mc.thePlayer.getHeldItem().getItem() instanceof ItemBlock && Mouse.isButtonDown(1) && mc.thePlayer.moveStrafing == 0 && mc.thePlayer.moveForward <= -0.8) {
+            return false;
+        }
+        if (omniDirectional.getInput() > 0) {
             return true;
         }
         return false;
+    }
+
+    double[] floatSpeedLevels = {0.2, 0.22, 0.28, 0.29, 0.3};
+
+    double getFloatSpeed(int speedLevel) {
+        double min = 0;
+        if (mc.thePlayer.moveStrafing != 0 && mc.thePlayer.moveForward != 0) min = 0.003;
+        if (speedLevel >= 0) {
+            return floatSpeedLevels[speedLevel] - min;
+        }
+        return floatSpeedLevels[0] - min;
+    }
+
+    private int getSpeedLevel() {
+        for (PotionEffect potionEffect : mc.thePlayer.getActivePotionEffects()) {
+            if (potionEffect.getEffectName().equals("potion.moveSpeed")) {
+                return potionEffect.getAmplifier() + 1;
+            }
+            return 0;
+        }
+        return 0;
     }
 
     private boolean exceptions() {

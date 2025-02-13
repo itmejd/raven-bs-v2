@@ -36,9 +36,9 @@ public class RotationUtils {
     }
 
     public static float[] getRotations(BlockPos blockPos) {
-        double x = blockPos.getX() + 0.45 - mc.thePlayer.posX;
-        double y = blockPos.getY() + 0.45 - (mc.thePlayer.posY + mc.thePlayer.getEyeHeight());
-        double z = blockPos.getZ() + 0.45 - mc.thePlayer.posZ;
+        double x = blockPos.getX() + 0.5D - mc.thePlayer.posX;
+        double y = blockPos.getY() + 0.5D - (mc.thePlayer.posY + mc.thePlayer.getEyeHeight());
+        double z = blockPos.getZ() + 0.5D - mc.thePlayer.posZ;
 
         float angleToBlock = (float) (Math.atan2(z, x) * (180 / Math.PI)) - 90.0f;
         float deltaYaw = MathHelper.wrapAngleTo180_float(angleToBlock - mc.thePlayer.rotationYaw);
@@ -55,9 +55,9 @@ public class RotationUtils {
     }
 
     public static float[] getRotations(Vec3 vec3) {
-        double x = vec3.xCoord + 1.0 - mc.thePlayer.posX;
-        double y = vec3.yCoord + 1.0 - (mc.thePlayer.posY + mc.thePlayer.getEyeHeight());
-        double z = vec3.zCoord + 1.0 - mc.thePlayer.posZ;
+        double x = vec3.xCoord + 1.0D - mc.thePlayer.posX;
+        double y = vec3.yCoord + 1.0D - (mc.thePlayer.posY + mc.thePlayer.getEyeHeight());
+        double z = vec3.zCoord + 1.0D - mc.thePlayer.posZ;
 
         float angleToBlock = (float) (Math.atan2(z, x) * (180 / Math.PI)) - 90.0f;
         float deltaYaw = MathHelper.wrapAngleTo180_float(angleToBlock - mc.thePlayer.rotationYaw);
@@ -74,9 +74,9 @@ public class RotationUtils {
     }
 
     public static float[] getRotations(double posX, double posY, double posZ) {
-        double x = posX + 1.0 - mc.thePlayer.posX;
-        double y = posY + 1.0 - (mc.thePlayer.posY + mc.thePlayer.getEyeHeight());
-        double z = posZ + 1.0 - mc.thePlayer.posZ;
+        double x = posX + 1.0D - mc.thePlayer.posX;
+        double y = posY + 1.0D - (mc.thePlayer.posY + mc.thePlayer.getEyeHeight());
+        double z = posZ + 1.0D - mc.thePlayer.posZ;
 
         float angleToBlock = (float) (Math.atan2(z, x) * (180 / Math.PI)) - 90.0f;
         float deltaYaw = MathHelper.wrapAngleTo180_float(angleToBlock - mc.thePlayer.rotationYaw);

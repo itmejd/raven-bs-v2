@@ -44,7 +44,7 @@ public class ModuleManager {
     public static Chams chams;
     public static HUD hud;
     public static Module timer;
-    public static Module fly;
+    public static Fly fly;
     public static Module wTap;
     public static Potions potions;
     public static TargetHUD targetHUD;

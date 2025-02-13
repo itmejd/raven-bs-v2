@@ -1,11 +1,13 @@
 package keystrokesmod.module.impl.combat;
 
+import keystrokesmod.event.PreUpdateEvent;
 import keystrokesmod.event.ReceivePacketEvent;
 import keystrokesmod.event.SendPacketEvent;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.movement.LongJump;
 import keystrokesmod.module.setting.impl.ButtonSetting;
+import keystrokesmod.module.setting.impl.KeySetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
 import keystrokesmod.utility.Utils;
 import keystrokesmod.utility.ModuleUtils;
@@ -18,20 +20,23 @@ import net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent;
 import org.lwjgl.input.Keyboard;
 
 public class Velocity extends Module {
-    private SliderSetting velocityModes;
-    public static SliderSetting horizontal;
-    public static SliderSetting vertical;
+    public SliderSetting velocityModes;
+    public static SliderSetting vertical, horizontal, reverseHorizontal;
+    public static SliderSetting minExtraSpeed, extraSpeedBoost;
     private SliderSetting chance;
     private ButtonSetting onlyWhileAttacking;
     private ButtonSetting onlyWhileTargeting;
     private ButtonSetting disableS;
     private ButtonSetting zzWhileNotTargeting;
     private ButtonSetting disableExplosions;
-    private ButtonSetting allowSelfFireball;
+    public ButtonSetting allowSelfFireball;
+    public static ButtonSetting reverseDebug;
+    private KeySetting switchToReverse, switchToHypixel;
     private boolean stopFBvelo;
     public boolean disableVelo;
+    private long delay;
 
-    private String[] velocityModesString = new String[] { "Normal", "Hypixel" };
+    private String[] velocityModesString = new String[] { "Normal", "Hypixel", "Reverse" };
 
 
     public Velocity() {
@@ -39,6 +44,11 @@ public class Velocity extends Module {
         this.registerSetting(velocityModes = new SliderSetting("Mode", 0, velocityModesString));
         this.registerSetting(horizontal = new SliderSetting("Horizontal", 0.0, 0.0, 100.0, 1.0));
         this.registerSetting(vertical = new SliderSetting("Vertical", 0.0, 0.0, 100.0, 1.0));
+
+        this.registerSetting(reverseHorizontal = new SliderSetting("-Horizontal", 0.0, 0.0, 100.0, 1.0));
+        this.registerSetting(minExtraSpeed = new SliderSetting("Maximum speed for extra boost", 0, 0, 0.7, 0.01));
+        this.registerSetting(extraSpeedBoost = new SliderSetting("Extra speed boost multiplier", "%", 0, 0, 100, 1));
+
         this.registerSetting(chance = new SliderSetting("Chance", "%", 100.0D, 0.0D, 100.0D, 1.0D));
         this.registerSetting(onlyWhileAttacking = new ButtonSetting("Only while attacking", false));
         this.registerSetting(onlyWhileTargeting = new ButtonSetting("Only while targeting", false));
@@ -46,6 +56,11 @@ public class Velocity extends Module {
         this.registerSetting(zzWhileNotTargeting = new ButtonSetting("00 while not targeting", false));
         this.registerSetting(disableExplosions = new ButtonSetting("Disable explosions", false));
         this.registerSetting(allowSelfFireball = new ButtonSetting("Allow self fireball", false));
+
+        this.registerSetting(switchToReverse = new KeySetting("Switch to reverse", Keyboard.KEY_SPACE));
+        this.registerSetting(switchToHypixel = new KeySetting("Switch to hypixel", Keyboard.KEY_SPACE));
+
+        this.registerSetting(reverseDebug = new ButtonSetting("Show reverse debug messages", false));
     }
 
     public void guiUpdate() {
@@ -56,12 +71,46 @@ public class Velocity extends Module {
         this.allowSelfFireball.setVisible(velocityModes.getInput() == 1, this);
         this.disableExplosions.setVisible(velocityModes.getInput() == 1, this);
         this.zzWhileNotTargeting.setVisible(velocityModes.getInput() == 1, this);
+
+        this.switchToReverse.setVisible(velocityModes.getInput() == 1, this);
+        this.switchToHypixel.setVisible(velocityModes.getInput() == 2, this);
+
+
+
+        horizontal.setVisible(velocityModes.getInput() != 2, this);
+        vertical.setVisible(velocityModes.getInput() != 2, this);
+        chance.setVisible(velocityModes.getInput() != 2, this);
+        reverseHorizontal.setVisible(velocityModes.getInput() == 2, this);
+
+        minExtraSpeed.setVisible(velocityModes.getInput() == 2, this);
+        extraSpeedBoost.setVisible(velocityModes.getInput() == 2, this);
+        reverseDebug.setVisible(velocityModes.getInput() == 2, this);
+    }
+
+    @SubscribeEvent
+    public void onPreUpdate(PreUpdateEvent e) {
+        if (Utils.tabbedIn()) {
+            if (switchToReverse.isPressed() && velocityModes.getInput() == 1 && delay == 0) {
+                velocityModes.setValue(2);
+                delay = Utils.time();
+                Utils.print(Utils.formatColor("&7[&dR&7]&7 Switched to &bReverse&7 Velocity mode"));
+            }
+            if (switchToHypixel.isPressed() && velocityModes.getInput() == 2 && delay == 0) {
+                velocityModes.setValue(1);
+                delay = Utils.time();
+                Utils.print(Utils.formatColor("&7[&dR&7]&7 Switched to &bHypixel&7 Velocity mode"));
+            }
+        }
+        if (delay > 0 && (Utils.time() - delay) > 100) {
+            delay = 0;
+        }
+
     }
 
     @SubscribeEvent
     public void onReceivePacket(ReceivePacketEvent e) {
         if (velocityModes.getInput() == 1) {
-            if (!Utils.nullCheck() || LongJump.stopVelocity || e.isCanceled() || ModuleManager.bedAura.cancelKnockback()) {
+            if (!Utils.nullCheck() || LongJump.stopVelocity || e.isCanceled() || ModuleManager.bedAura.cancelKnockback() || velocityModes.getInput() == 2 && ModuleUtils.firstDamage || ModuleManager.bhop.isEnabled() && ModuleManager.bhop.damageBoost.isToggled() && ModuleUtils.firstDamage && (!ModuleManager.bhop.damageBoostRequireKey.isToggled() || ModuleManager.bhop.damageBoostKey.isPressed())) {
                 return;
             }
             if (e.getPacket() instanceof S27PacketExplosion) {

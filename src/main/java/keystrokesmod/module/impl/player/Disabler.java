@@ -3,19 +3,23 @@ package keystrokesmod.module.impl.player;
 import keystrokesmod.event.*;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
+import keystrokesmod.module.impl.render.HUD;
 import keystrokesmod.module.setting.impl.ButtonSetting;
+import keystrokesmod.utility.Theme;
 import keystrokesmod.utility.Utils;
+import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.network.play.client.C0BPacketEntityAction;
 import net.minecraft.network.play.server.S08PacketPlayerPosLook;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 
+import java.awt.*;
 import java.util.Objects;
 
 public class Disabler extends Module {
-    public ButtonSetting motion;
-    public ButtonSetting bridging;
 
     private final int defaultSetbacks = 20;
     private final long joinDelay = 200, delay = 0, checkDisabledTime = 4000, timeout = 12000;
@@ -26,35 +30,29 @@ public class Disabler extends Module {
     private int setbackCount, airTicks, disablerAirTicks;
     private double minSetbacks, zOffset;
     private float savedYaw, savedPitch;
-    private boolean noRotateWasEnabled;
-    private Class<? extends Module> noRotate;
 
-    private boolean hasSneaked, hasWentInAir;
-    private int lastSneakTicks;
-    private int lastY;
+    private int color = new Color(0, 187, 255, 255).getRGB();
 
-    //private String text;
+    private String text;
     private int[] disp;
     private int width;
 
     public Disabler() {
         super("Disabler", Module.category.player);
-
-        this.registerSetting(motion = new ButtonSetting("Motion", false));
-        this.registerSetting(bridging = new ButtonSetting("Bridging", false));
     }
 
     private void resetVars() {
-        if (noRotateWasEnabled) {
-            Objects.requireNonNull(getModule(noRotate)).enable();
-        }
-        awaitJoin = joinTick = awaitSetback = noRotateWasEnabled = awaitJump = false;
+        awaitJoin = joinTick = awaitSetback = awaitJump = false;
         minSetbacks = zOffset = lobbyTime = finished = setbackCount = 0;
+    }
+
+    public void onDisable() {
+        resetVars();
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onPreMotion(PreMotionEvent e) {
-        /*long now = System.currentTimeMillis();
+        long now = System.currentTimeMillis();
 
         if (!awaitGround && !mc.thePlayer.onGround) {
             disablerAirTicks++;
@@ -64,15 +62,18 @@ public class Disabler extends Module {
         }
 
         if (awaitJoin && now >= joinTime + joinDelay) {
-            ItemStack item = mc.thePlayer.inventory.getStackInSlot(8);
-            if (Utils.getBedwarsStatus() == 1 || Utils.isBedwarsPractice() || Utils.skywarsQueue()) {
-                if (ModuleManager.noRotate.isEnabled() && Utils.skywarsQueue()) {
-                    Objects.requireNonNull(getModule(noRotate)).disable();
-                    noRotateWasEnabled = true;
-                }
+            if (Utils.getBedwarsStatus() == 1 || Utils.isBedwarsPractice() || Utils.getSkyWarsStatus() == 1) {
                 awaitJoin = false;
                 joinTick = true;
             }
+        }
+
+        if (awaitSetback) {
+            color = Theme.getGradient((int) HUD.theme.getInput(), 0);
+            text = "§7running disabler " + "§r" + Utils.round((now - lobbyTime) / 1000d, 1) + "s " + ((int) Utils.round(100 * (setbackCount / minSetbacks), 0)) + "%";
+            width = mc.fontRendererObj.getStringWidth(text) / 2 - 2;
+        } else {
+            text = null;
         }
 
         if (finished != 0 && mc.thePlayer.onGround && now - finished > checkDisabledTime) {
@@ -91,12 +92,11 @@ public class Disabler extends Module {
         }
 
         if (joinTick) {
+            joinTick = false;
             Utils.print("&7[&dR&7] running disabler...");
             if (mc.thePlayer.onGround || (mc.thePlayer.fallDistance < 0.3 && !Utils.isBedwarsPractice())) {
                 awaitJump = true;
-                mc.thePlayer.jump();
-                //client.print("Jump");
-                joinTick = false;
+                KeyBinding.setKeyBindState(mc.gameSettings.keyBindJump.getKeyCode(), true);
             } else {
                 minSetbacks = defaultSetbacks;
                 savedYaw = e.getYaw(); // pitch will be 0
@@ -123,56 +123,23 @@ public class Disabler extends Module {
                 mc.thePlayer.motionX = 0;
                 mc.thePlayer.motionY = 0;
                 mc.thePlayer.motionZ = 0;
-                //client.print("2");
-                if (Utils.skywarsQueue()) {
+
+                if (mc.thePlayer.ticksExisted % 2 == 0) {
+                    //e.setPosX(mc.thePlayer.posX + 0.11);
+                }
+
+                if (Utils.getSkyWarsStatus() == 1) {
                     zOffset = min_offset * 0.7;
                     if (mc.thePlayer.ticksExisted % 2 == 0) {
                         zOffset *= -1;
                     }
                     e.setPosZ(e.getPosZ() + zOffset);
                 } else {
-                    e.setPosZ(zOffset + min_offset);
-                }
-            }
-        }*/
-
-        if (bridging.isToggled()) {
-            if (mc.gameSettings.keyBindSneak.isKeyDown() || !Safewalk.canSafeWalk() && !ModuleManager.scaffold.isEnabled) {
-                lastSneakTicks = 0;
-            }
-            if (mc.thePlayer.onGround) { // Switching Y levels doesnt stop flagging
-                if ((int) mc.thePlayer.posY != lastY && hasWentInAir) {
-                    lastSneakTicks = 0;
-                    Utils.print("Dif Y");
-                }
-                lastY = (int) mc.thePlayer.posY;
-                hasWentInAir = false;
-            }
-            else {
-                hasWentInAir = true;
-            }
-            lastSneakTicks++;
-        }
-
-    }
-
-    @SubscribeEvent
-    public void onPostPlayerInput(PostPlayerInputEvent e) {
-        if (bridging.isToggled()) {
-            if (hasSneaked) {
-                if (!mc.gameSettings.keyBindSneak.isKeyDown()) {
-                    mc.thePlayer.sendQueue.addToSendQueue(new C0BPacketEntityAction(mc.thePlayer, C0BPacketEntityAction.Action.STOP_SNEAKING));
-                }
-                hasSneaked = false;
-                lastSneakTicks = 0;
-            } else if (lastSneakTicks >= 19) {
-                if (!mc.gameSettings.keyBindSneak.isKeyDown() && (Safewalk.canSafeWalk() || ModuleManager.scaffold.isEnabled) && mc.thePlayer.onGround) {
-                    mc.thePlayer.sendQueue.addToSendQueue(new C0BPacketEntityAction(mc.thePlayer, C0BPacketEntityAction.Action.START_SNEAKING));
-                    hasSneaked = true;
-                    Utils.print("Sneak packet");
+                    e.setPosZ(e.getPosZ() + (zOffset += min_offset));
                 }
             }
         }
+
     }
 
     @SubscribeEvent()
@@ -180,6 +147,7 @@ public class Disabler extends Module {
         if (awaitSetback) {
             e.setForward(0);
             e.setStrafe(0);
+            mc.thePlayer.movementInput.jump = false;
         }
     }
 
@@ -191,14 +159,22 @@ public class Disabler extends Module {
         }
     }
 
-    /*void onRenderTick(float partialTicks) {
-        if (awaitSetback) {
-            if (hideProgress || text == null) {
+    @SubscribeEvent
+    public void onRenderTick(TickEvent.RenderTickEvent ev) {
+        if (!Utils.nullCheck()) {
+            return;
+        }
+        if (ev.phase == TickEvent.Phase.END) {
+            if (mc.currentScreen != null || !awaitSetback || text == null) {
                 return;
             }
-            render.text(text, disp[0] / 2 - width, disp[1] / 2 + 13, 1, -1, true);
         }
-    }*/
+        float widthOffset = 0;
+        color = Theme.getGradient((int) HUD.theme.getInput(), 0);
+        final ScaledResolution scaledResolution = new ScaledResolution(mc);
+        int[] display = {scaledResolution.getScaledWidth(), scaledResolution.getScaledHeight(), scaledResolution.getScaleFactor()};
+        mc.fontRendererObj.drawString(text, display[0] / 2 - width + widthOffset, display[1] / 2 + 8, color, true);
+    }
 
     @SubscribeEvent
     public void onWorldJoin(EntityJoinWorldEvent e) {
@@ -206,8 +182,8 @@ public class Disabler extends Module {
             long joinTime = System.currentTimeMillis();
             if (awaitSetback) {
                 Utils.print("&7[&dR&7] &cdisabing disabler");
-                resetVars();
             }
+            resetVars();
             awaitJoin = awaitGround = true;
         }
     }

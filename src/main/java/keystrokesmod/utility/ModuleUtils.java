@@ -1,11 +1,15 @@
 package keystrokesmod.utility;
 
 import keystrokesmod.event.*;
+import keystrokesmod.module.impl.combat.Velocity;
 import keystrokesmod.module.impl.movement.LongJump;
 import keystrokesmod.module.impl.render.HUD;
 import keystrokesmod.utility.command.CommandManager;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockAir;
 import net.minecraft.client.Minecraft;
 import keystrokesmod.module.ModuleManager;
+import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.client.*;
@@ -34,22 +38,26 @@ public class ModuleUtils {
     private int isBreakingTick;
     public static long MAX_EXPLOSION_DIST_SQ = 10;
     private long FIREBALL_TIMEOUT = 500L, fireballTime = 0;
-    public static int inAirTicks, groundTicks;
+    public static int inAirTicks, groundTicks, stillTicks;
     public static int fadeEdge;
     public static int lastFaceDifference;
     private int lastFace;
-    public static float offsetValue = 1E-12F;
+    public static double offsetValue = 0.0000000000201;
     public static boolean isAttacking;
     private int attackingTicks;
     private int unTargetTicks;
     public static int profileTicks = -1;
     public static boolean lastTickOnGround, lastTickPos1;
     private boolean thisTickOnGround, thisTickPos1;
+    public static boolean firstDamage;
 
     public static boolean isBlocked;
 
     public static boolean damage;
     private int damageTicks;
+    private boolean lowhopAir;
+
+    public static boolean canSlow, didSlow, setSlow;
 
     @SubscribeEvent
     public void onSendPacketNoEvent(NoEventPacketEvent e) {
@@ -165,7 +173,7 @@ public class ModuleUtils {
         if (e.getPacket() instanceof S12PacketEntityVelocity) {
             if (((S12PacketEntityVelocity) e.getPacket()).getEntityID() == mc.thePlayer.getEntityId()) {
 
-                damage = true;
+                damage = firstDamage = true;
                 damageTicks = 0;
 
             }
@@ -176,7 +184,7 @@ public class ModuleUtils {
     public void onPreUpdate(PreUpdateEvent e) {
 
         if (damage && ++damageTicks >= 8) {
-            damage = false;
+            damage = firstDamage = false;
             damageTicks = 0;
         }
 
@@ -278,6 +286,43 @@ public class ModuleUtils {
     }
 
     @SubscribeEvent
+    public void onPostMotion(PostMotionEvent e) {
+        if (bhopBoostConditions()) {
+            if (firstDamage) {
+                Utils.setSpeed(Utils.getHorizontalSpeed());
+                firstDamage = false;
+            }
+        }
+        if (veloBoostConditions()) {
+            if (firstDamage) {
+                double added = 0;
+                if (Utils.getHorizontalSpeed() <= Velocity.minExtraSpeed.getInput()) {
+                    added = Velocity.extraSpeedBoost.getInput() / 100;
+                    if (Velocity.reverseDebug.isToggled()) {
+                        Utils.print("&7[&dR&7] Applied extra boost | Original speed: " + Utils.getHorizontalSpeed());
+                    }
+                }
+                Utils.setSpeed((Utils.getHorizontalSpeed() * (Velocity.reverseHorizontal.getInput() / 100)) * (1 + added));
+                firstDamage = false;
+            }
+        }
+    }
+
+    private boolean bhopBoostConditions() {
+        if (ModuleManager.bhop.isEnabled() && ModuleManager.bhop.damageBoost.isToggled() && (!ModuleManager.bhop.damageBoostRequireKey.isToggled() || ModuleManager.bhop.damageBoostKey.isPressed())) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean veloBoostConditions() {
+        if (ModuleManager.velocity.isEnabled() && ModuleManager.velocity.velocityModes.getInput() == 2) {
+            return true;
+        }
+        return false;
+    }
+
+    @SubscribeEvent
     public void onPreMotion(PreMotionEvent e) {
         int simpleY = (int) Math.round((e.posY % 1) * 10000);
 
@@ -287,33 +332,91 @@ public class ModuleUtils {
         lastTickPos1 = thisTickPos1;
         thisTickPos1 = mc.thePlayer.posY % 1 == 0;
 
-        if (inAirTicks <= 20) {
-            inAirTicks = mc.thePlayer.onGround ? 0 : ++inAirTicks;
-        }
-        else {
-            inAirTicks = 19;
-        }
+        inAirTicks = mc.thePlayer.onGround ? 0 : ++inAirTicks;
         groundTicks = !mc.thePlayer.onGround ? 0 : ++groundTicks;
+        stillTicks = Utils.isMoving() ? 0 : ++stillTicks;
 
-        // 7 tick needs to always finish the motion or itll lag back
-        if (!ModuleManager.bhop.isEnabled() && ModuleManager.bhop.mode.getInput() == 3 && ModuleManager.bhop.didMove) {
+        Block blockBelow = BlockUtils.getBlock(new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY - 1, mc.thePlayer.posZ));
+        Block blockBelow2 = BlockUtils.getBlock(new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY - 2, mc.thePlayer.posZ));
+        Block block = BlockUtils.getBlock(new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ));
 
-            if (mc.thePlayer.hurtTime == 0) {
-                switch (simpleY) {
-                    case 4200:
-                        mc.thePlayer.motionY = 0.39;
-                        break;
-                    case 1138:
-                        mc.thePlayer.motionY = mc.thePlayer.motionY - 0.13;
-                        ModuleManager.bhop.lowhop = false;
-                        ModuleManager.bhop.didMove = false;
-                        break;
-                    /*case 2031:
-                        mc.thePlayer.motionY = mc.thePlayer.motionY - 0.2;
-                        didMove = false;
-                        break;*/
+
+        if (ModuleManager.bhop.didMove || ModuleManager.scaffold.lowhop) {
+
+            if ((!ModuleUtils.damage || Velocity.vertical.getInput() == 0) && !mc.thePlayer.isCollidedHorizontally) {
+
+                if (ModuleManager.scaffold.lowhop && !ModuleManager.bhop.didMove) {
+                    switch (simpleY) {
+                        case 4200:
+                            mc.thePlayer.motionY = 0.39;
+                            break;
+                        case 1138:
+                            mc.thePlayer.motionY = mc.thePlayer.motionY - 0.13;
+                            break;
+                        case 2031:
+                            mc.thePlayer.motionY = mc.thePlayer.motionY - 0.2;
+                            resetLowhop();
+                            break;
+                    }
+                }
+                else {
+                    if (!(block instanceof BlockAir) || (blockBelow instanceof BlockAir && blockBelow2 instanceof BlockAir)) {
+                        resetLowhop();
+                    }
+                    switch ((int) ModuleManager.bhop.mode.getInput()) {
+                        case 2: // 9 tick
+                            switch (simpleY) {
+                                case 13:
+                                    mc.thePlayer.motionY = mc.thePlayer.motionY - 0.02483;
+                                    break;
+                                case 2000:
+                                    mc.thePlayer.motionY = mc.thePlayer.motionY - 0.1913;
+                                    break;
+                                case 7016:
+                                    mc.thePlayer.motionY = mc.thePlayer.motionY + 0.08;
+                                    break;
+                            }
+                            if (ModuleUtils.inAirTicks > 6 && Utils.isMoving()) {
+                                Utils.setSpeed(Utils.getHorizontalSpeed(mc.thePlayer));
+                            }
+                            if (ModuleUtils.inAirTicks > 8) {
+                                resetLowhop();
+                            }
+                            break;
+                        case 3: // 8 tick
+                            switch (simpleY) {
+                                case 13:
+                                    mc.thePlayer.motionY = mc.thePlayer.motionY - 0.045;//0.02483;
+                                    break;
+                                case 2000:
+                                    mc.thePlayer.motionY = mc.thePlayer.motionY - 0.175;//0.1913;
+                                    resetLowhop();
+                                    break;
+                            }
+                            break;
+                        case 4: // 7 tick
+                            switch (simpleY) {
+                                case 4200:
+                                    mc.thePlayer.motionY = 0.39;
+                                    break;
+                                case 1138:
+                                    mc.thePlayer.motionY = mc.thePlayer.motionY - 0.13;
+                                    break;
+                                case 2031:
+                                    mc.thePlayer.motionY = mc.thePlayer.motionY - 0.2;
+                                    resetLowhop();
+                                    break;
+                            }
+                            break;
+                    }
                 }
             }
+        }
+        if (!mc.thePlayer.onGround) {
+            lowhopAir = true;
+        }
+        else if (lowhopAir) {
+            resetLowhop();
         }
 
         if (ModuleManager.bhop.setRotation) {
@@ -331,6 +434,34 @@ public class ModuleUtils {
             fadeEdge = 0;
             ModuleManager.scaffold.highlight.clear();
         }
+
+        if ((canSlow || ModuleManager.scaffold.moduleEnabled && !ModuleManager.tower.canTower()) && !mc.thePlayer.onGround) {
+            double motionVal = 0.9 - ((double) inAirTicks / 10000) - Utils.randomizeDouble(0.00001, 0.00006);
+            if (mc.thePlayer.hurtTime == 0 && inAirTicks > 4 && !setSlow) {
+                mc.thePlayer.motionX *= motionVal;
+                mc.thePlayer.motionZ *= motionVal;
+                setSlow = true;
+                //Utils.print("Slow " + motionVal);
+            }
+            didSlow = true;
+        }
+        else if (didSlow) {
+            canSlow = didSlow = false;
+        }
+        if (mc.thePlayer.onGround) {
+            setSlow = false;
+        }
+    }
+
+    private void resetLowhop() {
+        ModuleManager.bhop.lowhop = ModuleManager.scaffold.lowhop = false;
+        ModuleManager.bhop.didMove = false;
+        lowhopAir = false;
+    }
+
+    public static void handleSlow() {
+        didSlow = false;
+        canSlow = true;
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
