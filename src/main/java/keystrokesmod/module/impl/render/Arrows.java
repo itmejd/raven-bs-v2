@@ -28,6 +28,7 @@ public class Arrows extends Module {
     private ButtonSetting renderEnemies;
     private ButtonSetting renderDistance;
     private ButtonSetting renderOnlyOffScreen;
+    private ButtonSetting renderInGUIs;
 
     private int friendColor = new Color(0, 255, 0, 255).getRGB();
     private int enemyColor = new Color(255, 0, 0, 255).getRGB();
@@ -45,6 +46,7 @@ public class Arrows extends Module {
         this.registerSetting(renderEnemies = new ButtonSetting("Render enemies (red)", true));
         this.registerSetting(renderDistance = new ButtonSetting("Render distance", true));
         this.registerSetting(renderOnlyOffScreen = new ButtonSetting("Render only offscreen", false));
+        this.registerSetting(renderInGUIs = new ButtonSetting("Render in GUIs", false));
     }
 
     @SubscribeEvent
@@ -52,7 +54,7 @@ public class Arrows extends Module {
         if (event.phase != TickEvent.Phase.END) {
             return;
         }
-        if (mc.currentScreen != null || !Utils.nullCheck()) {
+        if (mc.currentScreen != null && !renderInGUIs.isToggled() || !Utils.nullCheck()) {
             return;
         }
         try {

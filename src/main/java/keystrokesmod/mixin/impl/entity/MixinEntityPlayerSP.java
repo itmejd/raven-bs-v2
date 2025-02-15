@@ -121,6 +121,7 @@ public abstract class MixinEntityPlayerSP extends AbstractClientPlayer {
     @Overwrite
     public void onUpdateWalkingPlayer() {
         PreMotionEvent.setRenderYaw(false);
+        RotationUtils.setFakeRotations = false;
         PreMotionEvent preMotionEvent = new PreMotionEvent(
                 this.posX,
                 this.getEntityBoundingBox().minY,
@@ -165,6 +166,13 @@ public abstract class MixinEntityPlayerSP extends AbstractClientPlayer {
 
             RotationUtils.renderPitch = preMotionEvent.getPitch();
             RotationUtils.renderYaw = preMotionEvent.getYaw();
+
+            if (RotationUtils.setFakeRotations) {
+                RotationUtils.renderPitch = RotationUtils.fakeRotations[1];
+                RotationUtils.renderYaw = RotationUtils.fakeRotations[0];
+                RotationUtils.setRenderYaw(RotationUtils.renderYaw);
+            }
+            RotationUtils.setFakeRotations = false;
 
             double d0 = preMotionEvent.getPosX() - this.lastReportedPosX;
             double d1 = preMotionEvent.getPosY() - this.lastReportedPosY;

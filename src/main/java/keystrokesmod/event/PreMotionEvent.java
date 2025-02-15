@@ -9,6 +9,8 @@ public class PreMotionEvent extends Event {
     private double posZ;
     private float yaw;
     private float pitch;
+    private float fakeYaw;
+    private float fakePitch;
     private boolean onGround;
     private static boolean setRenderYaw;
     private boolean isSprinting;

@@ -57,7 +57,7 @@ public class LongJump extends Module {
     public static boolean function;
 
     private int boostTicks;
-    public int lastSlot = -1;
+    public int lastSlot = -1, spoofSlot = -1;
     private int stopTime;
     private int rotateTick;
     private int motionDecayVal;
@@ -158,7 +158,7 @@ public class LongJump extends Module {
             return;
         }
 
-        if (spoofItem.isToggled()) {
+        if (spoofItem.isToggled() && lastSlot != -1) {
             ((IMixinItemRenderer) mc.getItemRenderer()).setCancelUpdate(true);
             ((IMixinItemRenderer) mc.getItemRenderer()).setCancelReset(true);
         }
@@ -173,7 +173,7 @@ public class LongJump extends Module {
             int fireballSlot = setupFireballSlot(true);
             if (fireballSlot != -1) {
                 if (!manual.isToggled()) {
-                    lastSlot = mc.thePlayer.inventory.currentItem;
+                    lastSlot = spoofSlot = mc.thePlayer.inventory.currentItem;
                     if (mc.thePlayer.inventory.currentItem != fireballSlot) {
                         mc.thePlayer.inventory.currentItem = fireballSlot;
                     }
@@ -226,6 +226,13 @@ public class LongJump extends Module {
 
         if (firstSlot != -1) {
             mc.thePlayer.inventory.currentItem = firstSlot;
+        }
+    }
+
+    @SubscribeEvent
+    public void onSlotUpdate(SlotUpdateEvent e) {
+        if (lastSlot != -1) {
+            spoofSlot = e.slot;
         }
     }
 
@@ -375,13 +382,14 @@ public class LongJump extends Module {
 
     private void resetSlot() {
         if (lastSlot != -1 && !manual.isToggled()) {
+            mc.thePlayer.inventory.currentItem = lastSlot;
+            lastSlot = -1;
+            spoofSlot = -1;
+            firstSlot = -1;
             if (spoofItem.isToggled()) {
                 ((IMixinItemRenderer) mc.getItemRenderer()).setCancelUpdate(false);
                 ((IMixinItemRenderer) mc.getItemRenderer()).setCancelReset(false);
             }
-            mc.thePlayer.inventory.currentItem = lastSlot;
-            lastSlot = -1;
-            firstSlot = -1;
         }
         slotReset = true;
     }

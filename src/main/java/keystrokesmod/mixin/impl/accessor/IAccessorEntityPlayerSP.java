@@ -19,4 +19,7 @@ public interface IAccessorEntityPlayerSP {
 
     @Accessor("lastReportedYaw")
     float getLastReportedYaw();
+
+    @Accessor("lastReportedPitch")
+    float getLastReportedPitch();
 }

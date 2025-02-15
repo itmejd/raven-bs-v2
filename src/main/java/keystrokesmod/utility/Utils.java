@@ -709,6 +709,51 @@ public class Utils {
         return -1;
     }
 
+    public static int getLobbyStatus() {
+        if (!Utils.nullCheck()) {
+            return -1;
+        }
+        final Scoreboard scoreboard = mc.theWorld.getScoreboard();
+        if (scoreboard == null) {
+            return -1;
+        }
+        final ScoreObjective objective = scoreboard.getObjectiveInDisplaySlot(1);
+        if (objective == null) {
+            return -1;
+        }
+        for (String line : getSidebarLines()) {
+            line = stripString(line);
+            String[] parts = line.split("  ");
+            if (parts.length > 1) {
+                if (parts[1].startsWith("L")) {
+                    return 1;
+                }
+            }
+        }
+        return -1;
+    }
+
+    public static int hypixelStatus() {
+        if (!Utils.nullCheck()) {
+            return -1;
+        }
+        final Scoreboard scoreboard = mc.theWorld.getScoreboard();
+        if (scoreboard == null) {
+            return -1;
+        }
+        final ScoreObjective objective = scoreboard.getObjectiveInDisplaySlot(1);
+        if (objective == null) {
+            return -1;
+        }
+        for (String line : getSidebarLines()) {
+            line = stripString(line);
+            if (line.startsWith("0") || line.startsWith("1")) {
+                return 1;
+            }
+        }
+        return -1;
+    }
+
     public static boolean skywarsQueue() {
         if (!Utils.nullCheck()) {
             return false;
@@ -719,7 +764,6 @@ public class Utils {
         }
         final ScoreObjective objective = scoreboard.getObjectiveInDisplaySlot(1);
         if (stripString(objective.getDisplayName()).contains("SKYWARS")) {
-            Utils.print("Skywars");
             return true;
         }
         return false;
@@ -1052,6 +1096,10 @@ public class Utils {
 
     public static float getLastReportedYaw() {
         return ((IAccessorEntityPlayerSP) mc.thePlayer).getLastReportedYaw();
+    }
+
+    public static float getLastReportedPitch() {
+        return ((IAccessorEntityPlayerSP) mc.thePlayer).getLastReportedPitch();
     }
 
     public static boolean lookingAtBlock() {
@@ -1491,11 +1539,11 @@ public class Utils {
         if (ModuleManager.scaffold.isEnabled && ModuleManager.scaffold.autoSwap.isToggled() && ModuleManager.autoSwap.spoofItem.isToggled()) {
             return mc.thePlayer.inventory.getStackInSlot(ModuleManager.scaffold.lastSlot.get() == -1 ? mc.thePlayer.inventory.currentItem : ModuleManager.scaffold.lastSlot.get());
         }
+        if (ModuleManager.LongJump.lastSlot != -1 && ModuleManager.LongJump.spoofItem.isToggled()) {
+            return mc.thePlayer.inventory.getStackInSlot(ModuleManager.LongJump.spoofSlot == -1 ? mc.thePlayer.inventory.currentItem : ModuleManager.LongJump.spoofSlot);
+        }
         if (ModuleManager.autoTool.isEnabled() && ModuleManager.autoTool.spoofItem.isToggled()) {
             return mc.thePlayer.inventory.getStackInSlot(ModuleManager.autoTool.previousSlot == -1 ? mc.thePlayer.inventory.currentItem : ModuleManager.autoTool.previousSlot);
-        }
-        if (ModuleManager.LongJump.isEnabled() && ModuleManager.LongJump.spoofItem.isToggled()) {
-            return mc.thePlayer.inventory.getStackInSlot(ModuleManager.LongJump.lastSlot == -1 ? mc.thePlayer.inventory.currentItem : ModuleManager.LongJump.lastSlot);
         }
         return original;
     }

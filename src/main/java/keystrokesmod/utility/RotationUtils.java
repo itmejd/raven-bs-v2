@@ -21,6 +21,13 @@ public class RotationUtils {
     public static float[] serverRotations = new float[] { 0, 0 } ;
     public static final float PI = (float) Math.PI;
     public static final float TO_DEGREES = 180.0F / PI;
+    public static Float[] fakeRotations;
+    public static boolean setFakeRotations;
+
+    public static void setFakeRotations(float yaw, float pitch) {
+        fakeRotations = new Float[] { yaw, pitch };
+        setFakeRotations = true;
+    }
 
     public static void setRenderYaw(float yaw) {
         mc.thePlayer.rotationYawHead = yaw;

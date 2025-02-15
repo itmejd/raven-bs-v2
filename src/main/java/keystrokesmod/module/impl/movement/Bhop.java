@@ -19,7 +19,9 @@ public class Bhop extends Module {
     public SliderSetting mode;
     public static SliderSetting speedSetting;
     private ButtonSetting liquidDisable;
-    private ButtonSetting sneakDisable, jumpMoving;
+    public ButtonSetting disablerOnly;
+    private ButtonSetting sneakDisable;
+    private ButtonSetting jumpMoving;
     public ButtonSetting rotateYawOption, damageBoost, airStrafe, damageBoostRequireKey;
     public GroupSetting damageBoostGroup;
     public KeySetting damageBoostKey;
@@ -31,6 +33,7 @@ public class Bhop extends Module {
         super("Bhop", Module.category.movement);
         this.registerSetting(mode = new SliderSetting("Mode", 0, modes));
         this.registerSetting(speedSetting = new SliderSetting("Speed", 2.0, 0.8, 1.2, 0.01));
+        this.registerSetting(disablerOnly = new ButtonSetting("Lowhop only if disabler loaded", false));
         this.registerSetting(liquidDisable = new ButtonSetting("Disable in liquid", true));
         this.registerSetting(sneakDisable = new ButtonSetting("Disable while sneaking", true));
         this.registerSetting(jumpMoving = new ButtonSetting("Only jump when moving", true));

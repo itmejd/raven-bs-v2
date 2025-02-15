@@ -1,6 +1,7 @@
 package keystrokesmod.module.impl.movement;
 
 import keystrokesmod.clickgui.ClickGui;
+import keystrokesmod.event.PrePlayerInputEvent;
 import net.minecraft.client.gui.GuiChat;
 import keystrokesmod.event.JumpEvent;
 import keystrokesmod.event.PreUpdateEvent;
@@ -19,6 +20,7 @@ import net.minecraft.network.Packet;
 import net.minecraft.network.play.client.C0DPacketCloseWindow;
 import net.minecraft.network.play.client.C0EPacketClickWindow;
 import net.minecraft.network.play.client.C16PacketClientStatus;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.lwjgl.input.Keyboard;
 

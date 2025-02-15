@@ -18,12 +18,13 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public class Tower extends Module {
     final private SliderSetting towerMove;
+    private SliderSetting speedSetting;
     final private SliderSetting verticalTower;
     final private SliderSetting slowedSpeed;
     final private SliderSetting slowedTicks;
     final private ButtonSetting disableWhileHurt;
 
-    final private String[] towerMoveModes = new String[]{"None", "Vanilla", "Low", "Edge", "2.5 tick"};
+    final private String[] towerMoveModes = new String[]{"None", "Vanilla", "Low", "Edge", "2.5 tick", "1.5 tick"};
     final private String[] verticalTowerModes = new String[]{"None", "Vanilla", "Extra block"};
     private int slowTicks;
     private boolean wasTowering;
@@ -47,6 +48,7 @@ public class Tower extends Module {
     public Tower() {
         super("Tower", category.player);
         this.registerSetting(towerMove = new SliderSetting("Tower Move", 0, towerMoveModes));
+        this.registerSetting(speedSetting = new SliderSetting("Speed", 3.0, 0.5, 8.0, 0.1));
         this.registerSetting(verticalTower = new SliderSetting("Vertical Tower", 0, verticalTowerModes));
         this.registerSetting(slowedSpeed = new SliderSetting("Slowed speed", "%", 0, 0, 100, 1));
         this.registerSetting(slowedTicks = new SliderSetting("Slowed ticks", 1, 0, 20, 1));
@@ -58,9 +60,6 @@ public class Tower extends Module {
     @SubscribeEvent
     public void onPreMotion(PreMotionEvent e) {
         if (canTower() && Utils.keysDown()) {
-            if (tower) {
-                towerTicks = mc.thePlayer.onGround ? 0 : ++towerTicks;
-            }
             if (disableWhileHurt.isToggled() && ModuleUtils.damage) {
                 return;
             }
@@ -82,6 +81,9 @@ public class Tower extends Module {
                         }
                     }
                     break;
+                case 5:
+
+                    break;
             }
         }
     }
@@ -89,9 +91,12 @@ public class Tower extends Module {
     @SubscribeEvent
     public void onPreUpdate(PreUpdateEvent e) {
         int valY = (int) Math.round((mc.thePlayer.posY % 1) * 10000);
+        int simpleY = (int) Math.round((mc.thePlayer.posY % 1.0D) * 100.0D);
         if (canTower() && Utils.keysDown()) {
             wasTowering = true;
             if (disableWhileHurt.isToggled() && ModuleUtils.damage) {
+                towerTicks = 0;
+                tower = false;
                 return;
             }
             switch ((int) towerMove.getInput()) {
@@ -170,11 +175,11 @@ public class Tower extends Module {
                     break;
                 case 4:
                     speed = false;
-                    int simpleY = (int) Math.round((mc.thePlayer.posY % 1.0D) * 100.0D);
                     if (mc.thePlayer.posY % 1 == 0) {
                         tower = true;
                     }
                     if (tower) {
+                        towerTicks = mc.thePlayer.onGround ? 0 : ++towerTicks;
                         switch (simpleY) {
                             case 0:
                                 mc.thePlayer.motionY = 0.42f;
@@ -191,6 +196,43 @@ public class Tower extends Module {
                                 break;
                             case 75:
                                 mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1f;
+                                break;
+                        }
+                    }
+                    break;
+                case 5:
+                    speed = false;
+                    if (mc.thePlayer.posY % 1 == 0) {
+                        tower = true;
+                    }
+                    if (tower) {
+                        towerTicks = mc.thePlayer.onGround ? 0 : ++towerTicks;
+                        switch (towerTicks) {
+                            case 0:
+                                mc.thePlayer.motionY = 0.42f;
+                                Utils.setSpeed(get15tickspeed(getSpeedLevel())); // Speed + Strafe tick
+                                speed = true;
+                                break;
+                            case 1:
+                                mc.thePlayer.motionY = 0.33f;
+                                Utils.setSpeed(Utils.getHorizontalSpeed()); // Strafe tick
+                                break;
+                            case 2:
+                                mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1f;
+                                break;
+                            case 3:
+                                mc.thePlayer.motionY = 0.42f;
+                                Utils.setSpeed(Utils.getHorizontalSpeed()); // Strafe tick
+                                break;
+                            case 4:
+                                mc.thePlayer.motionY = 0.33f;
+                                Utils.setSpeed(Utils.getHorizontalSpeed()); // Strafe tick
+                                break;
+                            case 5:
+                                mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1f + 0.0000001;
+                                break;
+                            case 6:
+                                mc.thePlayer.motionY = -0.01;
                                 break;
                         }
                     }
@@ -281,12 +323,12 @@ public class Tower extends Module {
             if (!firstJump) {
                 if (!mc.thePlayer.onGround) {
                     if (!startedTowerInAir) {
-                        Utils.setSpeed(getTowerGroundSpeed(getSpeedLevel()) - 0.04);
+                        //Utils.setSpeed(getTowerGroundSpeed(getSpeedLevel()) - 0.04);
                     }
                     startedTowerInAir = true;
                 }
                 else if (mc.thePlayer.onGround) {
-                    Utils.setSpeed(getTowerGroundSpeed(getSpeedLevel()));
+                    //Utils.setSpeed(getTowerGroundSpeed(getSpeedLevel()));
                     firstJump = true;
                 }
             }
@@ -373,22 +415,49 @@ public class Tower extends Module {
         return value;
     }
 
-    private double[] towerSpeedLevels = {0.3, 0.34, 0.38, 0.42, 0.42};
-
     private double getTowerSpeed(int speedLevel) {
-        if (speedLevel >= 0) {
-            return towerSpeedLevels[speedLevel];
+        if (speedLevel == 0) {
+            return (speedSetting.getInput() / 10);
+        } else if (speedLevel == 1) {
+            return (speedSetting.getInput() / 10) + 0.04;
+        } else if (speedLevel == 2) {
+            return (speedSetting.getInput() / 10) + 0.08;
+        } else if (speedLevel == 3) {
+            return (speedSetting.getInput() / 10) + 0.12;
+        } else if (speedLevel == 4) {
+            return (speedSetting.getInput() / 10) + 0.12;
         }
-        return towerSpeedLevels[0];
+        return (speedSetting.getInput() / 10);
     }
 
-    private final double[] towerGroundSpeedLevels = {0.22, 0.25, 0.3, 0.35, 0.4};
-
     private double getTowerGroundSpeed(int speedLevel) {
-        if (speedLevel >= 0) {
-            return towerGroundSpeedLevels[speedLevel];
+        if (speedLevel == 0) {
+            return (speedSetting.getInput() / 10) - 0.08;
+        } else if (speedLevel == 1) {
+            return (speedSetting.getInput() / 10) - 0.05;
+        } else if (speedLevel == 2) {
+            return (speedSetting.getInput() / 10);
+        } else if (speedLevel == 3) {
+            return (speedSetting.getInput() / 10) + 0.05;
+        } else if (speedLevel == 4) {
+            return (speedSetting.getInput() / 10) + 0.10;
         }
-        return towerGroundSpeedLevels[0];
+        return (speedSetting.getInput() / 10) - 0.08;
+    }
+
+    private double get15tickspeed(int speedLevel) {
+        if (speedLevel == 0) {
+            return (speedSetting.getInput() / 10);
+        } else if (speedLevel == 1) {
+            return (speedSetting.getInput() / 10) + 0.04;
+        } else if (speedLevel == 2) {
+            return (speedSetting.getInput() / 10) + 0.08;
+        } else if (speedLevel == 3) {
+            return (speedSetting.getInput() / 10) + 0.12;
+        } else if (speedLevel == 4) {
+            return (speedSetting.getInput() / 10) + 0.13;
+        }
+        return (speedSetting.getInput() / 10);
     }
 
 }

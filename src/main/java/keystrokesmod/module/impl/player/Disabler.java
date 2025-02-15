@@ -5,6 +5,8 @@ import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.render.HUD;
 import keystrokesmod.module.setting.impl.ButtonSetting;
+import keystrokesmod.module.setting.impl.SliderSetting;
+import keystrokesmod.utility.RenderUtils;
 import keystrokesmod.utility.Theme;
 import keystrokesmod.utility.Utils;
 import net.minecraft.client.gui.ScaledResolution;
@@ -20,143 +22,172 @@ import java.awt.*;
 import java.util.Objects;
 
 public class Disabler extends Module {
+    private SliderSetting disablerTicks;
+    private SliderSetting activationDelay;
 
-    private final int defaultSetbacks = 20;
-    private final long joinDelay = 200, delay = 0, checkDisabledTime = 4000, timeout = 12000;
-    private final double min_offset = 0.2;
-
-    private long joinTime, lobbyTime, finished;
-    private boolean awaitJoin, joinTick, awaitSetback, hideProgress, awaitJump, awaitGround;
-    private int setbackCount, airTicks, disablerAirTicks;
-    private double minSetbacks, zOffset;
+    int tickCounter = 0;
+    boolean waitingForGround = false;
+    int airTicks = 0;
+    boolean applyingMotion = false;
+    int stateTickCounter = 0;
+    boolean warningDisplayed = false;
+    int sprintToggleTick = 0;
+    boolean shouldRun = false;
+    long lobbyTime = 0;
+    long finished = 0;
+    long activationDelayMillis;
+    final long checkDisabledTime = 4000;
+    private int color = new Color(0, 187, 255, 255).getRGB();
+    private float barWidth = 100;
+    private float barHeight = 6;
+    private float filledWidth;
+    private float barX;
+    private float barY;
+    private boolean shouldRender;
+    private double firstY;
+    private boolean reset;
     private float savedYaw, savedPitch;
 
-    private int color = new Color(0, 187, 255, 255).getRGB();
-
-    private String text;
-    private int[] disp;
-    private int width;
+    public boolean disablerLoaded, running;
 
     public Disabler() {
         super("Disabler", Module.category.player);
+        this.registerSetting(disablerTicks = new SliderSetting("Ticks", "", 150, 110, 150, 5));
+        this.registerSetting(activationDelay = new SliderSetting("Activation delay", " seconds", 0, 0, 4, 0.5));
     }
 
-    private void resetVars() {
-        awaitJoin = joinTick = awaitSetback = awaitJump = false;
-        minSetbacks = zOffset = lobbyTime = finished = setbackCount = 0;
+    public void onEnable() {
+        if (!disablerLoaded) {
+            resetState();
+        }
     }
 
     public void onDisable() {
-        resetVars();
+        shouldRun = false;
+        running = false;
+    }
+
+    private void resetState() {
+        shouldRun = true;
+        tickCounter = 0;
+        airTicks = 0;
+        applyingMotion = false;
+        waitingForGround = true;
+        stateTickCounter = 0;
+        warningDisplayed = false;
+        running = false;
+        sprintToggleTick = 0;
+        lobbyTime = Utils.time();
+        finished = 0;
+        shouldRender = false;
+        reset = false;
+        activationDelayMillis = (long)(activationDelay.getInput() * 1000);
+    }
+
+    @SubscribeEvent
+    public void onWorldJoin(EntityJoinWorldEvent e) {
+        if (e.entity == mc.thePlayer) {
+            resetState();
+        }
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onPreMotion(PreMotionEvent e) {
+        if (Utils.getLobbyStatus() == 1 || Utils.hypixelStatus() != 1) {
+            return;
+        }
         long now = System.currentTimeMillis();
-
-        if (!awaitGround && !mc.thePlayer.onGround) {
-            disablerAirTicks++;
-        } else {
-            awaitGround = false;
-            disablerAirTicks = 0;
-        }
-
-        if (awaitJoin && now >= joinTime + joinDelay) {
-            if (Utils.getBedwarsStatus() == 1 || Utils.isBedwarsPractice() || Utils.getSkyWarsStatus() == 1) {
-                awaitJoin = false;
-                joinTick = true;
-            }
-        }
-
-        if (awaitSetback) {
-            color = Theme.getGradient((int) HUD.theme.getInput(), 0);
-            text = "§7running disabler " + "§r" + Utils.round((now - lobbyTime) / 1000d, 1) + "s " + ((int) Utils.round(100 * (setbackCount / minSetbacks), 0)) + "%";
-            width = mc.fontRendererObj.getStringWidth(text) / 2 - 2;
-        } else {
-            text = null;
-        }
-
         if (finished != 0 && mc.thePlayer.onGround && now - finished > checkDisabledTime) {
             Utils.print("&7[&dR&7] &adisabler enabled");
             finished = 0;
+            disablerLoaded = true;
+        }
+        if (!shouldRun) {
+            return;
         }
 
-        if (awaitJump && disablerAirTicks == 5) {
-            KeyBinding.setKeyBindState(mc.gameSettings.keyBindJump.getKeyCode(), false);
-            awaitJump = false;
-
-            minSetbacks = defaultSetbacks;
-            savedYaw = e.getYaw(); // pitch will be 0
-            lobbyTime = now;
-            awaitSetback = true;
+        if ((now - lobbyTime) < activationDelayMillis) {
+            return;
         }
 
-        if (joinTick) {
-            joinTick = false;
-            Utils.print("&7[&dR&7] running disabler...");
-            if (mc.thePlayer.onGround || (mc.thePlayer.fallDistance < 0.3 && !Utils.isBedwarsPractice())) {
-                awaitJump = true;
-                KeyBinding.setKeyBindState(mc.gameSettings.keyBindJump.getKeyCode(), true);
-            } else {
-                minSetbacks = defaultSetbacks;
-                savedYaw = e.getYaw(); // pitch will be 0
-                lobbyTime = now;
-                awaitSetback = true;
+        if (waitingForGround) {
+            running = true;
+            if (mc.thePlayer.onGround) {
+                savedYaw = e.getYaw();
+                savedPitch = e.getPitch();
+                mc.thePlayer.motionY = 0.42f;
+                waitingForGround = false;
             }
             return;
         }
 
-        if (awaitSetback) {
-            if (setbackCount >= minSetbacks) {
-                Utils.print("&7[&dR&7] &afinished in &b" + Utils.round((now - lobbyTime) / 1000d, 1) + "&as, wait a few seconds...");
-                resetVars();
-                finished = now;
-                return;
-            } else if (lobbyTime != 0 && now - lobbyTime > timeout) {
-                Utils.print("&7[&dR&7] &cdisabler failed");
-                resetVars();
-                return;
+        airTicks = mc.thePlayer.onGround ? 0 : airTicks + 1;
+        int simpleY = (int) Math.round((e.posY % 1) * 10000);
+        //Utils.print("" + simpleY);
+        if (airTicks >= 10) {
+            if (!applyingMotion) {
+                applyingMotion = true;
+                firstY = mc.thePlayer.posY;
             }
-            if (now - lobbyTime > delay) {
-                e.setYaw(savedYaw);
-                e.setPitch(savedPitch);
+
+            if (tickCounter < disablerTicks.getInput()) {
+                shouldRender = true;
+
                 mc.thePlayer.motionX = 0;
                 mc.thePlayer.motionY = 0;
                 mc.thePlayer.motionZ = 0;
 
-                if (mc.thePlayer.ticksExisted % 2 == 0) {
-                    //e.setPosX(mc.thePlayer.posX + 0.11);
+                e.setRotations(savedYaw, savedPitch);
+
+                if (mc.thePlayer.posY != firstY) {
+                    if (!reset) {
+                        resetState();
+                        activationDelayMillis = 4000;
+                        reset = true;
+                        Utils.print("&7[&dR&7] &adisabler reset, wait 4s");
+                    }
+                    else {
+                        shouldRun = false;
+                        applyingMotion = false;
+                        running = false;
+                        Utils.print("&7[&dR&7] &cfailed to reset disabler, re-enable to try again");
+                    }
                 }
 
-                if (Utils.getSkyWarsStatus() == 1) {
-                    zOffset = min_offset * 0.7;
-                    if (mc.thePlayer.ticksExisted % 2 == 0) {
-                        zOffset *= -1;
-                    }
-                    e.setPosZ(e.getPosZ() + zOffset);
-                } else {
-                    e.setPosZ(e.getPosZ() + (zOffset += min_offset));
+                if (mc.thePlayer.ticksExisted % 2 == 0) {
+                    e.setPosZ(e.getPosZ() + 0.075);
+                    e.setPosX(e.getPosX() + 0.075);
+                    e.setPosY(e.getPosY() + 0.075);
+                    //e.setYaw(e.getYaw() + 8);
                 }
+
+                tickCounter++;
+            } else if (!warningDisplayed) {
+                double totalTimeSeconds = (now - lobbyTime) / 1000.0;
+                warningDisplayed = true;
+                finished = now;
+                shouldRender = false;
+                shouldRun = false;
+                applyingMotion = false;
+                running = false;
             }
         }
 
+        filledWidth = (float)(barWidth * tickCounter / disablerTicks.getInput());
+        final ScaledResolution scaledResolution = new ScaledResolution(mc);
+        int[] disp = {scaledResolution.getScaledWidth(), scaledResolution.getScaledHeight(), scaledResolution.getScaleFactor()};
+        barX = disp[0] / 2 - barWidth / 2;
+        barY = disp[1] / 2 + 20;
     }
 
     @SubscribeEvent()
     public void onMoveInput(PrePlayerInputEvent e) {
-        if (awaitSetback) {
-            e.setForward(0);
-            e.setStrafe(0);
-            mc.thePlayer.movementInput.jump = false;
+        if (!running) {
+            return;
         }
-    }
-
-    @SubscribeEvent
-    public void onReceivePacket(ReceivePacketEvent e) {
-        if (e.getPacket() instanceof S08PacketPlayerPosLook) {
-            setbackCount++;
-            zOffset = 0;
-        }
+        e.setForward(0);
+        e.setStrafe(0);
+        mc.thePlayer.movementInput.jump = false;
     }
 
     @SubscribeEvent
@@ -165,26 +196,12 @@ public class Disabler extends Module {
             return;
         }
         if (ev.phase == TickEvent.Phase.END) {
-            if (mc.currentScreen != null || !awaitSetback || text == null) {
+            if (mc.currentScreen != null || !shouldRun || !shouldRender) {
                 return;
             }
         }
-        float widthOffset = 0;
         color = Theme.getGradient((int) HUD.theme.getInput(), 0);
-        final ScaledResolution scaledResolution = new ScaledResolution(mc);
-        int[] display = {scaledResolution.getScaledWidth(), scaledResolution.getScaledHeight(), scaledResolution.getScaleFactor()};
-        mc.fontRendererObj.drawString(text, display[0] / 2 - width + widthOffset, display[1] / 2 + 8, color, true);
-    }
-
-    @SubscribeEvent
-    public void onWorldJoin(EntityJoinWorldEvent e) {
-        if (e.entity == mc.thePlayer) {
-            long joinTime = System.currentTimeMillis();
-            if (awaitSetback) {
-                Utils.print("&7[&dR&7] &cdisabing disabler");
-            }
-            resetVars();
-            awaitJoin = awaitGround = true;
-        }
+        RenderUtils.drawRect(barX, barY, barX + barWidth, barY + barHeight, 0xFF555555);
+        RenderUtils.drawRect(barX, barY, barX + filledWidth, barY + barHeight, color);
     }
 }

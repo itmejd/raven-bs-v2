@@ -7,6 +7,7 @@ import keystrokesmod.module.impl.render.HUD;
 import keystrokesmod.utility.command.CommandManager;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockAir;
+import net.minecraft.block.BlockSlab;
 import net.minecraft.client.Minecraft;
 import keystrokesmod.module.ModuleManager;
 import net.minecraft.client.settings.KeyBinding;
@@ -18,6 +19,7 @@ import net.minecraft.network.play.server.S27PacketExplosion;
 import net.minecraft.util.BlockPos;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -40,8 +42,6 @@ public class ModuleUtils {
     private long FIREBALL_TIMEOUT = 500L, fireballTime = 0;
     public static int inAirTicks, groundTicks, stillTicks;
     public static int fadeEdge;
-    public static int lastFaceDifference;
-    private int lastFace;
     public static double offsetValue = 0.0000000000201;
     public static boolean isAttacking;
     private int attackingTicks;
@@ -57,7 +57,16 @@ public class ModuleUtils {
     private int damageTicks;
     private boolean lowhopAir;
 
+    private int edgeTick;
+
     public static boolean canSlow, didSlow, setSlow;
+
+    @SubscribeEvent
+    public void onWorldJoin(EntityJoinWorldEvent e) {
+        if (e.entity == mc.thePlayer) {
+            ModuleManager.disabler.disablerLoaded = false;
+        }
+    }
 
     @SubscribeEvent
     public void onSendPacketNoEvent(NoEventPacketEvent e) {
@@ -148,36 +157,6 @@ public class ModuleUtils {
             }
         }
 
-        if (e.getPacket() instanceof C08PacketPlayerBlockPlacement && Utils.scaffoldDiagonal(false)) {
-            if (((C08PacketPlayerBlockPlacement) e.getPacket()).getPlacedBlockDirection() != 1) {
-                int currentFace = ((C08PacketPlayerBlockPlacement) e.getPacket()).getPlacedBlockDirection();
-
-                if (currentFace == lastFace) {
-                    lastFaceDifference++;
-                }
-                else {
-                   lastFaceDifference = 0;
-                }
-
-                lastFace = currentFace;
-            }
-        }
-
-    }
-
-    @SubscribeEvent
-    public void onReceivePacket(ReceivePacketEvent e) {
-        if (!Utils.nullCheck()) {
-            return;
-        }
-        if (e.getPacket() instanceof S12PacketEntityVelocity) {
-            if (((S12PacketEntityVelocity) e.getPacket()).getEntityID() == mc.thePlayer.getEntityId()) {
-
-                damage = firstDamage = true;
-                damageTicks = 0;
-
-            }
-        }
     }
 
     @SubscribeEvent
@@ -286,6 +265,21 @@ public class ModuleUtils {
     }
 
     @SubscribeEvent
+    public void onReceivePacket(ReceivePacketEvent e) {
+        if (!Utils.nullCheck()) {
+            return;
+        }
+        if (e.getPacket() instanceof S12PacketEntityVelocity) {
+            if (((S12PacketEntityVelocity) e.getPacket()).getEntityID() == mc.thePlayer.getEntityId()) {
+
+                damage = firstDamage = true;
+                damageTicks = 0;
+
+            }
+        }
+    }
+
+    @SubscribeEvent
     public void onPostMotion(PostMotionEvent e) {
         if (bhopBoostConditions()) {
             if (firstDamage) {
@@ -336,12 +330,13 @@ public class ModuleUtils {
         groundTicks = !mc.thePlayer.onGround ? 0 : ++groundTicks;
         stillTicks = Utils.isMoving() ? 0 : ++stillTicks;
 
+        Block blockAbove = BlockUtils.getBlock(new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY + 2, mc.thePlayer.posZ));
         Block blockBelow = BlockUtils.getBlock(new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY - 1, mc.thePlayer.posZ));
         Block blockBelow2 = BlockUtils.getBlock(new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY - 2, mc.thePlayer.posZ));
         Block block = BlockUtils.getBlock(new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ));
 
 
-        if (ModuleManager.bhop.didMove || ModuleManager.scaffold.lowhop) {
+        if ((ModuleManager.bhop.didMove || ModuleManager.scaffold.lowhop) && (!ModuleManager.bhop.disablerOnly.isToggled() || ModuleManager.bhop.disablerOnly.isToggled() && ModuleManager.disabler.disablerLoaded)) {
 
             if ((!ModuleUtils.damage || Velocity.vertical.getInput() == 0) && !mc.thePlayer.isCollidedHorizontally) {
 
@@ -360,7 +355,7 @@ public class ModuleUtils {
                     }
                 }
                 else {
-                    if (!(block instanceof BlockAir) || (blockBelow instanceof BlockAir && blockBelow2 instanceof BlockAir)) {
+                    if (!ModuleManager.bhop.lowhop && (!(block instanceof BlockAir) || !(blockAbove instanceof BlockAir) || blockBelow instanceof BlockSlab || (blockBelow instanceof BlockAir && blockBelow2 instanceof BlockAir))) {
                         resetLowhop();
                     }
                     switch ((int) ModuleManager.bhop.mode.getInput()) {
@@ -368,6 +363,7 @@ public class ModuleUtils {
                             switch (simpleY) {
                                 case 13:
                                     mc.thePlayer.motionY = mc.thePlayer.motionY - 0.02483;
+                                    ModuleManager.bhop.lowhop = true;
                                     break;
                                 case 2000:
                                     mc.thePlayer.motionY = mc.thePlayer.motionY - 0.1913;
@@ -376,20 +372,20 @@ public class ModuleUtils {
                                     mc.thePlayer.motionY = mc.thePlayer.motionY + 0.08;
                                     break;
                             }
-                            if (ModuleUtils.inAirTicks > 6 && Utils.isMoving()) {
+                            if (ModuleUtils.inAirTicks >= 7 && Utils.isMoving()) {
                                 Utils.setSpeed(Utils.getHorizontalSpeed(mc.thePlayer));
                             }
-                            if (ModuleUtils.inAirTicks > 8) {
+                            if (ModuleUtils.inAirTicks >= 9) {
                                 resetLowhop();
                             }
                             break;
                         case 3: // 8 tick
                             switch (simpleY) {
                                 case 13:
-                                    mc.thePlayer.motionY = mc.thePlayer.motionY - 0.045;//0.02483;
+                                    mc.thePlayer.motionY = mc.thePlayer.motionY - 0.02483;
                                     break;
                                 case 2000:
-                                    mc.thePlayer.motionY = mc.thePlayer.motionY - 0.175;//0.1913;
+                                    mc.thePlayer.motionY = mc.thePlayer.motionY - 0.1913;
                                     resetLowhop();
                                     break;
                             }
@@ -398,6 +394,7 @@ public class ModuleUtils {
                             switch (simpleY) {
                                 case 4200:
                                     mc.thePlayer.motionY = 0.39;
+                                    ModuleManager.bhop.lowhop = true;
                                     break;
                                 case 1138:
                                     mc.thePlayer.motionY = mc.thePlayer.motionY - 0.13;
@@ -436,7 +433,7 @@ public class ModuleUtils {
         }
 
         if ((canSlow || ModuleManager.scaffold.moduleEnabled && !ModuleManager.tower.canTower()) && !mc.thePlayer.onGround) {
-            double motionVal = 0.9 - ((double) inAirTicks / 10000) - Utils.randomizeDouble(0.00001, 0.00006);
+            double motionVal = 0.92 - ((double) inAirTicks / 10000) - Utils.randomizeDouble(0.00001, 0.00006);
             if (mc.thePlayer.hurtTime == 0 && inAirTicks > 4 && !setSlow) {
                 mc.thePlayer.motionX *= motionVal;
                 mc.thePlayer.motionZ *= motionVal;
@@ -457,6 +454,7 @@ public class ModuleUtils {
         ModuleManager.bhop.lowhop = ModuleManager.scaffold.lowhop = false;
         ModuleManager.bhop.didMove = false;
         lowhopAir = false;
+        edgeTick = 0;
     }
 
     public static void handleSlow() {

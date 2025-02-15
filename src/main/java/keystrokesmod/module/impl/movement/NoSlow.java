@@ -139,7 +139,7 @@ public class NoSlow extends Module {
         else {
             KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
             setCancelled = true;
-            if (!Utils.jumpDown()) {
+            if (!Utils.jumpDown() && !ModuleManager.bhop.isEnabled()) {
                 mc.thePlayer.jump();
             }
             reSendConsume = true;
