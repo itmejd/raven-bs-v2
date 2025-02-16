@@ -343,7 +343,7 @@ public class Scaffold extends Module {
                     }
                     else {
                         scaffoldYaw = mc.thePlayer.rotationYaw - hardcodedYaw();
-                        scaffoldPitch = minPitch;
+                        scaffoldPitch = 78f;
                     }
                     e.setRotations(scaffoldYaw, scaffoldPitch);
                     break;
