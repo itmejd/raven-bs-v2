@@ -177,7 +177,7 @@ public class Sprint extends Module {
         if ((limit <= -limitVal || limit >= limitVal)) {
             return true;
         }
-        if ((omniSprint() || ModuleManager.bhop.isEnabled()) && ModuleManager.killAura.isTargeting && mc.thePlayer.moveForward <= 0.5) {
+        if (omniSprint() && ModuleManager.killAura.isTargeting && mc.thePlayer.moveForward <= 0.5) {
             return true;
         }
         return false;

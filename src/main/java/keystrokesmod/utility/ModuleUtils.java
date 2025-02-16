@@ -337,10 +337,9 @@ public class ModuleUtils {
 
 
         if ((ModuleManager.bhop.didMove || ModuleManager.scaffold.lowhop) && (!ModuleManager.bhop.disablerOnly.isToggled() || ModuleManager.bhop.disablerOnly.isToggled() && ModuleManager.disabler.disablerLoaded)) {
+            if (!ModuleUtils.damage || Velocity.vertical.getInput() == 0) {
 
-            if ((!ModuleUtils.damage || Velocity.vertical.getInput() == 0) && !mc.thePlayer.isCollidedHorizontally) {
-
-                if (ModuleManager.scaffold.lowhop && !ModuleManager.bhop.didMove) {
+                if (ModuleManager.scaffold.lowhop) {
                     switch (simpleY) {
                         case 4200:
                             mc.thePlayer.motionY = 0.39;
@@ -354,8 +353,8 @@ public class ModuleUtils {
                             break;
                     }
                 }
-                else {
-                    if (!ModuleManager.bhop.lowhop && (!(block instanceof BlockAir) || !(blockAbove instanceof BlockAir) || blockBelow instanceof BlockSlab || (blockBelow instanceof BlockAir && blockBelow2 instanceof BlockAir))) {
+                else if (ModuleManager.bhop.didMove) {
+                    if (mc.thePlayer.isCollidedHorizontally || mc.thePlayer.isCollidedVertically || ModuleUtils.damage || !ModuleManager.bhop.lowhop && (!(block instanceof BlockAir) || !(blockAbove instanceof BlockAir) || blockBelow instanceof BlockSlab || (blockBelow instanceof BlockAir && blockBelow2 instanceof BlockAir))) {
                         resetLowhop();
                     }
                     switch ((int) ModuleManager.bhop.mode.getInput()) {
@@ -380,14 +379,39 @@ public class ModuleUtils {
                             }
                             break;
                         case 3: // 8 tick
-                            switch (simpleY) {
-                                case 13:
-                                    mc.thePlayer.motionY = mc.thePlayer.motionY - 0.02483;
-                                    break;
-                                case 2000:
-                                    mc.thePlayer.motionY = mc.thePlayer.motionY - 0.1913;
-                                    resetLowhop();
-                                    break;
+                            if (!ModuleManager.bhop.isNormalPos) {
+                                resetLowhop();
+                                break;
+                            }
+                            if (inAirTicks == 1) {
+                                mc.thePlayer.motionY = 0.38999998569488;
+                                ModuleManager.bhop.lowhop = true;
+                            }
+                            if (inAirTicks == 2) {
+                                mc.thePlayer.motionY = 0.30379999189377;
+                            }
+                            if (inAirTicks == 3) {
+                                mc.thePlayer.motionY = 0.08842400075912;
+                            }
+                            if (inAirTicks == 4) {
+                                mc.thePlayer.motionY = -0.19174457909538;
+                            }
+                            if (inAirTicks == 5) {
+                                mc.thePlayer.motionY = -0.26630949469659;
+                            }
+                            if (inAirTicks == 6) {
+                                mc.thePlayer.motionY = -0.26438340940798;
+                            }
+                            if (inAirTicks == 7) {
+                                mc.thePlayer.motionY = -0.33749574778843;
+                            }
+                            //strafe
+                            if (inAirTicks >= 6) {
+                                Utils.setSpeed(Utils.getHorizontalSpeed(mc.thePlayer));
+                            }
+                            //disable
+                            if (inAirTicks >= 8) {
+                                resetLowhop();
                             }
                             break;
                         case 4: // 7 tick
@@ -414,6 +438,9 @@ public class ModuleUtils {
         }
         else if (lowhopAir) {
             resetLowhop();
+            if (!ModuleManager.bhop.isEnabled()) {
+                ModuleManager.bhop.isNormalPos = false;
+            }
         }
 
         if (ModuleManager.bhop.setRotation) {

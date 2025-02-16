@@ -181,9 +181,7 @@ public class Scaffold extends Module {
         }
         KeyBinding.setKeyBindState(mc.gameSettings.keyBindAttack.getKeyCode(), false);
         KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
-        if (e.button >= 0) {
-            e.setCanceled(true);
-        }
+        e.setCanceled(true);
     }
 
     @SubscribeEvent
@@ -293,38 +291,38 @@ public class Scaffold extends Module {
                 long strokeDelay = 250;
 
                 if (quad <= 5 || quad >= 85) {
-                    yawAngle = 128F;
+                    yawAngle = 127.40F;
                     minOffset = 13;
-                    minPitch = 74.08F;
+                    minPitch = 75.48F;
                 }
                 if (quad > 5 && quad <= 15 || quad >= 75 && quad < 85) {
-                    yawAngle = 129F;
+                    yawAngle = 128.55F;
                     minOffset = 11;
-                    minPitch = 74.84F;
+                    minPitch = 75.74F;
                 }
                 if (quad > 15 && quad <= 25 || quad >= 65 && quad < 75) {
-                    yawAngle = 131.50F;
+                    yawAngle = 129.70F;
                     minOffset = 8;
-                    minPitch = 75.35F;
+                    minPitch = 75.95F;
                 }
                 if (quad > 25 && quad <= 32 || quad >= 58 && quad < 65) {
-                    yawAngle = 132.50F;
+                    yawAngle = 130.85F;
                     minOffset = 6;
-                    minPitch = 75.73F;
+                    minPitch = 76.13F;
                 }
                 if (quad > 32 && quad <= 38 || quad >= 52 && quad < 58) {
-                    yawAngle = 133.50F;
+                    yawAngle = 131.80F;
                     minOffset = 5;
                     minPitch = 76.41F;
                 }
                 if (quad > 38 && quad <= 42 || quad >= 48 && quad < 52) {
-                    yawAngle = 135.50F;
+                    yawAngle = 134.30F;
                     minOffset = 4;
                     minPitch = 77.54F;
                 }
                 if (quad > 42 && quad <= 45 || quad >= 45 && quad < 48) {
-                    yawAngle = 137.50F;
-                    minOffset = 4;
+                    yawAngle = 137.85F;
+                    minOffset = 3;
                     minPitch = 77.93F;
                 }
                 //Utils.print("" + minOffset);

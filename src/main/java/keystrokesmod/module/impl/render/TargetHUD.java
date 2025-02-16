@@ -111,7 +111,7 @@ public class TargetHUD extends Module {
 
     private void drawTargetHUD(Timer cd, String string, double health) {
         if (showStatus.isToggled()) {
-            string = string + " " + ((health <= Utils.getCompleteHealth(mc.thePlayer) / mc.thePlayer.getMaxHealth()) ? "§aW" : "§cL");
+            string = string + " " + ((health <= Utils.getTotalHealth(mc.thePlayer) / mc.thePlayer.getMaxHealth()) ? "§aW" : "§cL");
         }
         final ScaledResolution scaledResolution = new ScaledResolution(mc);
         final int padding = 8;
@@ -235,7 +235,7 @@ public class TargetHUD extends Module {
             playerInfo += " " + Utils.getHealthStr(mc.thePlayer, true);
             drawTargetHUD(null, playerInfo, health);
             if (showStatus.isToggled()) {
-                playerInfo = playerInfo + " " + ((health <= Utils.getCompleteHealth(mc.thePlayer) / mc.thePlayer.getMaxHealth()) ? "§aW" : "§cL");
+                playerInfo = playerInfo + " " + ((health <= Utils.getTotalHealth(mc.thePlayer) / mc.thePlayer.getMaxHealth()) ? "§aW" : "§cL");
             }
             int stringWidth = mc.fontRendererObj.getStringWidth(playerInfo) + 8;
             int maX = (res.getScaledWidth() / 2 - stringWidth / 2) + miX + mc.fontRendererObj.getStringWidth(playerInfo) + 8;

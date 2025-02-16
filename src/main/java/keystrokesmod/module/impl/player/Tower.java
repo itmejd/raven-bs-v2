@@ -24,7 +24,7 @@ public class Tower extends Module {
     final private SliderSetting slowedTicks;
     final private ButtonSetting disableWhileHurt;
 
-    final private String[] towerMoveModes = new String[]{"None", "Vanilla", "Low", "Edge", "2.5 tick", "1.5 tick"};
+    final private String[] towerMoveModes = new String[]{"None", "Vanilla", "Low", "Edge", "2.5 tick", "1.5 tick", "Test"};
     final private String[] verticalTowerModes = new String[]{"None", "Vanilla", "Extra block"};
     private int slowTicks;
     private boolean wasTowering;
@@ -44,6 +44,8 @@ public class Tower extends Module {
     public boolean placeExtraBlock;
 
     public boolean speed;
+
+    private int grounds;
 
     public Tower() {
         super("Tower", category.player);
@@ -82,6 +84,9 @@ public class Tower extends Module {
                     }
                     break;
                 case 5:
+
+                    break;
+                case 6:
 
                     break;
             }
@@ -237,6 +242,35 @@ public class Tower extends Module {
                         }
                     }
                     break;
+                case 6:
+                    speed = false;
+                    if (mc.thePlayer.onGround) {
+                        grounds++;
+                    }
+                    if (mc.thePlayer.posY % 1 == 0) {
+                        tower = true;
+                    }
+                    if (tower) {
+                        towerTicks = mc.thePlayer.onGround ? 0 : ++towerTicks;
+                        switch (towerTicks) {
+                            case 0:
+                                mc.thePlayer.motionY = 0.42f;
+                                Utils.setSpeed(get15tickspeed(getSpeedLevel())); // Speed + Strafe tick
+                                speed = true;
+                                break;
+                            case 1:
+                                mc.thePlayer.motionY = 0.33f;
+                                Utils.setSpeed(Utils.getHorizontalSpeed()); // Strafe tick
+                                break;
+                            case 2:
+                                mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1f + 0.0000001;
+                                break;
+                            case 3:
+                                mc.thePlayer.motionY = -0.01;
+                                break;
+                        }
+                    }
+                    break;
             }
         }
         else {
@@ -259,8 +293,11 @@ public class Tower extends Module {
                 }
                 slowTicks = 0;
             }
+            if (speed) {
+                Utils.setSpeed(Utils.getHorizontalSpeed(mc.thePlayer) / 1.6);
+            }
             hasTowered = tower = firstJump = startedTowerInAir = setLowMotion = speed = false;
-            cMotionTicks = placeTicks = towerTicks = 0;
+            cMotionTicks = placeTicks = towerTicks = grounds = 0;
             reset();
         }
         if (canTower() && !Utils.keysDown()) {
@@ -318,6 +355,9 @@ public class Tower extends Module {
 
     @SubscribeEvent
     public void onPostPlayerInput(PostPlayerInputEvent e) {
+        if (!ModuleManager.scaffold.isEnabled) {
+            return;
+        }
         if (canTower() && Utils.keysDown() && towerMove.getInput() > 0) {
             mc.thePlayer.movementInput.jump = false;
             if (!firstJump) {

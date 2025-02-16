@@ -122,8 +122,6 @@ public class Disabler extends Module {
         }
 
         airTicks = mc.thePlayer.onGround ? 0 : airTicks + 1;
-        int simpleY = (int) Math.round((e.posY % 1) * 10000);
-        //Utils.print("" + simpleY);
         if (airTicks >= 10) {
             if (!applyingMotion) {
                 applyingMotion = true;

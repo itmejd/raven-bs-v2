@@ -965,7 +965,7 @@ public class KillAura extends Module {
         if (interactTicks == 0) {
             firstEdge++;
         }
-        if (firstEdge > 10) {
+        if (firstEdge > 6) {
             firstEdge = 0;
         }
         interactTicks++;
@@ -985,7 +985,7 @@ public class KillAura extends Module {
                     lag = true;
                     break;
                 case 3:
-                    if (firstEdge == 3 || firstEdge == 6) {
+                    if (firstEdge == 2 || firstEdge == 5) {
                         firstCycle = false;
                     }
                     interactTicks = 0;

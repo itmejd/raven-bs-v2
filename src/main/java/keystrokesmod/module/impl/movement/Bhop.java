@@ -22,12 +22,14 @@ public class Bhop extends Module {
     public ButtonSetting disablerOnly;
     private ButtonSetting sneakDisable;
     private ButtonSetting jumpMoving;
-    public ButtonSetting rotateYawOption, damageBoost, airStrafe, damageBoostRequireKey;
-    public GroupSetting damageBoostGroup;
+    public ButtonSetting rotateYawOption, damageBoost, strafe, damageBoostRequireKey;
+    public GroupSetting damageBoostGroup, strafeGroup;
+    private SliderSetting strafeDegrees;
     public KeySetting damageBoostKey;
     public String[] modes = new String[]{"Strafe", "Ground", "9 tick", "8 tick", "7 tick"};
     public boolean hopping, lowhop, didMove, setRotation;
     private int motionTick = 0;
+    public boolean isNormalPos;
 
     public Bhop() {
         super("Bhop", Module.category.movement);
@@ -38,10 +40,15 @@ public class Bhop extends Module {
         this.registerSetting(sneakDisable = new ButtonSetting("Disable while sneaking", true));
         this.registerSetting(jumpMoving = new ButtonSetting("Only jump when moving", true));
         this.registerSetting(rotateYawOption = new ButtonSetting("Rotate yaw", false));
+
         this.registerSetting(damageBoostGroup = new GroupSetting("Damage boost"));
-        this.registerSetting(damageBoost = new ButtonSetting(damageBoostGroup, "Enable", false));
+        this.registerSetting(damageBoost = new ButtonSetting(damageBoostGroup, "Enable Damage boost", false));
         this.registerSetting(damageBoostRequireKey = new ButtonSetting(damageBoostGroup,"Require key", false));
         this.registerSetting(damageBoostKey = new KeySetting(damageBoostGroup,"Enable key", 51));
+
+        this.registerSetting(strafeGroup = new GroupSetting("Direction strafe"));
+        this.registerSetting(strafe = new ButtonSetting(strafeGroup, "Enable Direction strafe", false));
+        this.registerSetting(strafeDegrees = new SliderSetting(strafeGroup, "Degrees", 80, 50, 90, 5));
     }
 
     public void guiUpdate() {
@@ -83,7 +90,18 @@ public class Bhop extends Module {
                 if (mc.thePlayer.moveForward <= -0.5 && mc.thePlayer.moveStrafing == 0 && !ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !ModuleManager.scaffold.isEnabled && !mc.thePlayer.isCollidedHorizontally) {
                     setRotation = true;
                 }
-                mc.thePlayer.jump();
+                if (mode.getInput() != 3) {
+                    mc.thePlayer.jump();
+                }
+                else {
+                    mc.thePlayer.motionY = 0.41999998688698;
+                }
+                if (mc.thePlayer.posY % 1 == 0) {
+                    isNormalPos = true;
+                }
+                else {
+                    isNormalPos = false;
+                }
                 double speed = (speedSetting.getInput() - 0.52);
                 double speedModifier = speed;
                 final int speedAmplifier = Utils.getSpeedAmplifier();
@@ -99,8 +117,10 @@ public class Bhop extends Module {
                         break;
                 }
 
-                if (Utils.isMoving() && !Utils.noSlowingBackWithBow() && !ModuleManager.sprint.disableBackwards()) {
-                    Utils.setSpeed(speedModifier - Utils.randomizeDouble(0.0003, 0.0001));
+                if (Utils.isMoving()) {
+                    if (!Utils.noSlowingBackWithBow() && !ModuleManager.sprint.disableBackwards()) {
+                        Utils.setSpeed(speedModifier - Utils.randomizeDouble(0.0003, 0.0001));
+                    }
                     didMove = true;
                 }
                 hopping = true;
@@ -135,9 +155,9 @@ public class Bhop extends Module {
             }
         }*/
 
-        //if (airStrafe.isToggled()) {
-            //airStrafe();
-        //}
+        if (strafe.isToggled()) {
+            airStrafe();
+        }
 
     }
 
@@ -157,20 +177,21 @@ public class Bhop extends Module {
         return simpleYaw;
     }
 
-    void airStrafe() {
-        if (!mc.thePlayer.onGround && mc.thePlayer.hurtTime < 3 && Utils.isMoving()) {
-            float moveDirection = moveDirection(Utils.getLastReportedYaw());
-            float strafeDirection = strafeDirection();
-            float diff = Math.abs(moveDirection - strafeDirection);
-            int range = 70;
+    private void airStrafe() {
+        if (!mc.thePlayer.onGround && mc.thePlayer.hurtTime < 3 && (mc.thePlayer.motionX != 0 || mc.thePlayer.motionZ != 0)) {
+            float moveDir = moveDirection(mc.thePlayer.rotationYaw);
+            float currentMotionDir = strafeDirection();
+            float diff = Math.abs(moveDir - currentMotionDir);
+            int range = (int) strafeDegrees.getInput();
 
             if (diff > 180 - range && diff < 180 + range) {
-                Utils.setSpeed(Utils.getHorizontalSpeed() * Utils.randomizeDouble(0.831, 0.8405));
+                mc.thePlayer.motionX = -(mc.thePlayer.motionX * 0.85);
+                mc.thePlayer.motionZ = -(mc.thePlayer.motionZ * 0.85);
             }
         }
     }
 
-    float moveDirection(float rawYaw) {
+    private float moveDirection(float rawYaw) {
         float yaw = ((rawYaw % 360) + 360) % 360 > 180 ? ((rawYaw % 360) + 360) % 360 - 360 : ((rawYaw % 360) + 360) % 360;
         float forward = 1;
 
@@ -184,7 +205,7 @@ public class Bhop extends Module {
         return (float) (yaw);
     }
 
-    float strafeDirection() {
+    private float strafeDirection() {
         float yaw = (float) Math.toDegrees(Math.atan2(-mc.thePlayer.motionX, mc.thePlayer.motionZ));
         if (yaw < 0) yaw += 360;
         return yaw;

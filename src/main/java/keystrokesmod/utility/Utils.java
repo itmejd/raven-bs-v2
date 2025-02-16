@@ -20,6 +20,7 @@ import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.inventory.GuiInventory;
 import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.client.renderer.ActiveRenderInfo;
+import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
@@ -350,12 +351,12 @@ public class Utils {
         }
     }
 
-    public static float getCompleteHealth(EntityLivingBase entity) {
+    public static float getTotalHealth(EntityLivingBase entity) {
         return entity.getHealth() + entity.getAbsorptionAmount();
     }
 
     public static String getHealthStr(EntityLivingBase entity, boolean accountDead) {
-        float completeHealth = getCompleteHealth(entity);
+        float completeHealth = getTotalHealth(entity);
         if (accountDead && entity.isDead) {
             completeHealth = 0;
         }
@@ -521,8 +522,17 @@ public class Utils {
         totalEPF = 0.04 * Math.min(Math.ceil(Math.min(totalEPF, 25.0) * 0.75), 20.0);
         final double armorReduction = armorProtPercentage + totalEPF * (1.0 - armorProtPercentage);
         final double damage = heldItemDamageLevel * (1.0 - armorReduction);
-        final double hitsToKill = getCompleteHealth(target) / damage;
+        final double hitsToKill = getTotalHealth(target) / damage;
         return round(hitsToKill, 1);
+    }
+
+    public static boolean isBindDown(KeyBinding keyBinding) {
+        try {
+            return Keyboard.isKeyDown(keyBinding.getKeyCode());
+        }
+        catch (IndexOutOfBoundsException e) {
+            return Mouse.isButtonDown(100 + keyBinding.getKeyCode());
+        }
     }
 
     public static double ap(final EntityPlayer entityPlayer, final ItemStack itemStack) {
@@ -544,7 +554,7 @@ public class Utils {
                 }
             }
         }
-        return round((double)getCompleteHealth(entityPlayer) / (n * (1.0 - (n2 + 0.04 * Math.min(Math.ceil(Math.min(n3, 25.0) * 0.75), 20.0) * (1.0 - n2)))), 1);
+        return round((double)getTotalHealth(entityPlayer) / (n * (1.0 - (n2 + 0.04 * Math.min(Math.ceil(Math.min(n3, 25.0) * 0.75), 20.0) * (1.0 - n2)))), 1);
     }
 
     public static float n() {

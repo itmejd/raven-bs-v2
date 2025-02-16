@@ -107,8 +107,8 @@ public class LongJump extends Module {
             return;
         }
         if (!manual.isToggled()) {
-            if (mc.thePlayer.getHealth() <= 3) {
-                Utils.print("&7[&dR&7] &cPrevented throwing fireball due to low health");
+            if (Utils.getTotalHealth(mc.thePlayer) <= 3) {
+                Utils.sendMessage("&cPrevented throwing fireball due to low health");
                 disable();
                 return;
             }
