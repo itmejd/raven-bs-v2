@@ -1,18 +1,18 @@
 package keystrokesmod.module.impl.player;
 
-import keystrokesmod.event.PostPlayerInputEvent;
-import keystrokesmod.event.PreMotionEvent;
-import keystrokesmod.event.PreUpdateEvent;
-import keystrokesmod.event.SendPacketEvent;
+import keystrokesmod.event.*;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.setting.impl.ButtonSetting;
+import keystrokesmod.module.setting.impl.GroupSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
 import keystrokesmod.utility.ModuleUtils;
 import keystrokesmod.utility.RotationUtils;
 import keystrokesmod.utility.Utils;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.network.play.client.*;
+import net.minecraft.network.play.server.S12PacketEntityVelocity;
+import net.minecraft.network.play.server.S27PacketExplosion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
@@ -23,8 +23,11 @@ public class Tower extends Module {
     final private SliderSetting slowedSpeed;
     final private SliderSetting slowedTicks;
     final private ButtonSetting disableWhileHurt;
+    private GroupSetting cancelKnockbackGroup;
+    private final ButtonSetting cancelKnockback;
+    private ButtonSetting cancelVelocityRequired;
 
-    final private String[] towerMoveModes = new String[]{"None", "Vanilla", "Low", "Edge", "2.5 tick", "1.5 tick", "Test"};
+    final private String[] towerMoveModes = new String[]{"None", "Vanilla", "Low", "Edge", "2.5 tick", "1.5 tick", "1 tick"};
     final private String[] verticalTowerModes = new String[]{"None", "Vanilla", "Extra block"};
     private int slowTicks;
     private boolean wasTowering;
@@ -55,8 +58,26 @@ public class Tower extends Module {
         this.registerSetting(slowedSpeed = new SliderSetting("Slowed speed", "%", 0, 0, 100, 1));
         this.registerSetting(slowedTicks = new SliderSetting("Slowed ticks", 1, 0, 20, 1));
         this.registerSetting(disableWhileHurt = new ButtonSetting("Disable while hurt", false));
+        this.registerSetting(cancelKnockbackGroup = new GroupSetting("Cancel knockback"));
+        this.registerSetting(cancelKnockback = new ButtonSetting(cancelKnockbackGroup, "Enable Cancel knockback", false));
+        this.registerSetting(cancelVelocityRequired = new ButtonSetting(cancelKnockbackGroup, "Require velocity enabled", false));
 
         this.canBeEnabled = false;
+    }
+
+    @SubscribeEvent
+    public void onReceivePacket(ReceivePacketEvent e) {
+        if (!Utils.nullCheck() || !cancelKnockback()) {
+            return;
+        }
+        if (e.getPacket() instanceof S12PacketEntityVelocity) {
+            if (((S12PacketEntityVelocity) e.getPacket()).getEntityID() == mc.thePlayer.getEntityId()) {
+                e.setCanceled(true);
+            }
+        }
+        else if (e.getPacket() instanceof S27PacketExplosion) {
+            e.setCanceled(true);
+        }
     }
 
     @SubscribeEvent
@@ -263,10 +284,10 @@ public class Tower extends Module {
                                 Utils.setSpeed(Utils.getHorizontalSpeed()); // Strafe tick
                                 break;
                             case 2:
-                                mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1f + 0.0000001;
+                                mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1f;
                                 break;
                             case 3:
-                                mc.thePlayer.motionY = -0.01;
+                                mc.thePlayer.motionY = 0.005;
                                 break;
                         }
                     }
@@ -294,7 +315,7 @@ public class Tower extends Module {
                 slowTicks = 0;
             }
             if (speed) {
-                Utils.setSpeed(Utils.getHorizontalSpeed(mc.thePlayer) / 1.6);
+                Utils.setSpeed(Utils.getHorizontalSpeed(mc.thePlayer) / 2);
             }
             hasTowered = tower = firstJump = startedTowerInAir = setLowMotion = speed = false;
             cMotionTicks = placeTicks = towerTicks = grounds = 0;
@@ -410,6 +431,19 @@ public class Tower extends Module {
         tower = false;
         placeTicks = 0;
         setLowMotion = false;
+    }
+
+    public boolean cancelKnockback() {
+        if (!canTower()) {
+            return false;
+        }
+        if (cancelVelocityRequired.isToggled() && !ModuleManager.velocity.isEnabled()) {
+            return false;
+        }
+        if (cancelKnockback.isToggled()) {
+            return true;
+        }
+        return false;
     }
 
     public boolean canTower() {

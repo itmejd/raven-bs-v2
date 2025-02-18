@@ -51,7 +51,11 @@ public class MixinMinecraft {
 
     @Redirect(method = "runTick", at = @At(value = "FIELD", target = "Lnet/minecraft/entity/player/InventoryPlayer;currentItem:I", opcode = Opcodes.PUTFIELD))
     private void onSetCurrentItem(InventoryPlayer inventoryPlayer, int slot) {
-        MinecraftForge.EVENT_BUS.post(new SlotUpdateEvent(slot));
+        SlotUpdateEvent e = new SlotUpdateEvent(slot);
+        MinecraftForge.EVENT_BUS.post(e);
+        if (e.isCanceled()) {
+            return;
+        }
         inventoryPlayer.currentItem = slot;
     }
 }

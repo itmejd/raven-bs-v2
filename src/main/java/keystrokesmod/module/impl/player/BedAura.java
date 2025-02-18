@@ -46,6 +46,7 @@ public class BedAura extends Module {
     private ButtonSetting sendAnimations;
     private ButtonSetting silentSwing;
     private String[] modes = new String[] { "Legit", "Instant", "Swap" };
+
     private BlockPos[] bedPos;
     public float breakProgress;
     private int lastSlot = -1;
@@ -129,13 +130,16 @@ public class BedAura extends Module {
         }
         switch (noAutoBlockTicks) {
             case -1:
-                resetSlot();
                 noAutoBlockTicks = -2;
-                break;
+                return;
             case -2:
+                resetSlot();
+                noAutoBlockTicks = -3;
+                return;
+            case -3:
                 stopAutoblock = false;
                 noAutoBlockTicks = 0;
-                break;
+                return;
         }
         if (breakNearBlock.isToggled() && isCovered(bedPos[0]) && isCovered(bedPos[1])) {
             if (nearestBlock == null) {
@@ -151,7 +155,7 @@ public class BedAura extends Module {
 
     @SubscribeEvent
     public void onReceivePacket(ReceivePacketEvent e) {
-        if (!Utils.nullCheck() || !cancelKnockback()) {
+        if (!Utils.nullCheck() || !cancelKnockback.isToggled() || currentBlock == null) {
             return;
         }
         if (e.getPacket() instanceof S12PacketEntityVelocity) {
@@ -186,7 +190,7 @@ public class BedAura extends Module {
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public void onRenderWorld(RenderWorldLastEvent renderWorldLastEvent) {
+    public void onRenderWorld(RenderWorldLastEvent e) {
         if (!renderOutline.isToggled() || currentBlock == null || !Utils.nullCheck()) {
             return;
         }
@@ -387,8 +391,17 @@ public class BedAura extends Module {
         if (breakProgress == 0 && !aiming) {
             return;
         }
-        if (!stopAutoblock && breakProgress <= 0 && mode.getInput() == 2 && ModuleManager.killAura.autoBlockOverride()) {
-            stopAutoblock = true; // if blocking then return and stop autoblocking
+        if ((!stopAutoblock || noAutoBlockTicks == 99) && breakProgress <= 0 && mode.getInput() == 2 && ModuleManager.killAura.autoBlockOverride()) {
+            stopAutoblock = true;
+            if (noAutoBlockTicks == 0) {
+                noAutoBlockTicks = 99;
+            }
+            else if (noAutoBlockTicks == 99) {
+                noAutoBlockTicks = 0;
+            }
+            if (Raven.debug) {
+                Utils.sendModuleMessage(this, "&7stopping autoblock on &3start &7(&b" + mc.thePlayer.ticksExisted + "&7)");
+            }
             return;
         }
         if (mode.getInput() == 2 || mode.getInput() == 0) {

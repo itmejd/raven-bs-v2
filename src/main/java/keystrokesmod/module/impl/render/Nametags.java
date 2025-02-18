@@ -8,6 +8,7 @@ import keystrokesmod.module.impl.minigames.SkyWars;
 import keystrokesmod.module.impl.world.AntiBot;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.DescriptionSetting;
+import keystrokesmod.module.setting.impl.GroupSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
 import keystrokesmod.utility.RenderUtils;
 import keystrokesmod.utility.Utils;
@@ -36,10 +37,12 @@ public class Nametags extends Module {
     private ButtonSetting showInvis;
     private ButtonSetting removeTags;
     private ButtonSetting renderSelf;
+    private GroupSetting armorSettings;
     private ButtonSetting showArmor;
     private ButtonSetting showEnchants;
     private ButtonSetting showDurability;
     private ButtonSetting showStackSize;
+    private ButtonSetting outlineFSE;
 
     private int backGroundColor = new Color(0, 0, 0, 100).getRGB();
     private int friendColor = new Color(0, 255, 0, 255).getRGB();
@@ -60,11 +63,12 @@ public class Nametags extends Module {
         this.registerSetting(showHitsToKill = new ButtonSetting("Show hits to kill", false));
         this.registerSetting(showInvis = new ButtonSetting("Show invis", true));
         this.registerSetting(removeTags = new ButtonSetting("Remove tags", false));
-        this.registerSetting(new DescriptionSetting("Armor settings"));
-        this.registerSetting(showArmor = new ButtonSetting("Show armor", false));
-        this.registerSetting(showEnchants = new ButtonSetting("Show enchants", true));
-        this.registerSetting(showDurability = new ButtonSetting("Show durability", true));
-        this.registerSetting(showStackSize = new ButtonSetting("Show stack size", true));
+        this.registerSetting(armorSettings = new GroupSetting("Armor settings"));
+        this.registerSetting(showArmor = new ButtonSetting(armorSettings, "Show armor", false));
+        this.registerSetting(showEnchants = new ButtonSetting(armorSettings, "Show enchants", true));
+        this.registerSetting(showDurability = new ButtonSetting(armorSettings, "Show durability", true));
+        this.registerSetting(showStackSize = new ButtonSetting(armorSettings, "Show stack size", true));
+        this.registerSetting(outlineFSE = new ButtonSetting("Outline friends/enemies", true));
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
@@ -205,11 +209,12 @@ public class Nametags extends Module {
             if (drawBackground.isToggled()) {
                 RenderUtils.drawRect(x1, y1, x2, y2, backGroundColor);
             }
-            if (Utils.isFriended(en)) {
-                RenderUtils.drawOutline(x1, y1, x2, y2, 2, friendColor);
-            }
-            else if (Utils.isEnemy(en)) {
-                RenderUtils.drawOutline(x1, y1, x2, y2, 2, enemyColor);
+            if (outlineFSE.isToggled()) {
+                if (Utils.isFriended(en)) {
+                    RenderUtils.drawOutline(x1, y1, x2, y2, 2, friendColor);
+                } else if (Utils.isEnemy(en)) {
+                    RenderUtils.drawOutline(x1, y1, x2, y2, 2, enemyColor);
+                }
             }
             mc.fontRendererObj.drawString(name, -strWidth, -9, -1, dropShadow.isToggled());
             if (showArmor.isToggled()) {

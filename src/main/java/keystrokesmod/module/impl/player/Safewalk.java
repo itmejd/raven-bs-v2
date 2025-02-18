@@ -23,8 +23,7 @@ public class Safewalk extends Module {
 
     private int unsneakDelayTicks = 0;
     private boolean isSneaking;
-    private boolean hasSneaked;
-    private Vec3 pos;
+    private boolean canSneak;
 
     public Safewalk() {
         super("Safewalk", Module.category.player, 0);
@@ -55,7 +54,6 @@ public class Safewalk extends Module {
 
     @SubscribeEvent
     public void onPostPlayerInput(PostPlayerInputEvent e) {
-        Vec3 current = new Vec3((int) mc.thePlayer.posX, (int) mc.thePlayer.posY, (int) mc.thePlayer.posZ);
         if (!sneak.isToggled() || !Utils.nullCheck()) {
             return;
         }
@@ -64,10 +62,9 @@ public class Safewalk extends Module {
             return;
         }
         boolean edge = mc.thePlayer.onGround && Utils.isEdgeOfBlock();
-        if (edge && !hasSneaked) {
+        if (edge) {
             if (!this.isSneaking) {
-                hasSneaked = true;
-                pos = new Vec3((int) mc.thePlayer.posX, (int) mc.thePlayer.posY, (int) mc.thePlayer.posZ);
+                canSneak = true;
             }
         }
         else {
@@ -75,13 +72,13 @@ public class Safewalk extends Module {
                 if (unsneakDelayTicks > 0) {
                     unsneakDelayTicks--;
                 }
-                else if (!current.equals(pos)) {
+                else {
                     this.setSneakState(false);
                     return;
                 }
             }
         }
-        if (hasSneaked) {
+        if (canSneak) {
             this.setSneakState(true);
             unsneakDelayTicks = (int) sneakDelay.getInput();
         }
@@ -104,7 +101,7 @@ public class Safewalk extends Module {
         if (!sneakState && Utils.isBindDown(mc.gameSettings.keyBindSneak)) {
             return;
         }
-        hasSneaked = sneakState;
+        canSneak = sneakState;
         mc.thePlayer.movementInput.sneak = sneakState;
         this.isSneaking = sneakState;
         //Utils.print("Edge " + mc.thePlayer.movementInput.sneak + " " + sneakState + " " + mc.thePlayer.ticksExisted);

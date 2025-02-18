@@ -5,16 +5,17 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 import keystrokesmod.event.PostProfileLoadEvent;
+import keystrokesmod.event.PostSetSliderEvent;
 import keystrokesmod.keystroke.KeySrokeRenderer;
 import keystrokesmod.keystroke.KeyStrokeConfigGui;
 import keystrokesmod.keystroke.keystrokeCommand;
 import keystrokesmod.module.Module;
 import keystrokesmod.clickgui.ClickGui;
 import keystrokesmod.module.ModuleManager;
+import keystrokesmod.script.ScriptDefaults;
+import keystrokesmod.script.ScriptManager;
 import keystrokesmod.script.classes.Entity;
 import keystrokesmod.script.classes.NetworkPlayer;
-import keystrokesmod.utility.ModuleUtils;
-import keystrokesmod.script.ScriptManager;
 import keystrokesmod.utility.*;
 import keystrokesmod.utility.command.CommandManager;
 import keystrokesmod.utility.profile.Profile;
@@ -23,7 +24,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
-import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -31,12 +31,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
 
-@Mod(
-        modid = "keystrokes",
-        name = "KeystrokesMod",
-        version = "KMV5",
-        acceptedMinecraftVersions = "[1.8.9]"
-)
+@Mod(modid = "keystrokes", name = "KeystrokesMod", version = "KMV5", acceptedMinecraftVersions = "[1.8.9]")
 public class Raven {
     public static boolean debug = false;
     public static Minecraft mc = Minecraft.getMinecraft();
@@ -63,19 +58,20 @@ public class Raven {
         Runtime.getRuntime().addShutdownHook(new Thread(cachedExecutor::shutdown));
         ClientCommandHandler.instance.registerCommand(new keystrokeCommand());
         MinecraftForge.EVENT_BUS.register(this);
-        MinecraftForge.EVENT_BUS.register(new DebugInfoRenderer());
+        MinecraftForge.EVENT_BUS.register(new Debugger());
         MinecraftForge.EVENT_BUS.register(new CPSCalculator());
-        MinecraftForge.EVENT_BUS.register(new MovementFix(mc));
+        MinecraftForge.EVENT_BUS.register(new MovementFix(this.mc));
         MinecraftForge.EVENT_BUS.register(new KeySrokeRenderer());
         MinecraftForge.EVENT_BUS.register(new Ping());
         MinecraftForge.EVENT_BUS.register(packetsHandler = new PacketsHandler());
-        MinecraftForge.EVENT_BUS.register(new ModuleUtils(mc));
+        MinecraftForge.EVENT_BUS.register(new ModuleUtils(this.mc));
         Reflection.getFields();
         moduleManager.register();
         scriptManager = new ScriptManager();
         keySrokeRenderer = new KeySrokeRenderer();
         clickGui = new ClickGui();
         profileManager = new ProfileManager();
+        ScriptDefaults.reloadModules();
         scriptManager.loadScripts();
         profileManager.loadProfiles();
         profileManager.loadProfile("default");
@@ -83,7 +79,6 @@ public class Raven {
         MinecraftForge.EVENT_BUS.register(ModuleManager.scaffold);
         MinecraftForge.EVENT_BUS.register(ModuleManager.tower);
         commandManager = new CommandManager();
-
     }
 
     @SubscribeEvent
@@ -93,6 +88,9 @@ public class Raven {
                 if (mc.thePlayer.ticksExisted % 6000 == 0) { // reset cache every 5 minutes
                     Entity.clearCache();
                     NetworkPlayer.clearCache();
+                    if (Debugger.BACKGROUND) {
+                        Utils.sendMessage("&aticks % 6000 == 0 &7reached, clearing script caches. (&dEntity&7, &dNetworkPlayer&7)");
+                    }
                 }
                 if (Reflection.sendMessage) {
                     Utils.sendMessage("&cThere was an error, relaunch the game.");
@@ -111,9 +109,6 @@ public class Raven {
                     }
                 }
                 if (mc.currentScreen == null) {
-                    for (Profile profile : Raven.profileManager.profiles) {
-                        profile.getModule().onKeyBind();
-                    }
                     for (Module module : Raven.scriptManager.scripts.values()) {
                         module.onKeyBind();
                     }
@@ -135,6 +130,16 @@ public class Raven {
     }
 
     @SubscribeEvent
+    public void onPostProfileLoad(PostProfileLoadEvent e) {
+        clickGui.onSliderChange();
+    }
+
+    @SubscribeEvent
+    public void onPostSetSlider(PostSetSliderEvent e) {
+        clickGui.onSliderChange();
+    }
+
+    @SubscribeEvent
     public void onEntityJoinWorld(EntityJoinWorldEvent e) {
         if (e.entity == mc.thePlayer) {
             if (!firstLoad) {
@@ -143,12 +148,10 @@ public class Raven {
             }
             Entity.clearCache();
             NetworkPlayer.clearCache();
+            if (Debugger.BACKGROUND) {
+                Utils.sendMessage("&enew world&7, clearing script caches. (&dEntity&7, &dNetworkPlayer&7)");
+            }
         }
-    }
-
-    @SubscribeEvent
-    public void onPostProfileLoad(PostProfileLoadEvent e) {
-        clickGui.onProfileLoad();
     }
 
     public static ModuleManager getModuleManager() {

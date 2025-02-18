@@ -18,6 +18,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
 import net.minecraft.network.play.client.C09PacketHeldItemChange;
+import net.minecraft.network.play.client.C0APacketAnimation;
 import net.minecraft.network.play.server.*;
 import net.minecraft.potion.PotionEffect;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
@@ -34,18 +35,20 @@ public class LongJump extends Module {
 
     private ButtonSetting manual;
     private ButtonSetting onlyWithVelocity;
-    private KeySetting disableKey;
+    private KeySetting disableKey, flatKey;
 
     private ButtonSetting allowStrafe;
     private ButtonSetting invertYaw;
     private ButtonSetting stopMovement;
     private ButtonSetting hideExplosion;
     public ButtonSetting spoofItem;
+    private ButtonSetting beginFlat;
+    private ButtonSetting silentSwing;
 
-    private KeySetting temporaryFlightKey;
+    private KeySetting verticalKey;
     private SliderSetting pitchVal;
 
-    public String[] modes = new String[]{"Floyd", "Boost"};
+    public String[] modes = new String[]{"Float", "Boost"};
 
     private boolean manualWasOn;
 
@@ -53,7 +56,7 @@ public class LongJump extends Module {
     private float pitch;
 
     private boolean notMoving;
-    private boolean enabled;
+    private boolean enabled, swapped;
     public static boolean function;
 
     private int boostTicks;
@@ -89,17 +92,23 @@ public class LongJump extends Module {
         this.registerSetting(stopMovement = new ButtonSetting("Stop movement", false));
         this.registerSetting(hideExplosion = new ButtonSetting("Hide explosion", false));
         this.registerSetting(spoofItem = new ButtonSetting("Spoof item", false));
+        this.registerSetting(silentSwing = new ButtonSetting("Silent swing", false));
 
-        this.registerSetting(temporaryFlightKey = new KeySetting("Vertical key", Keyboard.KEY_SPACE));
+        this.registerSetting(beginFlat = new ButtonSetting("Begin flat", false));
+        this.registerSetting(verticalKey = new KeySetting("Vertical key", Keyboard.KEY_SPACE));
+        this.registerSetting(flatKey = new KeySetting("Flat key", Keyboard.KEY_SPACE));
     }
 
     public void guiUpdate() {
         this.onlyWithVelocity.setVisible(manual.isToggled(), this);
         this.disableKey.setVisible(manual.isToggled(), this);
+        this.spoofItem.setVisible(!manual.isToggled(), this);
+        this.silentSwing.setVisible(!manual.isToggled(), this);
 
         this.verticalMotion.setVisible(mode.getInput() == 0, this);
         this.motionDecay.setVisible(mode.getInput() == 0, this);
-        this.temporaryFlightKey.setVisible(mode.getInput() == 0, this);
+        this.verticalKey.setVisible(mode.getInput() == 0 && beginFlat.isToggled(), this);
+        this.flatKey.setVisible(mode.getInput() == 0 && !beginFlat.isToggled(), this);
     }
 
     public void onEnable() {
@@ -148,6 +157,16 @@ public class LongJump extends Module {
             disabled();
         }
 
+        if (spoofItem.isToggled() && lastSlot != -1) {
+            ((IMixinItemRenderer) mc.getItemRenderer()).setCancelUpdate(true);
+            ((IMixinItemRenderer) mc.getItemRenderer()).setCancelReset(true);
+        }
+
+        if (swapped) {
+            resetSlot();
+            swapped = false;
+        }
+
         if (!function) {
             if (manual.isToggled() && !enabled && (!onlyWithVelocity.isToggled() || onlyWithVelocity.isToggled() && ModuleManager.velocity.isEnabled())) {
                 if (ModuleUtils.threwFireballLow) {
@@ -156,11 +175,6 @@ public class LongJump extends Module {
                 }
             }
             return;
-        }
-
-        if (spoofItem.isToggled() && lastSlot != -1) {
-            ((IMixinItemRenderer) mc.getItemRenderer()).setCancelUpdate(true);
-            ((IMixinItemRenderer) mc.getItemRenderer()).setCancelReset(true);
         }
 
         if (enabled) {
@@ -176,6 +190,7 @@ public class LongJump extends Module {
                     lastSlot = spoofSlot = mc.thePlayer.inventory.currentItem;
                     if (mc.thePlayer.inventory.currentItem != fireballSlot) {
                         mc.thePlayer.inventory.currentItem = fireballSlot;
+                        swapped = true;
                     }
 
                 }
@@ -193,7 +208,7 @@ public class LongJump extends Module {
         } else {
             motionDecayVal = (int) motionDecay.getInput();
         }
-        if (stopTime == -1 && ++boostTicks > (!temporaryFlightKey() ? 33/*flat motion ticks*/ : (!notMoving ? 32/*normal motion ticks*/ : 33/*vertical motion ticks*/))) {
+        if (stopTime == -1 && ++boostTicks > (!verticalKey() ? 33/*flat motion ticks*/ : (!notMoving ? 32/*normal motion ticks*/ : 33/*vertical motion ticks*/))) {
             disabled();
             return;
         }
@@ -265,8 +280,15 @@ public class LongJump extends Module {
                     mc.getNetHandler().addToSendQueue(new C08PacketPlayerBlockPlacement(mc.thePlayer.getHeldItem()));
                     //((IAccessorMinecraft) mc).callRightClickMouse();
                 }
-                mc.thePlayer.swingItem();
-                mc.getItemRenderer().resetEquippedProgress();
+                if (silentSwing.isToggled()) {
+                    mc.thePlayer.sendQueue.addToSendQueue(new C0APacketAnimation());
+                }
+                else {
+                    mc.thePlayer.swingItem();
+                    if (!spoofItem.isToggled()) {
+                        mc.getItemRenderer().resetEquippedProgress();
+                    }
+                }
                 stopVelocity = true;
                 //Utils.print("Right click");
             }
@@ -360,7 +382,7 @@ public class LongJump extends Module {
         fireballTime = rotateTick = stopTime = 0;
         boostTicks = -1;
         resetSlot();
-        enabled = function = notMoving = stopVelocity = stopModules = false;
+        enabled = function = notMoving = stopVelocity = stopModules = swapped = false;
         if (!manual.isToggled()) {
             disable();
         }
@@ -372,7 +394,7 @@ public class LongJump extends Module {
         if (fireballSlot == -1) {
             Utils.print("&cFireball not found.");
             disabled();
-        } else if (ModuleManager.scaffold.isEnabled || (pre && Utils.distanceToGround(mc.thePlayer) > 3)/* || (!pre && !PacketUtil.canRightClickItem())*/) { //needs porting
+        } else if ((pre && Utils.distanceToGround(mc.thePlayer) > 3)/* || (!pre && !PacketUtil.canRightClickItem())*/) { //needs porting
             Utils.print("&cCan't throw fireball right now.");
             disabled();
             fireballSlot = -1;
@@ -392,6 +414,7 @@ public class LongJump extends Module {
             }
         }
         slotReset = true;
+        stopModules = false;
     }
 
     private int getSpeedLevel() {
@@ -407,12 +430,10 @@ public class LongJump extends Module {
     // only apply horizontal boost once
     void modifyHorizontal() {
         if (boostSetting.getInput() != 0) {
-            //client.print("&7horizontal &b" + boostTicks + " " + client.getPlayer().getHurtTime());
 
-            double speed = boostSetting.getInput() - Utils.randomizeDouble(0.0001, 0);
+            double speed = ((boostSetting.getInput() > 1.6 && ModuleManager.scaffold.isEnabled) ? 1.6 : boostSetting.getInput()) - Utils.randomizeDouble(0.0001, 0);
             if (Utils.isMoving()) {
                 Utils.setSpeed(speed);
-                //Utils.print("og speed");
             }
         }
     }
@@ -421,7 +442,7 @@ public class LongJump extends Module {
         if (verticalMotion.getInput() != 0) {
             double ver = ((!notMoving ? verticalMotion.getInput() : 1.16 /*vertical*/) * (1.0 / (1.0 + (0.05 * getSpeedLevel())))) + Utils.randomizeDouble(0.0001, 0.1);
             double decay = motionDecay.getInput() / 1000;
-            if (boostTicks > 1 && !temporaryFlightKey()) {
+            if (boostTicks > 1 && !verticalKey()) {
                 if (boostTicks > 1 || boostTicks <= (!notMoving ? 32/*horizontal motion ticks*/ : 33/*vertical motion ticks*/)) {
                     mc.thePlayer.motionY = Utils.randomizeDouble(0.0101, 0.01);
                 }
@@ -436,9 +457,9 @@ public class LongJump extends Module {
         }
     }
 
-    private boolean temporaryFlightKey() {
+    private boolean verticalKey() {
         if (notMoving) return true;
-        return temporaryFlightKey.isPressed();
+        return beginFlat.isToggled() ? verticalKey.isPressed() : !flatKey.isPressed();
     }
 
     private int getKeyCode(String keyName) {

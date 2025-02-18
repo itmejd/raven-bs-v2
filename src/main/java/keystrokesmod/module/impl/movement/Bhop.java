@@ -3,6 +3,7 @@ package keystrokesmod.module.impl.movement;
 import keystrokesmod.event.PostMotionEvent;
 import keystrokesmod.event.PostPlayerInputEvent;
 import keystrokesmod.event.PreMotionEvent;
+import keystrokesmod.event.PreUpdateEvent;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.combat.Velocity;
@@ -17,6 +18,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public class Bhop extends Module {
     public SliderSetting mode;
+    public static SliderSetting friction;
     public static SliderSetting speedSetting;
     private ButtonSetting liquidDisable;
     public ButtonSetting disablerOnly;
@@ -30,11 +32,13 @@ public class Bhop extends Module {
     public boolean hopping, lowhop, didMove, setRotation;
     private int motionTick = 0;
     public boolean isNormalPos;
+    public boolean running;
 
     public Bhop() {
         super("Bhop", Module.category.movement);
         this.registerSetting(mode = new SliderSetting("Mode", 0, modes));
         this.registerSetting(speedSetting = new SliderSetting("Speed", 2.0, 0.8, 1.2, 0.01));
+        this.registerSetting(friction = new SliderSetting("Friction multiplier", 1, 1, 1.3, 0.01));
         this.registerSetting(disablerOnly = new ButtonSetting("Lowhop only if disabler loaded", false));
         this.registerSetting(liquidDisable = new ButtonSetting("Disable in liquid", true));
         this.registerSetting(sneakDisable = new ButtonSetting("Disable while sneaking", true));
@@ -81,7 +85,7 @@ public class Bhop extends Module {
         if (ModuleManager.scaffold.moduleEnabled || ModuleManager.scaffold.lowhop) {
             return;
         }
-        if (ModuleManager.LongJump.function) {
+        if (LongJump.function) {
             return;
         }
         motionTick = 0;
@@ -96,6 +100,7 @@ public class Bhop extends Module {
                 else {
                     mc.thePlayer.motionY = 0.41999998688698;
                 }
+                running = true;
                 if (mc.thePlayer.posY % 1 == 0) {
                     isNormalPos = true;
                 }
@@ -119,7 +124,7 @@ public class Bhop extends Module {
 
                 if (Utils.isMoving()) {
                     if (!Utils.noSlowingBackWithBow() && !ModuleManager.sprint.disableBackwards()) {
-                        Utils.setSpeed(speedModifier - Utils.randomizeDouble(0.0003, 0.0001));
+                        Utils.setSpeed((speedModifier - Utils.randomizeDouble(0.0003, 0.0001)) * ModuleUtils.applyFrictionMulti());
                     }
                     didMove = true;
                 }
@@ -213,5 +218,6 @@ public class Bhop extends Module {
 
     public void onDisable() {
         hopping = false;
+        running = false;
     }
 }

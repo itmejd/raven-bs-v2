@@ -25,6 +25,7 @@
     "network.MixinNetHandlerPlayClient",
     "render.MixinRenderManager",
     "render.MixinCustomSky",
+    "render.MixinRenderPlayer",
     "client.MixinPlayerControllerMP",
 
     "accessor.IAccessorEntityPlayerSP",

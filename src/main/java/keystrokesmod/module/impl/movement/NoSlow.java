@@ -232,6 +232,7 @@ public class NoSlow extends Module {
     }
 
     public static float getSlowed() {
+        float val = (100.0F - (float) slowed.getInput()) / 100.0F;
         if (mc.thePlayer.getHeldItem() == null || ModuleManager.noSlow == null || !ModuleManager.noSlow.isEnabled()) {
             return 0.2f;
         }
@@ -248,8 +249,10 @@ public class NoSlow extends Module {
             else if (fix) {
                 return 0.2f;
             }
+            else if (ModuleManager.killAura.blocked) {
+                return val;
+            }
         }
-        float val = (100.0F - (float) slowed.getInput()) / 100.0F;
         return val;
     }
 

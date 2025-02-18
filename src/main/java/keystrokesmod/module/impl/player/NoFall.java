@@ -2,6 +2,8 @@ package keystrokesmod.module.impl.player;
 
 import keystrokesmod.event.PreMotionEvent;
 import keystrokesmod.event.PreUpdateEvent;
+import keystrokesmod.event.ReceivePacketEvent;
+import keystrokesmod.event.SendPacketEvent;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
@@ -12,17 +14,24 @@ import keystrokesmod.utility.Reflection;
 import keystrokesmod.utility.Utils;
 import net.minecraft.client.gui.GuiIngame;
 import net.minecraft.init.Blocks;
+import net.minecraft.network.Packet;
 import net.minecraft.network.play.client.C03PacketPlayer;
+import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
+import net.minecraft.network.play.server.*;
 import net.minecraft.util.BlockPos;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
+import net.minecraftforge.client.event.sound.SoundEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+
+import java.util.Objects;
 
 public class NoFall extends Module {
     public SliderSetting mode;
     private SliderSetting minFallDistance;
     private ButtonSetting disableAdventure;
     private ButtonSetting ignoreVoid;
+    private ButtonSetting hideSound;
     private String[] modes = new String[]{"Spoof", "NoGround", "Packet A", "Packet B", "CTW Packet"};
 
     private double initialY;
@@ -35,11 +44,32 @@ public class NoFall extends Module {
         this.registerSetting(disableAdventure = new ButtonSetting("Disable adventure", false));
         this.registerSetting(minFallDistance = new SliderSetting("Minimum fall distance", 3, 0, 10, 0.1));
         this.registerSetting(ignoreVoid = new ButtonSetting("Ignore void", true));
+        //this.registerSetting(hideSound = new ButtonSetting("Hide fall damage sound", false));
     }
 
     public void onDisable() {
         Utils.resetTimer();
     }
+
+    /*@SubscribeEvent
+    public void onReceivePacket(ReceivePacketEvent e) {
+        if (e.getPacket() instanceof S29PacketSoundEffect) {
+            S29PacketSoundEffect s29 = (S29PacketSoundEffect) e.getPacket();
+            /*if (!Objects.equals(String.valueOf(s29.getSoundName()), "random.explode")) {
+
+            }*/
+            /*Utils.print("" + s29.getSoundName());
+        }
+    }*/
+
+    /*@SubscribeEvent
+    public void onSoundEvent(SoundEvent.SoundSourceEvent e) {
+        if (e.name.startsWith("game.player.hurt.fall")) {
+            Utils.print("Fall dmg sound");
+
+        }
+    }*/
+
 
     @SubscribeEvent
     public void onPreUpdate(PreUpdateEvent e) {

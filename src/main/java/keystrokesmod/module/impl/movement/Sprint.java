@@ -34,6 +34,7 @@ public class Sprint extends Module {
     private ButtonSetting displayText;
     private ButtonSetting rainbow;
     public SliderSetting omniDirectional;
+    private SliderSetting floatSetting;
     public ButtonSetting disableBackwards;
     public String text = "[Sprint (Toggled)]";
     public float posX = 5;
@@ -52,8 +53,13 @@ public class Sprint extends Module {
         this.registerSetting(displayText = new ButtonSetting("Display text", false));
         this.registerSetting(rainbow = new ButtonSetting("Rainbow", false));
         this.registerSetting(omniDirectional = new SliderSetting("Omni-Directional", 0, omniDirectionalModes));
+        this.registerSetting(floatSetting = new SliderSetting("Float speed", "%", 100, 0.0, 100.0, 1.0));
         this.registerSetting(disableBackwards = new ButtonSetting("Disable backwards", false));
         this.closetModule = true;
+    }
+
+    public void guiUpdate() {
+        this.floatSetting.setVisible(omniDirectional.getInput() == 3, this);
     }
 
     @SubscribeEvent
@@ -234,9 +240,9 @@ public class Sprint extends Module {
         double min = 0;
         if (mc.thePlayer.moveStrafing != 0 && mc.thePlayer.moveForward != 0) min = 0.003;
         if (speedLevel >= 0) {
-            return floatSpeedLevels[speedLevel] - min;
+            return ((floatSpeedLevels[speedLevel] - min) * (floatSetting.getInput() / 100));
         }
-        return floatSpeedLevels[0] - min;
+        return ((floatSpeedLevels[0] - min) * (floatSetting.getInput() / 100));
     }
 
     private int getSpeedLevel() {

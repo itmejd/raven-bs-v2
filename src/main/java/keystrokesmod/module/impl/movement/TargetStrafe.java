@@ -18,14 +18,16 @@ import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public class TargetStrafe extends Module {
-    private ButtonSetting bhopOnly;
+    private ButtonSetting requireBhop;
+    private ButtonSetting requireJump;
 
     private double angle;
     private float radius = 0.6f;
 
     public TargetStrafe() {
         super("TargetStrafe", category.movement);
-        this.registerSetting(bhopOnly = new ButtonSetting("Require bhop", false));
+        this.registerSetting(requireBhop = new ButtonSetting("Require bhop", false));
+        this.registerSetting(requireJump = new ButtonSetting("Require jump key", false));
     }
 
     public void guiUpdate() {
@@ -39,7 +41,10 @@ public class TargetStrafe extends Module {
 
     @SubscribeEvent(priority = EventPriority.LOWEST) // called last in order to apply fix
     public void onMoveInput(PrePlayerInputEvent e) {
-        if (bhopOnly.isToggled() && !ModuleManager.bhop.isEnabled()) {
+        if (requireBhop.isToggled() && !ModuleManager.bhop.isEnabled()) {
+            return;
+        }
+        if (requireJump.isToggled() && !Utils.jumpDown()) {
             return;
         }
         if (ModuleManager.scaffold.isEnabled) {

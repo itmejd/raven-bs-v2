@@ -21,6 +21,7 @@ import net.minecraft.network.handshake.client.C00Handshake;
 import net.minecraft.network.login.client.C00PacketLoginStart;
 import net.minecraft.network.login.client.C01PacketEncryptionResponse;
 import net.minecraft.network.play.client.C00PacketKeepAlive;
+import net.minecraft.network.play.client.C02PacketUseEntity;
 import net.minecraft.network.play.client.C0FPacketConfirmTransaction;
 import net.minecraft.network.status.client.C00PacketServerQuery;
 import net.minecraft.network.status.client.C01PacketPing;
@@ -40,7 +41,7 @@ public class Blink extends Module {
     private static SliderSetting maximumBlinkTicks;
     private ButtonSetting initialPosition;
     private ButtonSetting renderTimer;
-    private ButtonSetting disableOnBreak;
+    private ButtonSetting disableOnBreak, disableOnAttack;
     private ConcurrentLinkedQueue<Packet> blinkedPackets = new ConcurrentLinkedQueue<>();
     private Vec3 pos;
     //final private int color = Theme.getGradient((int) theme.getInput(), 255);
@@ -54,6 +55,7 @@ public class Blink extends Module {
         this.registerSetting(initialPosition = new ButtonSetting("Show initial position", true));
         this.registerSetting(renderTimer = new ButtonSetting("Render Timer", false));
         this.registerSetting(disableOnBreak = new ButtonSetting("Disable on Break", false));
+        this.registerSetting(disableOnAttack = new ButtonSetting("Disable on Attack", false));
     }
 
     @Override
@@ -95,6 +97,10 @@ public class Blink extends Module {
         if (packet instanceof C00PacketLoginStart || packet instanceof C00Handshake) {
             return;
         }
+        if (disableOnAttack.isToggled() && packet instanceof C02PacketUseEntity || blinkTicks >= 99999) {
+            blinkTicks = 99999;
+            return;
+        }
         if (!e.isCanceled()) {
             started = true;
             blinkedPackets.add(packet);
@@ -116,11 +122,14 @@ public class Blink extends Module {
                 disable();
             }
         }
+        if (blinkTicks >= 99999) {
+            disable();
+        }
     }
 
     @SubscribeEvent
     public void onRenderTick(TickEvent.RenderTickEvent ev) {
-        if (!Utils.nullCheck() || !renderTimer.isToggled() || blinkTicks == 0) {
+        if (!Utils.nullCheck() || !renderTimer.isToggled() || blinkTicks == 0 || blinkTicks >= 99999) {
             return;
         }
         if (ev.phase == TickEvent.Phase.END) {

@@ -77,14 +77,14 @@ public class Velocity extends Module {
 
 
 
-        horizontal.setVisible(velocityModes.getInput() != 2, this);
-        vertical.setVisible(velocityModes.getInput() != 2, this);
-        chance.setVisible(velocityModes.getInput() != 2, this);
-        reverseHorizontal.setVisible(velocityModes.getInput() == 2, this);
+        this.horizontal.setVisible(velocityModes.getInput() != 2, this);
+        this.vertical.setVisible(velocityModes.getInput() != 2, this);
+        this.chance.setVisible(velocityModes.getInput() != 2, this);
+        this.reverseHorizontal.setVisible(velocityModes.getInput() == 2, this);
 
-        minExtraSpeed.setVisible(velocityModes.getInput() == 2, this);
-        extraSpeedBoost.setVisible(velocityModes.getInput() == 2, this);
-        reverseDebug.setVisible(velocityModes.getInput() == 2, this);
+        this.minExtraSpeed.setVisible(velocityModes.getInput() == 2, this);
+        this.extraSpeedBoost.setVisible(velocityModes.getInput() == 2, this);
+        this.reverseDebug.setVisible(velocityModes.getInput() == 2, this);
     }
 
     @SubscribeEvent
@@ -110,7 +110,7 @@ public class Velocity extends Module {
     @SubscribeEvent
     public void onReceivePacket(ReceivePacketEvent e) {
         if (velocityModes.getInput() == 1) {
-            if (!Utils.nullCheck() || LongJump.stopVelocity || e.isCanceled() || ModuleManager.bedAura.cancelKnockback() || velocityModes.getInput() == 2 && ModuleUtils.firstDamage || ModuleManager.bhop.isEnabled() && ModuleManager.bhop.damageBoost.isToggled() && ModuleUtils.firstDamage && (!ModuleManager.bhop.damageBoostRequireKey.isToggled() || ModuleManager.bhop.damageBoostKey.isPressed())) {
+            if (!Utils.nullCheck() || LongJump.stopVelocity || e.isCanceled() || ModuleManager.bedAura.cancelKnockback() || ModuleManager.tower.cancelKnockback() || velocityModes.getInput() == 2 && ModuleUtils.firstDamage || ModuleManager.bhop.isEnabled() && ModuleManager.bhop.damageBoost.isToggled() && ModuleUtils.firstDamage && (!ModuleManager.bhop.damageBoostRequireKey.isToggled() || ModuleManager.bhop.damageBoostKey.isPressed())) {
                 return;
             }
             if (e.getPacket() instanceof S27PacketExplosion) {

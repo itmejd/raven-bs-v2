@@ -2,6 +2,7 @@ package keystrokesmod.utility;
 
 import keystrokesmod.event.*;
 import keystrokesmod.module.impl.combat.Velocity;
+import keystrokesmod.module.impl.movement.Bhop;
 import keystrokesmod.module.impl.movement.LongJump;
 import keystrokesmod.module.impl.render.HUD;
 import keystrokesmod.utility.command.CommandManager;
@@ -46,7 +47,7 @@ public class ModuleUtils {
     public static boolean isAttacking;
     private int attackingTicks;
     private int unTargetTicks;
-    public static int profileTicks = -1;
+    public static int profileTicks = -1, swapTick;
     public static boolean lastTickOnGround, lastTickPos1;
     private boolean thisTickOnGround, thisTickPos1;
     public static boolean firstDamage;
@@ -60,6 +61,7 @@ public class ModuleUtils {
     private int edgeTick;
 
     public static boolean canSlow, didSlow, setSlow;
+    private static boolean allowFriction;
 
     @SubscribeEvent
     public void onWorldJoin(EntityJoinWorldEvent e) {
@@ -72,6 +74,10 @@ public class ModuleUtils {
     public void onSendPacketNoEvent(NoEventPacketEvent e) {
         if (!Utils.nullCheck()) {
             return;
+        }
+
+        if (e.getPacket() instanceof C09PacketHeldItemChange) {
+            swapTick = 2;
         }
 
         // isBlocked
@@ -138,6 +144,10 @@ public class ModuleUtils {
 
         //
 
+        if (e.getPacket() instanceof C09PacketHeldItemChange) {
+            swapTick = 2;
+        }
+
 
 
 
@@ -157,111 +167,6 @@ public class ModuleUtils {
             }
         }
 
-    }
-
-    @SubscribeEvent
-    public void onPreUpdate(PreUpdateEvent e) {
-
-        if (damage && ++damageTicks >= 8) {
-            damage = firstDamage = false;
-            damageTicks = 0;
-        }
-
-        profileTicks++;
-
-        if (isAttacking) {
-            if (attackingTicks <= 0) {
-                isAttacking = false;
-            }
-            else {
-                --attackingTicks;
-            }
-        }
-
-        if (LongJump.slotReset && ++LongJump.slotResetTicks >= 2) {
-            LongJump.stopModules = false;
-            LongJump.slotResetTicks = 0;
-            LongJump.slotReset = false;
-        }
-
-        if (fireballTime > 0 && (System.currentTimeMillis() - fireballTime) > FIREBALL_TIMEOUT / 3) {
-            threwFireballLow = false;
-            ModuleManager.velocity.disableVelo = false;
-        }
-
-        if (fireballTime > 0 && (System.currentTimeMillis() - fireballTime) > FIREBALL_TIMEOUT) {
-            threwFireball = threwFireballLow = false;
-            fireballTime = 0;
-            ModuleManager.velocity.disableVelo = false;
-        }
-
-        if (isBreaking && ++isBreakingTick >= 1) {
-            isBreaking = false;
-            isBreakingTick = 0;
-        }
-
-        if (ModuleManager.killAura.justUnTargeted) {
-            if (++unTargetTicks >= 2) {
-                unTargetTicks = 0;
-                ModuleManager.killAura.justUnTargeted = false;
-            }
-        }
-
-        if (CommandManager.status.cooldown != 0) {
-            if (mc.thePlayer.ticksExisted % 20 == 0) {
-                CommandManager.status.cooldown--;
-            }
-        }
-    }
-
-    @SubscribeEvent
-    public void onChat(ClientChatReceivedEvent e) {
-        if (!Utils.nullCheck()) {
-            return;
-        }
-        String stripped = Utils.stripColor(e.message.getUnformattedText());
-
-        //online
-        if (stripped.contains("You tipped ") && stripped.contains(" in") && stripped.contains("!") && CommandManager.status.start) {
-            CommandManager.status.start = false;
-            Utils.print("§a " + CommandManager.status.ign + " is online");
-            e.setCanceled(true);
-        }
-        if ((stripped.contains("You've already tipped someone in the past hour in") && stripped.contains("! Wait a bit and try again!") || stripped.contains("You've already tipped that person today in ")) && CommandManager.status.start) {
-            CommandManager.status.start = false;
-            Utils.print("§a " + CommandManager.status.ign + " is online");
-            //client.print(util.colorSymbol + "7^ if player recently left the server this may be innacurate (rate limited)");
-            e.setCanceled(true);
-        }
-        //offline
-        if (stripped.contains("That player is not online, try another user!") && CommandManager.status.start) {
-            CommandManager.status.start = false;
-            Utils.print("§7 " + CommandManager.status.ign + " is offline");
-            e.setCanceled(true);
-        }
-        //invalid name
-        if (stripped.contains("Can't find a player by the name of '") && CommandManager.status.start) {
-            CommandManager.status.cooldown = 0;
-            CommandManager.status.start = false;
-            CommandManager.status.currentMode = CommandManager.status.lastMode;
-            Utils.print("§7 " + CommandManager.status.ign + " doesn't exist");
-            e.setCanceled(true);
-        }
-        if (stripped.contains("That's not a valid username!") && CommandManager.status.start) {
-            CommandManager.status.cooldown = 0;
-            CommandManager.status.start = false;
-            CommandManager.status.currentMode = CommandManager.status.lastMode;
-            Utils.print("§binvalid username");
-            e.setCanceled(true);
-        }
-        //checking urself
-        if (stripped.contains("You cannot give yourself tips!") && CommandManager.status.start) {
-            CommandManager.status.cooldown = 0;
-            CommandManager.status.start = false;
-            CommandManager.status.currentMode = CommandManager.status.lastMode;
-            Utils.print("§a " + CommandManager.status.ign + " is online");
-            e.setCanceled(true);
-        }
     }
 
     @SubscribeEvent
@@ -314,6 +219,89 @@ public class ModuleUtils {
             return true;
         }
         return false;
+    }
+
+    @SubscribeEvent
+    public void onPreUpdate(PreUpdateEvent e) {
+
+        if (swapTick > 0) {
+            --swapTick;
+        }
+
+        if ((canSlow || ModuleManager.scaffold.moduleEnabled && !ModuleManager.tower.canTower()) && !mc.thePlayer.onGround) {
+            double motionVal = 0.9507832 - ((double) inAirTicks / 10000) - Utils.randomizeDouble(0.00001, 0.00006);
+            if (mc.thePlayer.hurtTime == 0 && inAirTicks >= 4 && !setSlow) {
+                mc.thePlayer.motionX *= motionVal;
+                mc.thePlayer.motionZ *= motionVal;
+                setSlow = true;
+                //Utils.print("Slow " + motionVal);
+            }
+            didSlow = true;
+        }
+        else if (didSlow) {
+            canSlow = didSlow = false;
+        }
+        if (mc.thePlayer.onGround || mc.thePlayer.hurtTime != 0) {
+            setSlow = false;
+        }
+
+        if (!ModuleManager.bhop.running && !ModuleManager.scaffold.fastScaffoldKeepY) {
+            allowFriction = false;
+        }
+        else if (!mc.thePlayer.onGround) {
+            allowFriction = true;
+        }
+
+        if (damage && ++damageTicks >= 8) {
+            damage = firstDamage = false;
+            damageTicks = 0;
+        }
+
+        profileTicks++;
+
+        if (isAttacking) {
+            if (attackingTicks <= 0) {
+                isAttacking = false;
+            }
+            else {
+                --attackingTicks;
+            }
+        }
+
+        if (LongJump.slotReset && ++LongJump.slotResetTicks >= 2) {
+            LongJump.stopModules = false;
+            LongJump.slotResetTicks = 0;
+            LongJump.slotReset = false;
+        }
+
+        if (fireballTime > 0 && (System.currentTimeMillis() - fireballTime) > FIREBALL_TIMEOUT / 3) {
+            threwFireballLow = false;
+            ModuleManager.velocity.disableVelo = false;
+        }
+
+        if (fireballTime > 0 && (System.currentTimeMillis() - fireballTime) > FIREBALL_TIMEOUT) {
+            threwFireball = threwFireballLow = false;
+            fireballTime = 0;
+            ModuleManager.velocity.disableVelo = false;
+        }
+
+        if (isBreaking && ++isBreakingTick >= 1) {
+            isBreaking = false;
+            isBreakingTick = 0;
+        }
+
+        if (ModuleManager.killAura.justUnTargeted) {
+            if (++unTargetTicks >= 2) {
+                unTargetTicks = 0;
+                ModuleManager.killAura.justUnTargeted = false;
+            }
+        }
+
+        if (CommandManager.status.cooldown != 0) {
+            if (mc.thePlayer.ticksExisted % 20 == 0) {
+                CommandManager.status.cooldown--;
+            }
+        }
     }
 
     @SubscribeEvent
@@ -458,23 +446,6 @@ public class ModuleUtils {
             fadeEdge = 0;
             ModuleManager.scaffold.highlight.clear();
         }
-
-        if ((canSlow || ModuleManager.scaffold.moduleEnabled && !ModuleManager.tower.canTower()) && !mc.thePlayer.onGround) {
-            double motionVal = 0.92 - ((double) inAirTicks / 10000) - Utils.randomizeDouble(0.00001, 0.00006);
-            if (mc.thePlayer.hurtTime == 0 && inAirTicks > 4 && !setSlow) {
-                mc.thePlayer.motionX *= motionVal;
-                mc.thePlayer.motionZ *= motionVal;
-                setSlow = true;
-                //Utils.print("Slow " + motionVal);
-            }
-            didSlow = true;
-        }
-        else if (didSlow) {
-            canSlow = didSlow = false;
-        }
-        if (mc.thePlayer.onGround) {
-            setSlow = false;
-        }
     }
 
     private void resetLowhop() {
@@ -487,6 +458,14 @@ public class ModuleUtils {
     public static void handleSlow() {
         didSlow = false;
         canSlow = true;
+    }
+
+    public static double applyFrictionMulti() {
+        final int speedAmplifier = Utils.getSpeedAmplifier();
+        if (speedAmplifier > 1 && allowFriction) {
+            return Bhop.friction.getInput();
+        }
+        return 1;
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -510,6 +489,56 @@ public class ModuleUtils {
                 continue;
             }
             RenderUtils.renderBlock(entry.getKey(), Utils.mergeAlpha(Theme.getGradient((int) HUD.theme.getInput(), 0), alpha), true, false);
+        }
+    }
+
+    @SubscribeEvent
+    public void onChat(ClientChatReceivedEvent e) {
+        if (!Utils.nullCheck()) {
+            return;
+        }
+        String stripped = Utils.stripColor(e.message.getUnformattedText());
+
+        //online
+        if (stripped.contains("You tipped ") && stripped.contains(" in") && stripped.contains("!") && CommandManager.status.start) {
+            CommandManager.status.start = false;
+            Utils.print("§a " + CommandManager.status.ign + " is online");
+            e.setCanceled(true);
+        }
+        if ((stripped.contains("You've already tipped someone in the past hour in") && stripped.contains("! Wait a bit and try again!") || stripped.contains("You've already tipped that person today in ")) && CommandManager.status.start) {
+            CommandManager.status.start = false;
+            Utils.print("§a " + CommandManager.status.ign + " is online");
+            //client.print(util.colorSymbol + "7^ if player recently left the server this may be innacurate (rate limited)");
+            e.setCanceled(true);
+        }
+        //offline
+        if (stripped.contains("That player is not online, try another user!") && CommandManager.status.start) {
+            CommandManager.status.start = false;
+            Utils.print("§7 " + CommandManager.status.ign + " is offline");
+            e.setCanceled(true);
+        }
+        //invalid name
+        if (stripped.contains("Can't find a player by the name of '") && CommandManager.status.start) {
+            CommandManager.status.cooldown = 0;
+            CommandManager.status.start = false;
+            CommandManager.status.currentMode = CommandManager.status.lastMode;
+            Utils.print("§7 " + CommandManager.status.ign + " doesn't exist");
+            e.setCanceled(true);
+        }
+        if (stripped.contains("That's not a valid username!") && CommandManager.status.start) {
+            CommandManager.status.cooldown = 0;
+            CommandManager.status.start = false;
+            CommandManager.status.currentMode = CommandManager.status.lastMode;
+            Utils.print("§binvalid username");
+            e.setCanceled(true);
+        }
+        //checking urself
+        if (stripped.contains("You cannot give yourself tips!") && CommandManager.status.start) {
+            CommandManager.status.cooldown = 0;
+            CommandManager.status.start = false;
+            CommandManager.status.currentMode = CommandManager.status.lastMode;
+            Utils.print("§a " + CommandManager.status.ign + " is online");
+            e.setCanceled(true);
         }
     }
 }
