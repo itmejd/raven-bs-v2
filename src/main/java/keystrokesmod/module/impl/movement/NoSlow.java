@@ -43,7 +43,7 @@ public class NoSlow extends Module {
     public static boolean noSlowing, offset, fix;
     private int ticksOffStairs = 30;
     private boolean setCancelled, didC;
-    private int grounded;
+    private int grounded, offsetDelay;
 
     public NoSlow() {
         super("NoSlow", category.movement, 0);
@@ -214,10 +214,18 @@ public class NoSlow extends Module {
             offset = false;
             return;
         }
-        if (mc.thePlayer.ticksExisted % 2 == 0 || mc.thePlayer.onGround) {
-            e.setPosY(e.getPosY() + ModuleUtils.offsetValue);
-            offset = true;
+        if (offsetDelay <= 2) {
+            ++offsetDelay;
+            return;
         }
+        if (mc.thePlayer.motionY >= -0.0784000015258789) {
+            e.setPosY(e.getPosY() + ModuleUtils.offsetValue);
+        }
+        else {
+            e.setPosY(e.getPosY() - ModuleUtils.offsetValue);
+        }
+        ModuleManager.scaffold.offsetDelay = 2;
+        offset = true;
         if (groundSpeedOption.isToggled()) {
             if (!ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !Utils.jumpDown() && mc.thePlayer.moveForward <= -0.5 && mc.thePlayer.moveStrafing == 0 && offset && Utils.isMoving() && mc.thePlayer.onGround) {
                 float yaw = mc.thePlayer.rotationYaw;
@@ -293,7 +301,7 @@ public class NoSlow extends Module {
 
     private void resetFloat() {
         reSendConsume = canFloat = noSlowing = offset = didC = fix = requireJump = false;
-        grounded = 0;
+        grounded = offsetDelay = 0;
     }
 
     public static boolean hasArrows(ItemStack stack) {

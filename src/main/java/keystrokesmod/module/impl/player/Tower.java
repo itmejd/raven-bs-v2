@@ -379,8 +379,8 @@ public class Tower extends Module {
         return canTower() && !Utils.keysDown() && verticalTower.getInput() == 2;
     }
 
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public void onMoveInput(PrePlayerInputEvent e) {
+    @SubscribeEvent
+    public void onPostPlayerInput(PostPlayerInputEvent e) {
         if (!ModuleManager.scaffold.isEnabled) {
             return;
         }

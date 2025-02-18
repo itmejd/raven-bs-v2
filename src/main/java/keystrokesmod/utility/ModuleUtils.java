@@ -309,6 +309,10 @@ public class ModuleUtils {
     public void onPreMotion(PreMotionEvent e) {
         int simpleY = (int) Math.round((e.posY % 1) * 10000);
 
+        if (ModuleManager.scaffold.offsetDelay > 0) {
+            --ModuleManager.scaffold.offsetDelay;
+        }
+
         lastTickOnGround = thisTickOnGround;
         thisTickOnGround = mc.thePlayer.onGround;
 

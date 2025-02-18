@@ -95,6 +95,7 @@ public class Scaffold extends Module {
     private boolean floatStarted;
     private boolean floatWasEnabled;
     private boolean floatKeepY;
+    public int offsetDelay;
 
     //disable checks
     public boolean moduleEnabled;
@@ -234,7 +235,7 @@ public class Scaffold extends Module {
         //Float
         if (sprint.getInput() == 2 && !usingFastScaffold() && !fastScaffoldKeepY && !ModuleManager.tower.canTower() && !LongJump.function) {
             floatWasEnabled = true;
-            if (!floatStarted) {
+            if (!floatStarted && offsetDelay == 0) {
                 if (ModuleUtils.groundTicks > 8 && mc.thePlayer.onGround) {
                     floatKeepY = true;
                     startYPos = e.posY;
@@ -258,6 +259,7 @@ public class Scaffold extends Module {
                 if (moduleEnabled) {
                     e.setPosY(e.getPosY() + ModuleUtils.offsetValue);
                     if (Utils.isMoving()) Utils.setSpeed(getFloatSpeed(getSpeedLevel()));
+                    offsetDelay = 2;
                 }
             }
         } else if (floatWasEnabled && moduleEnabled) {
