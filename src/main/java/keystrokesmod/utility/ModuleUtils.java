@@ -43,7 +43,7 @@ public class ModuleUtils {
     private long FIREBALL_TIMEOUT = 500L, fireballTime = 0;
     public static int inAirTicks, groundTicks, stillTicks;
     public static int fadeEdge;
-    public static double offsetValue = 0.0000000000201;
+    public static double offsetValue = 0.0000000000003;
     public static boolean isAttacking;
     private int attackingTicks;
     private int unTargetTicks;
@@ -230,13 +230,14 @@ public class ModuleUtils {
 
         if ((canSlow || ModuleManager.scaffold.moduleEnabled && !ModuleManager.tower.canTower()) && !mc.thePlayer.onGround) {
             double motionVal = 0.9507832 - ((double) inAirTicks / 10000) - Utils.randomizeDouble(0.00001, 0.00006);
-            if (mc.thePlayer.hurtTime == 0 && inAirTicks >= 4 && !setSlow) {
+            if (mc.thePlayer.hurtTime == 0 && inAirTicks >= 5 && !setSlow) {
                 mc.thePlayer.motionX *= motionVal;
                 mc.thePlayer.motionZ *= motionVal;
                 setSlow = true;
                 //Utils.print("Slow " + motionVal);
             }
             didSlow = true;
+            //Utils.print(mc.thePlayer.ticksExisted + " : " + Utils.getHorizontalSpeed());
         }
         else if (didSlow) {
             canSlow = didSlow = false;

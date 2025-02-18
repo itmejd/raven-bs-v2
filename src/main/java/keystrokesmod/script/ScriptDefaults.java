@@ -121,6 +121,10 @@ public class ScriptDefaults {
             Utils.sendRawMessage(s);
         }
 
+        public static void print(Message component) {
+            mc.thePlayer.addChatMessage(component.component);
+        }
+
         public static boolean isDiagonal() {
             return Utils.isDiagonal(false);
         }

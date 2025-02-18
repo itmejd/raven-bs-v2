@@ -8,6 +8,7 @@ import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.movement.Bhop;
 import keystrokesmod.module.impl.movement.LongJump;
 import keystrokesmod.module.setting.impl.ButtonSetting;
+import keystrokesmod.module.setting.impl.GroupSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
 import keystrokesmod.utility.*;
 import keystrokesmod.utility.Timer;
@@ -42,6 +43,9 @@ public class Scaffold extends Module {
     private SliderSetting floatFirstJump;
     private SliderSetting fastScaffold;
     private SliderSetting multiPlace;
+    private GroupSetting multiPlaceSettings;
+    final private ButtonSetting mAlways, mSprint, mSprintWithSpeed, mKeepY, mKeepYWithSpeed, mTowerMove, mVerticalTower;
+
     public ButtonSetting autoSwap;
     private ButtonSetting fastOnRMB;
     public ButtonSetting highlightBlocks;
@@ -124,7 +128,17 @@ public class Scaffold extends Module {
         this.registerSetting(sprint = new SliderSetting("Sprint mode", 0, sprintModes));
         this.registerSetting(floatFirstJump = new SliderSetting("§eFloat §rfirst jump speed", "%", 100, 50, 100, 1));
         this.registerSetting(fastScaffold = new SliderSetting("Fast scaffold", 0, fastScaffoldModes));
+
         this.registerSetting(multiPlace = new SliderSetting("Multi-place", 0, multiPlaceModes));
+        this.registerSetting(multiPlaceSettings = new GroupSetting("Multi-place settings"));
+        this.registerSetting(mAlways = new ButtonSetting(multiPlaceSettings, "Always", false));
+        this.registerSetting(mSprint = new ButtonSetting(multiPlaceSettings, "Sprint scaffold", false));
+        this.registerSetting(mSprintWithSpeed = new ButtonSetting(multiPlaceSettings, "Sprint scaffold with speed", false));
+        this.registerSetting(mKeepY = new ButtonSetting(multiPlaceSettings, "Keep-Y", false));
+        this.registerSetting(mKeepYWithSpeed = new ButtonSetting(multiPlaceSettings, "Keep-Y with speed", false));
+        this.registerSetting(mTowerMove = new ButtonSetting(multiPlaceSettings, "Tower move", false));
+        this.registerSetting(mVerticalTower = new ButtonSetting(multiPlaceSettings, "Vertical tower", false));
+
         this.registerSetting(autoSwap = new ButtonSetting("Auto swap", true));
         this.registerSetting(fastOnRMB = new ButtonSetting("Fast on RMB", true));
         this.registerSetting(highlightBlocks = new ButtonSetting("Highlight blocks", true));
@@ -141,6 +155,7 @@ public class Scaffold extends Module {
 
     public void guiUpdate() {
         this.floatFirstJump.setVisible(sprint.getInput() == 2, this);
+        this.multiPlaceSettings.setVisible(multiPlace.getInput() > 0, this);
     }
 
     public void onDisable() {
@@ -217,7 +232,7 @@ public class Scaffold extends Module {
         }
 
         //Float
-        if (sprint.getInput() == 2 && !usingFastScaffold() && !fastScaffoldKeepY && !ModuleManager.bhop.isEnabled() && !ModuleManager.tower.canTower() && !ModuleManager.LongJump.function) {
+        if (sprint.getInput() == 2 && !usingFastScaffold() && !fastScaffoldKeepY && !ModuleManager.tower.canTower() && !LongJump.function) {
             floatWasEnabled = true;
             if (!floatStarted) {
                 if (ModuleUtils.groundTicks > 8 && mc.thePlayer.onGround) {
@@ -283,37 +298,37 @@ public class Scaffold extends Module {
                 if (quad <= 5 || quad >= 85) {
                     yawAngle = 126.50F;
                     minOffset = 13;
-                    minPitch = 77.08F;
+                    minPitch = 71.08F;
                 }
                 if (quad > 5 && quad <= 15 || quad >= 75 && quad < 85) {
                     yawAngle = 127.50F;
                     minOffset = 10;
-                    minPitch = 77.34F;
+                    minPitch = 72.34F;
                 }
                 if (quad > 15 && quad <= 25 || quad >= 65 && quad < 75) {
                     yawAngle = 128.50F;
                     minOffset = 7;
-                    minPitch = 77.65F;
+                    minPitch = 73.65F;
                 }
                 if (quad > 25 && quad <= 32 || quad >= 58 && quad < 65) {
                     yawAngle = 130F;
                     minOffset = 6;
-                    minPitch = 78.13F;
+                    minPitch = 74.13F;
                 }
                 if (quad > 32 && quad <= 38 || quad >= 52 && quad < 58) {
                     yawAngle = 131.50F;
                     minOffset = 4;
-                    minPitch = 78.41F;
+                    minPitch = 75.41F;
                 }
                 if (quad > 38 && quad <= 42 || quad >= 48 && quad < 52) {
                     yawAngle = 133.50F;
                     minOffset = 2;
-                    minPitch = 79.54F;
+                    minPitch = 76.54F;
                 }
                 if (quad > 42 && quad <= 45 || quad >= 45 && quad < 48) {
                     yawAngle = 137F;
                     minOffset = 1;
-                    minPitch = 79.93F;
+                    minPitch = 77.43F;
                 }
                 //Utils.print("" + minOffset);
                 //float offsetAmountD = ((((float) offsetAmount.getInput() / 10) - 10) * -2) - (((float) offsetAmount.getInput() / 10) - 10);
@@ -333,7 +348,7 @@ public class Scaffold extends Module {
                     }
                     else {
                         scaffoldYaw = mc.thePlayer.rotationYaw - hardcodedYaw();
-                        scaffoldPitch = 77f;
+                        scaffoldPitch = 78f;
                     }
                     e.setRotations(scaffoldYaw, scaffoldPitch);
                     break;
@@ -395,7 +410,6 @@ public class Scaffold extends Module {
                         was451 = false;
                     }
                 }
-
                 double minSwitch = (!Utils.scaffoldDiagonal(false)) ? 9 : 15;
                 if (side >= 0) {
                     if (yawOffset <= -minSwitch && firstStroke == 0) {
@@ -558,9 +572,12 @@ public class Scaffold extends Module {
         }
     }
 
-    @SubscribeEvent
-    public void onPostPlayerInput(PostPlayerInputEvent e) {
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public void onMoveInput(PrePlayerInputEvent e) {
         if (!ModuleManager.scaffold.isEnabled) {
+            return;
+        }
+        if (fastScaffold.getInput() == 0) {
             return;
         }
         mc.thePlayer.movementInput.jump = false;
@@ -741,7 +758,7 @@ public class Scaffold extends Module {
 
     private int handleFastScaffolds() {
         if (fastOnRMB.isToggled()) {
-            return Mouse.isButtonDown(1) && Utils.tabbedIn() ? (int) fastScaffold.getInput() : (int) sprint.getInput();
+            return fastScaffold.getInput() > 0 && Mouse.isButtonDown(1) && Utils.tabbedIn() ? (int) fastScaffold.getInput() : (int) sprint.getInput();
         }
         else {
             return fastScaffold.getInput() > 0 ? (int) fastScaffold.getInput() : (int) sprint.getInput();
@@ -814,11 +831,10 @@ public class Scaffold extends Module {
     private void placeBlock(int yOffset, int xOffset) {
         locateAndPlaceBlock(yOffset, xOffset);
         int input = (int) multiPlace.getInput();
-        if (sprint.getInput() == 0 && mc.thePlayer.onGround && !ModuleManager.tower.canTower() && !usingFastScaffold()) {
-            return;
-        }
-        if (ModuleManager.tower.canTower() && !ModuleManager.tower.tower) {
-            return;
+        if (!mAlways.isToggled()) {
+            if (!handleMultiPlaceSettings()) {
+                return;
+            }
         }
         if (input >= 1) {
             locateAndPlaceBlock(yOffset, xOffset);
@@ -826,6 +842,28 @@ public class Scaffold extends Module {
                 locateAndPlaceBlock(yOffset, xOffset);
             }
         }
+    }
+
+    private boolean handleMultiPlaceSettings() {
+        if (mTowerMove.isToggled() && ModuleManager.tower.towerMove.getInput() != 0 && (ModuleManager.tower.canTower() && Utils.keysDown() && ModuleManager.tower.towering || ModuleManager.tower.finishedTower)) {
+            return true;
+        }
+        if (mVerticalTower.isToggled() && ModuleManager.tower.verticalTower.getInput() != 0 && ModuleManager.tower.canTower() && !Utils.keysDown()) {
+            return true;
+        }
+        if (mSprint.isToggled() && sprint.getInput() != 0 && !usingFastScaffold() && !ModuleManager.tower.canTower()) {
+            return true;
+        }
+        if (mSprintWithSpeed.isToggled() && sprint.getInput() != 0 && !usingFastScaffold() && getSpeedLevel() > 0 && !ModuleManager.tower.canTower()) {
+            return true;
+        }
+        if (mKeepY.isToggled() && fastScaffold.getInput() != 0 && usingFastScaffold() && !ModuleManager.tower.canTower()) {
+            return true;
+        }
+        if (mKeepYWithSpeed.isToggled() && fastScaffold.getInput() != 0 && usingFastScaffold() && getSpeedLevel() > 0 && !ModuleManager.tower.canTower()) {
+            return true;
+        }
+        return false;
     }
 
     private void locateAndPlaceBlock(int yOffset, int xOffset) {

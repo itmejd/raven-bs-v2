@@ -57,7 +57,7 @@ public class BindComponent extends Component {
     }
 
     public boolean onClick(int x, int y, int button) {
-        if (this.overSetting(x, y) && this.moduleComponent.isOpened && this.moduleComponent.mod.canBeEnabled() && this.visible && (this.keySetting == null || this.keySetting.visible)) {
+        if (this.overSetting(x, y) && this.moduleComponent.isOpened && this.moduleComponent.mod.canBeEnabled() && this.moduleComponent.isVisible(this)) {
             if (button == 0) {
                 this.isBinding = !this.isBinding;
             }

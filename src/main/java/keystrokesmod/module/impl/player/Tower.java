@@ -14,12 +14,13 @@ import net.minecraft.network.play.client.*;
 import net.minecraft.network.play.server.S12PacketEntityVelocity;
 import net.minecraft.network.play.server.S27PacketExplosion;
 import net.minecraft.potion.PotionEffect;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public class Tower extends Module {
-    final private SliderSetting towerMove;
+    final public SliderSetting towerMove;
     private SliderSetting speedSetting;
-    final private SliderSetting verticalTower;
+    final public SliderSetting verticalTower;
     final private SliderSetting slowedSpeed;
     final private SliderSetting slowedTicks;
     final private ButtonSetting disableWhileHurt;
@@ -32,13 +33,15 @@ public class Tower extends Module {
     private int slowTicks;
     private boolean wasTowering;
     private int towerTicks;
-    public boolean tower;
+    public boolean towering;
     private boolean hasTowered, startedTowerInAir, setLowMotion, firstJump;
     private int cMotionTicks, placeTicks;
     public int dCount;
     public float yaw;
 
     public float pitch;
+
+    public boolean finishedTower;
 
     //vertical tower
     private boolean aligning, aligned, placed;
@@ -97,7 +100,7 @@ public class Tower extends Module {
 
                     break;
                 case 4:
-                    if (tower) {
+                    if (towering) {
                         if (towerTicks == 6) {
                             e.setPosY(e.getPosY() + 0.000383527);
                             ModuleManager.scaffold.rotateForward();
@@ -119,10 +122,11 @@ public class Tower extends Module {
         int valY = (int) Math.round((mc.thePlayer.posY % 1) * 10000);
         int simpleY = (int) Math.round((mc.thePlayer.posY % 1.0D) * 100.0D);
         if (canTower() && Utils.keysDown()) {
-            wasTowering = true;
+            speed = false;
+            wasTowering = hasTowered = true;
             if (disableWhileHurt.isToggled() && ModuleUtils.damage) {
                 towerTicks = 0;
-                tower = false;
+                towering = false;
                 return;
             }
             switch ((int) towerMove.getInput()) {
@@ -162,10 +166,10 @@ public class Tower extends Module {
                     }
                     break;
                 case 3:
-                    if (mc.thePlayer.posY % 1 == 0 && !setLowMotion) {
-                        tower = true;
+                    if (mc.thePlayer.posY % 1 == 0 && mc.thePlayer.onGround && !setLowMotion) {
+                        towering = true;
                     }
-                    if (tower) {
+                    if (towering) {
                         if (valY == 0) {
                             mc.thePlayer.motionY = 0.42f;
                             Utils.setSpeed(getTowerGroundSpeed(getSpeedLevel()));
@@ -175,13 +179,11 @@ public class Tower extends Module {
                             mc.thePlayer.motionY = 0.33f;
                             Utils.setSpeed(getTowerSpeed(getSpeedLevel()));
                             speed = true;
-                            hasTowered = true;
                         }
                         else if (valY > 7000) {
                             if (setLowMotion) {
-                                tower = false;
+                                towering = false;
                             }
-                            speed = false;
                             mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1f;
                         }
                     }
@@ -194,17 +196,16 @@ public class Tower extends Module {
                         else if (cMotionTicks == 4) {
                             cMotionTicks = 0;
                             setLowMotion = false;
-                            tower = true;
+                            towering = true;
                             Utils.setSpeed(getTowerGroundSpeed(getSpeedLevel()) - 0.02);
                         }
                     }
                     break;
                 case 4:
-                    speed = false;
-                    if (mc.thePlayer.posY % 1 == 0) {
-                        tower = true;
+                    if (mc.thePlayer.posY % 1 == 0 && mc.thePlayer.onGround) {
+                        towering = true;
                     }
-                    if (tower) {
+                    if (towering) {
                         towerTicks = mc.thePlayer.onGround ? 0 : ++towerTicks;
                         switch (simpleY) {
                             case 0:
@@ -227,11 +228,10 @@ public class Tower extends Module {
                     }
                     break;
                 case 5:
-                    speed = false;
-                    if (mc.thePlayer.posY % 1 == 0) {
-                        tower = true;
+                    if (mc.thePlayer.posY % 1 == 0 && mc.thePlayer.onGround) {
+                        towering = true;
                     }
-                    if (tower) {
+                    if (towering) {
                         towerTicks = mc.thePlayer.onGround ? 0 : ++towerTicks;
                         switch (towerTicks) {
                             case 0:
@@ -264,14 +264,13 @@ public class Tower extends Module {
                     }
                     break;
                 case 6:
-                    speed = false;
-                    if (mc.thePlayer.onGround) {
+                    if (mc.thePlayer.posY % 1 == 0 && mc.thePlayer.onGround) {
                         grounds++;
                     }
                     if (mc.thePlayer.posY % 1 == 0) {
-                        tower = true;
+                        towering = true;
                     }
-                    if (tower) {
+                    if (towering) {
                         towerTicks = mc.thePlayer.onGround ? 0 : ++towerTicks;
                         switch (towerTicks) {
                             case 0:
@@ -295,6 +294,12 @@ public class Tower extends Module {
             }
         }
         else {
+            if (finishedTower) {
+                finishedTower = false;
+            }
+            if (hasTowered) {
+                finishedTower = true;
+            }
             if (wasTowering && modulesEnabled()) {
                 if (slowedTicks.getInput() > 0 && slowedTicks.getInput() != 100 && slowTicks++ < slowedTicks.getInput()) {
                     mc.thePlayer.motionX *= slowedSpeed.getInput() / 100;
@@ -314,10 +319,10 @@ public class Tower extends Module {
                 }
                 slowTicks = 0;
             }
-            if (speed) {
-                Utils.setSpeed(Utils.getHorizontalSpeed(mc.thePlayer) / 2);
+            if (speed || hasTowered && mc.thePlayer.onGround) {
+                Utils.setSpeed(Utils.getHorizontalSpeed(mc.thePlayer) / 1.6);
             }
-            hasTowered = tower = firstJump = startedTowerInAir = setLowMotion = speed = false;
+            hasTowered = towering = firstJump = startedTowerInAir = setLowMotion = speed = false;
             cMotionTicks = placeTicks = towerTicks = grounds = 0;
             reset();
         }
@@ -374,8 +379,8 @@ public class Tower extends Module {
         return canTower() && !Utils.keysDown() && verticalTower.getInput() == 2;
     }
 
-    @SubscribeEvent
-    public void onPostPlayerInput(PostPlayerInputEvent e) {
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public void onMoveInput(PrePlayerInputEvent e) {
         if (!ModuleManager.scaffold.isEnabled) {
             return;
         }
@@ -428,7 +433,7 @@ public class Tower extends Module {
 
     private void reset() {
         towerTicks = 0;
-        tower = false;
+        towering = false;
         placeTicks = 0;
         setLowMotion = false;
     }

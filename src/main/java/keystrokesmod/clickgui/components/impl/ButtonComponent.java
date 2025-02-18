@@ -14,7 +14,7 @@ public class ButtonComponent extends Component {
     private final int enabledColor = (new Color(20, 255, 0)).getRGB();
     private Module mod;
     public ButtonSetting buttonSetting;
-    private ModuleComponent p;
+    private ModuleComponent moduleComponent;
     public int o;
     public int x;
     private int y;
@@ -24,7 +24,7 @@ public class ButtonComponent extends Component {
     public ButtonComponent(Module mod, ButtonSetting op, ModuleComponent b, int o) {
         this.mod = mod;
         this.buttonSetting = op;
-        this.p = b;
+        this.moduleComponent = b;
         this.x = b.categoryComponent.getX() + b.categoryComponent.getWidth();
         this.y = b.categoryComponent.getY() + b.yPos;
         this.o = o;
@@ -33,7 +33,7 @@ public class ButtonComponent extends Component {
     public void render() {
         GL11.glPushMatrix();
         GL11.glScaled(0.5D, 0.5D, 0.5D);
-        Minecraft.getMinecraft().fontRendererObj.drawString((this.buttonSetting.isMethodButton ? "[=]  " : (this.buttonSetting.isToggled() ? "[+]  " : "[-]  ")) + this.buttonSetting.getName(), (float) ((this.p.categoryComponent.getX() + 4) * 2) + xOffset, (float) ((this.p.categoryComponent.getY() + this.o + 4) * 2), this.buttonSetting.isToggled() ? this.enabledColor : -1, false);
+        Minecraft.getMinecraft().fontRendererObj.drawString((this.buttonSetting.isMethodButton ? "[=]  " : (this.buttonSetting.isToggled() ? "[+]  " : "[-]  ")) + this.buttonSetting.getName(), (float) ((this.moduleComponent.categoryComponent.getX() + 4) * 2) + xOffset, (float) ((this.moduleComponent.categoryComponent.getY() + this.o + 4) * 2), this.buttonSetting.isToggled() ? this.enabledColor : -1, false);
         GL11.glScaled(1, 1, 1);
         if (renderLine) {
             //RenderUtils.drawRectangleGL((float) ((this.p.categoryComponent.getX() + 4) * 2), (float) ((this.p.categoryComponent.getY() + this.o) * 2), (float) ((this.p.categoryComponent.getX() + 4) * 2) + 1, (float) ((this.p.categoryComponent.getY() + this.o + 4) * 2) + 16, new Color(192, 192, 192).getRGB());
@@ -46,12 +46,12 @@ public class ButtonComponent extends Component {
     }
 
     public void drawScreen(int x, int y) {
-        this.y = this.p.categoryComponent.getModuleY() + this.o;
-        this.x = this.p.categoryComponent.getX();
+        this.y = this.moduleComponent.categoryComponent.getModuleY() + this.o;
+        this.x = this.moduleComponent.categoryComponent.getX();
     }
 
     public boolean onClick(int x, int y, int b) {
-        if (this.i(x, y) && b == 0 && this.p.isOpened && this.visible && this.buttonSetting.visible) {
+        if (this.i(x, y) && b == 0 && this.moduleComponent.isOpened && this.moduleComponent.isVisible(this)) {
             if (this.buttonSetting.isMethodButton) {
                 this.buttonSetting.runMethod();
                 return false;
@@ -66,6 +66,6 @@ public class ButtonComponent extends Component {
     }
 
     public boolean i(int x, int y) {
-        return x > this.x && x < this.x + this.p.categoryComponent.getWidth() && y > this.y && y < this.y + 11;
+        return x > this.x && x < this.x + this.moduleComponent.categoryComponent.getWidth() && y > this.y && y < this.y + 11;
     }
 }

@@ -103,6 +103,7 @@ public class Safewalk extends Module {
         }
         canSneak = sneakState;
         mc.thePlayer.movementInput.sneak = sneakState;
+        mc.thePlayer.setSneaking(sneakState);
         this.isSneaking = sneakState;
         //Utils.print("Edge " + mc.thePlayer.movementInput.sneak + " " + sneakState + " " + mc.thePlayer.ticksExisted);
 

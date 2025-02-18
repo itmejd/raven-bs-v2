@@ -157,7 +157,7 @@ public class LongJump extends Module {
             disabled();
         }
 
-        if (spoofItem.isToggled() && lastSlot != -1) {
+    if (spoofItem.isToggled() && lastSlot != -1 && !manual.isToggled()) {
             ((IMixinItemRenderer) mc.getItemRenderer()).setCancelUpdate(true);
             ((IMixinItemRenderer) mc.getItemRenderer()).setCancelReset(true);
         }
@@ -278,15 +278,14 @@ public class LongJump extends Module {
                 fireballTime = System.currentTimeMillis();
                 if (!manual.isToggled()) {
                     mc.getNetHandler().addToSendQueue(new C08PacketPlayerBlockPlacement(mc.thePlayer.getHeldItem()));
-                    //((IAccessorMinecraft) mc).callRightClickMouse();
-                }
-                if (silentSwing.isToggled()) {
-                    mc.thePlayer.sendQueue.addToSendQueue(new C0APacketAnimation());
-                }
-                else {
-                    mc.thePlayer.swingItem();
-                    if (!spoofItem.isToggled()) {
-                        mc.getItemRenderer().resetEquippedProgress();
+                    if (silentSwing.isToggled()) {
+                        mc.thePlayer.sendQueue.addToSendQueue(new C0APacketAnimation());
+                    }
+                    else {
+                        mc.thePlayer.swingItem();
+                        if (!spoofItem.isToggled()) {
+                            mc.getItemRenderer().resetEquippedProgress();
+                        }
                     }
                 }
                 stopVelocity = true;
@@ -431,7 +430,7 @@ public class LongJump extends Module {
     void modifyHorizontal() {
         if (boostSetting.getInput() != 0) {
 
-            double speed = ((boostSetting.getInput() > 1.6 && ModuleManager.scaffold.isEnabled) ? 1.6 : boostSetting.getInput()) - Utils.randomizeDouble(0.0001, 0);
+            double speed = boostSetting.getInput() - Utils.randomizeDouble(0.0001, 0);
             if (Utils.isMoving()) {
                 Utils.setSpeed(speed);
             }

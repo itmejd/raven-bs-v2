@@ -966,7 +966,7 @@ public class KillAura extends Module {
         if (interactTicks == 0) {
             firstEdge++;
         }
-        if (firstEdge > 6) {
+        if (firstEdge > 8) {
             firstEdge = 0;
         }
         interactTicks++;

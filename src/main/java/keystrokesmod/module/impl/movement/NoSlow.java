@@ -214,8 +214,10 @@ public class NoSlow extends Module {
             offset = false;
             return;
         }
-        e.setPosY(e.getPosY() + ModuleUtils.offsetValue);
-        offset = true;
+        if (mc.thePlayer.ticksExisted % 2 == 0 || mc.thePlayer.onGround) {
+            e.setPosY(e.getPosY() + ModuleUtils.offsetValue);
+            offset = true;
+        }
         if (groundSpeedOption.isToggled()) {
             if (!ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !Utils.jumpDown() && mc.thePlayer.moveForward <= -0.5 && mc.thePlayer.moveStrafing == 0 && offset && Utils.isMoving() && mc.thePlayer.onGround) {
                 float yaw = mc.thePlayer.rotationYaw;

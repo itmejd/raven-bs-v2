@@ -171,11 +171,12 @@ public class BedAura extends Module {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onPreMotion(PreMotionEvent e) {
         aiming = false;
+        if (currentBlock != null && !RotationUtils.inRange(currentBlock, range.getInput())) {
+            stopAutoblock = false;
+            return;
+        }
         if ((rotate || breakProgress >= 1 || breakProgress == 0) && (currentBlock != null || rotateLastBlock != null)) {
             float[] rotations = RotationUtils.getRotations(currentBlock == null ? rotateLastBlock : currentBlock, e.getYaw(), e.getPitch());
-            if (currentBlock != null && !RotationUtils.inRange(currentBlock, range.getInput())) {
-                return;
-            }
             e.setYaw(RotationUtils.applyVanilla(rotations[0]));
             e.setPitch(rotations[1]);
             if (Raven.debug) {
