@@ -21,14 +21,13 @@ import org.lwjgl.input.Keyboard;
 
 public class Velocity extends Module {
     public SliderSetting velocityModes;
-    public static SliderSetting vertical, horizontal, reverseHorizontal;
+    public static SliderSetting vertical, horizontal, reverseHorizontal, explosionsHorizontal, explosionsVertical;
     public static SliderSetting minExtraSpeed, extraSpeedBoost;
     private SliderSetting chance;
     private ButtonSetting onlyWhileAttacking;
     private ButtonSetting onlyWhileTargeting;
     private ButtonSetting disableS;
     private ButtonSetting zzWhileNotTargeting;
-    private ButtonSetting disableExplosions;
     public ButtonSetting allowSelfFireball;
     public static ButtonSetting reverseDebug;
     private KeySetting switchToReverse, switchToHypixel;
@@ -46,15 +45,19 @@ public class Velocity extends Module {
         this.registerSetting(vertical = new SliderSetting("Vertical", 0.0, 0.0, 100.0, 1.0));
 
         this.registerSetting(reverseHorizontal = new SliderSetting("-Horizontal", 0.0, 0.0, 100.0, 1.0));
+
+        this.registerSetting(explosionsHorizontal = new SliderSetting("Horizontal (Explosions)", 0.0, 0.0, 100.0, 1.0));
+        this.registerSetting(explosionsVertical = new SliderSetting("Vertical (Explosions)", 0.0, 0.0, 100.0, 1.0));
+
         this.registerSetting(minExtraSpeed = new SliderSetting("Maximum speed for extra boost", 0, 0, 0.7, 0.01));
         this.registerSetting(extraSpeedBoost = new SliderSetting("Extra speed boost multiplier", "%", 0, 0, 100, 1));
+
 
         this.registerSetting(chance = new SliderSetting("Chance", "%", 100.0D, 0.0D, 100.0D, 1.0D));
         this.registerSetting(onlyWhileAttacking = new ButtonSetting("Only while attacking", false));
         this.registerSetting(onlyWhileTargeting = new ButtonSetting("Only while targeting", false));
         this.registerSetting(disableS = new ButtonSetting("Disable while holding S", false));
         this.registerSetting(zzWhileNotTargeting = new ButtonSetting("00 while not targeting", false));
-        this.registerSetting(disableExplosions = new ButtonSetting("Disable explosions", false));
         this.registerSetting(allowSelfFireball = new ButtonSetting("Allow self fireball", false));
 
         this.registerSetting(switchToReverse = new KeySetting("Switch to reverse", Keyboard.KEY_SPACE));
@@ -69,7 +72,6 @@ public class Velocity extends Module {
         this.disableS.setVisible(velocityModes.getInput() == 0, this);
 
         this.allowSelfFireball.setVisible(velocityModes.getInput() == 1, this);
-        this.disableExplosions.setVisible(velocityModes.getInput() == 1, this);
         this.zzWhileNotTargeting.setVisible(velocityModes.getInput() == 1, this);
 
         this.switchToReverse.setVisible(velocityModes.getInput() == 1, this);
@@ -81,6 +83,9 @@ public class Velocity extends Module {
         this.vertical.setVisible(velocityModes.getInput() != 2, this);
         this.chance.setVisible(velocityModes.getInput() != 2, this);
         this.reverseHorizontal.setVisible(velocityModes.getInput() == 2, this);
+
+        this.explosionsHorizontal.setVisible(velocityModes.getInput() != 0, this);
+        this.explosionsVertical.setVisible(velocityModes.getInput() != 0, this);
 
         this.minExtraSpeed.setVisible(velocityModes.getInput() == 2, this);
         this.extraSpeedBoost.setVisible(velocityModes.getInput() == 2, this);
@@ -109,7 +114,7 @@ public class Velocity extends Module {
 
     @SubscribeEvent
     public void onReceivePacket(ReceivePacketEvent e) {
-        if (velocityModes.getInput() == 1) {
+        if (velocityModes.getInput() >= 1) {
             if (!Utils.nullCheck() || LongJump.stopVelocity || e.isCanceled() || ModuleManager.bedAura.cancelKnockback() || ModuleManager.tower.cancelKnockback() || velocityModes.getInput() == 2 && ModuleUtils.firstDamage || ModuleManager.bhop.isEnabled() && ModuleManager.bhop.damageBoost.isToggled() && ModuleUtils.firstDamage && (!ModuleManager.bhop.damageBoostRequireKey.isToggled() || ModuleManager.bhop.damageBoostKey.isPressed())) {
                 return;
             }
@@ -126,19 +131,19 @@ public class Velocity extends Module {
                         return;
                     }
                 }
-                if (!dontEditMotion() && !disableVelo && !disableExplosions.isToggled() && !ModuleManager.bedAura.cancelKnockback()) {
-                    if (horizontal.getInput() == 0 && vertical.getInput() > 0) {
-                        mc.thePlayer.motionY += s27PacketExplosion.func_149144_d() * vertical.getInput() / 100.0;
-                    } else if (horizontal.getInput() > 0 && vertical.getInput() == 0) {
-                        mc.thePlayer.motionX += s27PacketExplosion.func_149149_c() * horizontal.getInput() / 100.0;
-                        mc.thePlayer.motionZ += s27PacketExplosion.func_149147_e() * horizontal.getInput() / 100.0;
-                    } else if (horizontal.getInput() > 0 && vertical.getInput() > 0) {
-                        mc.thePlayer.motionX += s27PacketExplosion.func_149149_c() * horizontal.getInput() / 100.0;
-                        mc.thePlayer.motionY += s27PacketExplosion.func_149144_d() * vertical.getInput() / 100.0;
-                        mc.thePlayer.motionZ += s27PacketExplosion.func_149147_e() * horizontal.getInput() / 100.0;
+                if (!dontEditMotion() && !disableVelo) {
+                    if (explosionsHorizontal.getInput() == 0 && explosionsVertical.getInput() > 0) {
+                        mc.thePlayer.motionY += s27PacketExplosion.func_149144_d() * explosionsVertical.getInput() / 100.0;
+                    } else if (explosionsHorizontal.getInput() > 0 && explosionsVertical.getInput() == 0) {
+                        mc.thePlayer.motionX += s27PacketExplosion.func_149149_c() * explosionsHorizontal.getInput() / 100.0;
+                        mc.thePlayer.motionZ += s27PacketExplosion.func_149147_e() * explosionsHorizontal.getInput() / 100.0;
+                    } else if (explosionsHorizontal.getInput() > 0 && explosionsVertical.getInput() > 0) {
+                        mc.thePlayer.motionX += s27PacketExplosion.func_149149_c() * explosionsHorizontal.getInput() / 100.0;
+                        mc.thePlayer.motionY += s27PacketExplosion.func_149144_d() * explosionsVertical.getInput() / 100.0;
+                        mc.thePlayer.motionZ += s27PacketExplosion.func_149147_e() * explosionsHorizontal.getInput() / 100.0;
                     }
                 }
-                if (disableExplosions.isToggled()) stopFBvelo = true;
+                stopFBvelo = true;
                 e.setCanceled(true);
                 disableVelo = false;
             }
@@ -146,16 +151,32 @@ public class Velocity extends Module {
                 if (((S12PacketEntityVelocity) e.getPacket()).getEntityID() == mc.thePlayer.getEntityId()) {
                     S12PacketEntityVelocity s12PacketEntityVelocity = (S12PacketEntityVelocity) e.getPacket();
 
-                    if (!dontEditMotion() && !disableVelo && !stopFBvelo && !ModuleManager.bedAura.cancelKnockback()) {
-                        if (horizontal.getInput() == 0 && vertical.getInput() > 0) {
-                            mc.thePlayer.motionY = ((double) s12PacketEntityVelocity.getMotionY() / 8000) * vertical.getInput() / 100.0;
-                        } else if (horizontal.getInput() > 0 && vertical.getInput() == 0) {
-                            mc.thePlayer.motionX = ((double) s12PacketEntityVelocity.getMotionX() / 8000) * horizontal.getInput() / 100.0;
-                            mc.thePlayer.motionZ = ((double) s12PacketEntityVelocity.getMotionZ() / 8000) * horizontal.getInput() / 100.0;
-                        } else if (horizontal.getInput() > 0 && vertical.getInput() > 0) {
-                            mc.thePlayer.motionX = ((double) s12PacketEntityVelocity.getMotionX() / 8000) * horizontal.getInput() / 100.0;
-                            mc.thePlayer.motionY = ((double) s12PacketEntityVelocity.getMotionY() / 8000) * vertical.getInput() / 100.0;
-                            mc.thePlayer.motionZ = ((double) s12PacketEntityVelocity.getMotionZ() / 8000) * horizontal.getInput() / 100.0;
+                    if (!stopFBvelo) {
+                        if (!dontEditMotion() && !disableVelo) {
+                            if (horizontal.getInput() == 0 && vertical.getInput() > 0) {
+                                mc.thePlayer.motionY = ((double) s12PacketEntityVelocity.getMotionY() / 8000) * vertical.getInput() / 100.0;
+                            } else if (horizontal.getInput() > 0 && vertical.getInput() == 0) {
+                                mc.thePlayer.motionX = ((double) s12PacketEntityVelocity.getMotionX() / 8000) * horizontal.getInput() / 100.0;
+                                mc.thePlayer.motionZ = ((double) s12PacketEntityVelocity.getMotionZ() / 8000) * horizontal.getInput() / 100.0;
+                            } else if (horizontal.getInput() > 0 && vertical.getInput() > 0) {
+                                mc.thePlayer.motionX = ((double) s12PacketEntityVelocity.getMotionX() / 8000) * horizontal.getInput() / 100.0;
+                                mc.thePlayer.motionY = ((double) s12PacketEntityVelocity.getMotionY() / 8000) * vertical.getInput() / 100.0;
+                                mc.thePlayer.motionZ = ((double) s12PacketEntityVelocity.getMotionZ() / 8000) * horizontal.getInput() / 100.0;
+                            }
+                        }
+                    }
+                    else {
+                        if (!dontEditMotion() && !disableVelo) {
+                            if (explosionsHorizontal.getInput() == 0 && explosionsVertical.getInput() > 0) {
+                                mc.thePlayer.motionY = ((double) s12PacketEntityVelocity.getMotionY() / 8000) * explosionsVertical.getInput() / 100.0;
+                            } else if (explosionsHorizontal.getInput() > 0 && explosionsVertical.getInput() == 0) {
+                                mc.thePlayer.motionX = ((double) s12PacketEntityVelocity.getMotionX() / 8000) * explosionsHorizontal.getInput() / 100.0;
+                                mc.thePlayer.motionZ = ((double) s12PacketEntityVelocity.getMotionZ() / 8000) * explosionsHorizontal.getInput() / 100.0;
+                            } else if (explosionsHorizontal.getInput() > 0 && explosionsVertical.getInput() > 0) {
+                                mc.thePlayer.motionX = ((double) s12PacketEntityVelocity.getMotionX() / 8000) * explosionsHorizontal.getInput() / 100.0;
+                                mc.thePlayer.motionY = ((double) s12PacketEntityVelocity.getMotionY() / 8000) * explosionsVertical.getInput() / 100.0;
+                                mc.thePlayer.motionZ = ((double) s12PacketEntityVelocity.getMotionZ() / 8000) * explosionsHorizontal.getInput() / 100.0;
+                            }
                         }
                     }
                     stopFBvelo = false;

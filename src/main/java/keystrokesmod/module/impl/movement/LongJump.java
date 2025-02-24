@@ -107,6 +107,7 @@ public class LongJump extends Module {
 
         this.verticalMotion.setVisible(mode.getInput() == 0, this);
         this.motionDecay.setVisible(mode.getInput() == 0, this);
+        this.beginFlat.setVisible(mode.getInput() == 0, this);
         this.verticalKey.setVisible(mode.getInput() == 0 && beginFlat.isToggled(), this);
         this.flatKey.setVisible(mode.getInput() == 0 && !beginFlat.isToggled(), this);
     }
@@ -157,12 +158,12 @@ public class LongJump extends Module {
             disabled();
         }
 
-    if (spoofItem.isToggled() && lastSlot != -1 && !manual.isToggled()) {
+        if (spoofItem.isToggled() && lastSlot != -1 && !manual.isToggled()) {
             ((IMixinItemRenderer) mc.getItemRenderer()).setCancelUpdate(true);
             ((IMixinItemRenderer) mc.getItemRenderer()).setCancelReset(true);
         }
 
-        if (swapped) {
+        if (swapped && rotateTick == 0) {
             resetSlot();
             swapped = false;
         }
@@ -256,7 +257,10 @@ public class LongJump extends Module {
         if (!Utils.nullCheck()) {
             return;
         }
-        if (rotateTick == 1) {
+        if (rotateTick >= 3) {
+            rotateTick = 0;
+        }
+        if (rotateTick >= 1) {
             if ((invertYaw.isToggled() || stopMovement.isToggled()) && !notMoving) {
                 if (!stopMovement.isToggled()) {
                     yaw = mc.thePlayer.rotationYaw - 180f;
@@ -272,7 +276,6 @@ public class LongJump extends Module {
             e.setRotations(yaw, pitch);
         }
         if (rotateTick > 0 && ++rotateTick >= 3) {
-            rotateTick = 0;
             int fireballSlot = setupFireballSlot(false);
             if (fireballSlot != -1) {
                 fireballTime = System.currentTimeMillis();

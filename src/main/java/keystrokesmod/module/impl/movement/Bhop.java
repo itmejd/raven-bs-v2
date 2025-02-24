@@ -24,26 +24,26 @@ public class Bhop extends Module {
     public ButtonSetting disablerOnly;
     private ButtonSetting sneakDisable;
     private ButtonSetting jumpMoving;
-    public ButtonSetting rotateYawOption, damageBoost, strafe, damageBoostRequireKey;
+    public ButtonSetting rotateYaw, slowBackwards, damageBoost, strafe, damageBoostRequireKey;
     public GroupSetting damageBoostGroup, strafeGroup;
     private SliderSetting strafeDegrees;
     public KeySetting damageBoostKey;
     public String[] modes = new String[]{"Strafe", "Ground", "9 tick", "8 tick", "7 tick"};
     public boolean hopping, lowhop, didMove, setRotation;
-    private int motionTick = 0;
     public boolean isNormalPos;
     public boolean running;
 
     public Bhop() {
         super("Bhop", Module.category.movement);
         this.registerSetting(mode = new SliderSetting("Mode", 0, modes));
+        this.registerSetting(disablerOnly = new ButtonSetting("Require disabler", false));
         this.registerSetting(speedSetting = new SliderSetting("Speed", 2.0, 0.8, 1.2, 0.01));
         this.registerSetting(friction = new SliderSetting("Friction multiplier", 1, 1, 1.3, 0.01));
-        this.registerSetting(disablerOnly = new ButtonSetting("Lowhop only if disabler loaded", false));
         this.registerSetting(liquidDisable = new ButtonSetting("Disable in liquid", true));
         this.registerSetting(sneakDisable = new ButtonSetting("Disable while sneaking", true));
         this.registerSetting(jumpMoving = new ButtonSetting("Only jump when moving", true));
-        this.registerSetting(rotateYawOption = new ButtonSetting("Rotate yaw", false));
+        this.registerSetting(rotateYaw = new ButtonSetting("Rotate yaw", false));
+        this.registerSetting(slowBackwards = new ButtonSetting("Slow backwards", false));
 
         this.registerSetting(damageBoostGroup = new GroupSetting("Damage boost"));
         this.registerSetting(damageBoost = new ButtonSetting(damageBoostGroup, "Enable Damage boost", false));
@@ -57,6 +57,8 @@ public class Bhop extends Module {
 
     public void guiUpdate() {
         this.damageBoostKey.setVisible(damageBoostRequireKey.isToggled(), this);
+
+        this.disablerOnly.setVisible(mode.getInput() >= 2, this);
     }
 
     @Override
@@ -88,7 +90,6 @@ public class Bhop extends Module {
         if (LongJump.function) {
             return;
         }
-        motionTick = 0;
         if (mode.getInput() >= 1) {
             if (mc.thePlayer.onGround && (!jumpMoving.isToggled() || Utils.isMoving())) {
                 if (mc.thePlayer.moveForward <= -0.5 && mc.thePlayer.moveStrafing == 0 && !ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !ModuleManager.scaffold.isEnabled && !mc.thePlayer.isCollidedHorizontally) {
@@ -123,8 +124,11 @@ public class Bhop extends Module {
                 }
 
                 if (Utils.isMoving()) {
-                    if (!Utils.noSlowingBackWithBow() && !ModuleManager.sprint.disableBackwards()) {
+                    if (!Utils.noSlowingBackWithBow() && !ModuleManager.sprint.disableBackwards() && !slowBackwards()) {
                         Utils.setSpeed((speedModifier - Utils.randomizeDouble(0.0003, 0.0001)) * ModuleUtils.applyFrictionMulti());
+                    }
+                    else {
+                        Utils.setSpeed((speedModifier - Utils.randomizeDouble(0.0003, 0.0001)) - 0.3);
                     }
                     didMove = true;
                 }
@@ -164,6 +168,10 @@ public class Bhop extends Module {
             airStrafe();
         }
 
+    }
+
+    private boolean slowBackwards() {
+        return slowBackwards.isToggled() && mc.thePlayer.moveForward <= -0.5;
     }
 
     public float hardcodedYaw() {

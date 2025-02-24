@@ -3,6 +3,7 @@ package keystrokesmod.module.impl.player;
 import keystrokesmod.event.*;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
+import keystrokesmod.module.impl.movement.LongJump;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.GroupSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
@@ -28,7 +29,7 @@ public class Tower extends Module {
     private final ButtonSetting cancelKnockback;
     private ButtonSetting cancelVelocityRequired;
 
-    final private String[] towerMoveModes = new String[]{"None", "Vanilla", "Low", "Edge", "2.5 tick", "1.5 tick", "1 tick"};
+    final private String[] towerMoveModes = new String[]{"None", "Vanilla", "Low", "Edge", "2.5 tick", "1.5 tick", "1 tick", "10 tick"};
     final private String[] verticalTowerModes = new String[]{"None", "Vanilla", "Extra block"};
     private int slowTicks;
     private boolean wasTowering;
@@ -113,6 +114,13 @@ public class Tower extends Module {
                 case 6:
 
                     break;
+                case 7:
+                    if (towering) {
+                        if (towerTicks == 0) {
+                            //e.setOnGround(true);
+                        }
+                    }
+                    break;
             }
         }
     }
@@ -121,257 +129,289 @@ public class Tower extends Module {
     public void onPreUpdate(PreUpdateEvent e) {
         int valY = (int) Math.round((mc.thePlayer.posY % 1) * 10000);
         int simpleY = (int) Math.round((mc.thePlayer.posY % 1.0D) * 100.0D);
-        if (canTower() && Utils.keysDown()) {
-            speed = false;
-            wasTowering = hasTowered = true;
-            if (disableWhileHurt.isToggled() && ModuleUtils.damage) {
-                towerTicks = 0;
-                towering = false;
-                return;
-            }
-            switch ((int) towerMove.getInput()) {
-                case 1:
-                    mc.thePlayer.motionY = 0.41965;
-                    switch (towerTicks) {
-                        case 1:
-                            mc.thePlayer.motionY = 0.33;
-                            break;
-                        case 2:
-                            mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1;
-                            break;
-                    }
-                    if (towerTicks >= 3) {
-                        towerTicks = 0;
-                    }
-                case 2:
-                    if (mc.thePlayer.onGround) {
-                        mc.thePlayer.motionY = 0.4196;
-                    }
-                    else {
+        if (towerMove.getInput() > 0) {
+            if (canTower() && Utils.keysDown()) {
+                speed = false;
+                wasTowering = hasTowered = true;
+                if (disableWhileHurt.isToggled() && ModuleUtils.damage) {
+                    towerTicks = 0;
+                    towering = false;
+                    return;
+                }
+                switch ((int) towerMove.getInput()) {
+                    case 1:
+                        mc.thePlayer.motionY = 0.41965;
                         switch (towerTicks) {
-                            case 3:
-                            case 4:
-                                mc.thePlayer.motionY = 0;
-                                break;
-                            case 5:
-                                mc.thePlayer.motionY = 0.4191;
-                                break;
-                            case 6:
-                                mc.thePlayer.motionY = 0.3275;
-                                break;
-                            case 11:
-                                mc.thePlayer.motionY = - 0.5;
-
-                        }
-                    }
-                    break;
-                case 3:
-                    if (mc.thePlayer.posY % 1 == 0 && mc.thePlayer.onGround && !setLowMotion) {
-                        towering = true;
-                    }
-                    if (towering) {
-                        if (valY == 0) {
-                            mc.thePlayer.motionY = 0.42f;
-                            Utils.setSpeed(getTowerGroundSpeed(getSpeedLevel()));
-                            startedTowerInAir = false;
-                        }
-                        else if (valY > 4000 && valY < 4300) {
-                            mc.thePlayer.motionY = 0.33f;
-                            Utils.setSpeed(getTowerSpeed(getSpeedLevel()));
-                            speed = true;
-                        }
-                        else if (valY > 7000) {
-                            if (setLowMotion) {
-                                towering = false;
-                            }
-                            mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1f;
-                        }
-                    }
-                    else if (setLowMotion) {
-                        ++cMotionTicks;
-                        if (cMotionTicks == 1) {
-                            mc.thePlayer.motionY = 0.08F;
-                            Utils.setSpeed(getTowerSpeed(getSpeedLevel()));
-                        }
-                        else if (cMotionTicks == 4) {
-                            cMotionTicks = 0;
-                            setLowMotion = false;
-                            towering = true;
-                            Utils.setSpeed(getTowerGroundSpeed(getSpeedLevel()) - 0.02);
-                        }
-                    }
-                    break;
-                case 4:
-                    if (mc.thePlayer.posY % 1 == 0 && mc.thePlayer.onGround) {
-                        towering = true;
-                    }
-                    if (towering) {
-                        towerTicks = mc.thePlayer.onGround ? 0 : ++towerTicks;
-                        switch (simpleY) {
-                            case 0:
-                                mc.thePlayer.motionY = 0.42f;
-                                if (towerTicks == 6) {
-                                    mc.thePlayer.motionY = -0.078400001525879;
-                                }
-                                Utils.setSpeed(getTowerSpeed(getSpeedLevel()));
-                                speed = true;
-                                break;
-                            case 42:
-                                mc.thePlayer.motionY = 0.33f;
-                                Utils.setSpeed(getTowerSpeed(getSpeedLevel()));
-                                speed = true;
-                                break;
-                            case 75:
-                                mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1f;
-                                break;
-                        }
-                    }
-                    break;
-                case 5:
-                    if (mc.thePlayer.posY % 1 == 0 && mc.thePlayer.onGround) {
-                        towering = true;
-                    }
-                    if (towering) {
-                        towerTicks = mc.thePlayer.onGround ? 0 : ++towerTicks;
-                        switch (towerTicks) {
-                            case 0:
-                                mc.thePlayer.motionY = 0.42f;
-                                Utils.setSpeed(get15tickspeed(getSpeedLevel())); // Speed + Strafe tick
-                                speed = true;
-                                break;
                             case 1:
-                                mc.thePlayer.motionY = 0.33f;
-                                Utils.setSpeed(Utils.getHorizontalSpeed()); // Strafe tick
+                                mc.thePlayer.motionY = 0.33;
                                 break;
                             case 2:
-                                mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1f;
-                                break;
-                            case 3:
-                                mc.thePlayer.motionY = 0.42f;
-                                Utils.setSpeed(Utils.getHorizontalSpeed()); // Strafe tick
-                                break;
-                            case 4:
-                                mc.thePlayer.motionY = 0.33f;
-                                Utils.setSpeed(Utils.getHorizontalSpeed()); // Strafe tick
-                                break;
-                            case 5:
-                                mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1f + 0.0000001;
-                                break;
-                            case 6:
-                                mc.thePlayer.motionY = -0.01;
+                                mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1;
                                 break;
                         }
-                    }
-                    break;
-                case 6:
-                    if (mc.thePlayer.posY % 1 == 0 && mc.thePlayer.onGround) {
-                        grounds++;
-                    }
-                    if (mc.thePlayer.posY % 1 == 0) {
-                        towering = true;
-                    }
-                    if (towering) {
-                        towerTicks = mc.thePlayer.onGround ? 0 : ++towerTicks;
-                        switch (towerTicks) {
-                            case 0:
-                                mc.thePlayer.motionY = 0.42f;
-                                Utils.setSpeed(get15tickspeed(getSpeedLevel())); // Speed + Strafe tick
-                                speed = true;
-                                break;
-                            case 1:
-                                mc.thePlayer.motionY = 0.33f;
-                                Utils.setSpeed(Utils.getHorizontalSpeed()); // Strafe tick
-                                break;
-                            case 2:
-                                mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1f;
-                                break;
-                            case 3:
-                                mc.thePlayer.motionY = 0.005;
-                                break;
+                        if (towerTicks >= 3) {
+                            towerTicks = 0;
                         }
-                    }
-                    break;
-            }
-        }
-        else {
-            if (finishedTower) {
-                finishedTower = false;
-            }
-            if (hasTowered) {
-                finishedTower = true;
-            }
-            if (wasTowering && modulesEnabled()) {
-                if (slowedTicks.getInput() > 0 && slowedTicks.getInput() != 100 && slowTicks++ < slowedTicks.getInput()) {
-                    mc.thePlayer.motionX *= slowedSpeed.getInput() / 100;
-                    mc.thePlayer.motionZ *= slowedSpeed.getInput() / 100;
-                }
-                else {
-                    ModuleUtils.handleSlow();
-                }
-                if (slowTicks >= slowedTicks.getInput()) {
-                    slowTicks = 0;
-                    wasTowering = false;
-                }
-            }
-            else {
-                if (wasTowering) {
-                    wasTowering = false;
-                }
-                slowTicks = 0;
-            }
-            if (speed || hasTowered && mc.thePlayer.onGround) {
-                Utils.setSpeed(Utils.getHorizontalSpeed(mc.thePlayer) / 1.6);
-            }
-            hasTowered = towering = firstJump = startedTowerInAir = setLowMotion = speed = false;
-            cMotionTicks = placeTicks = towerTicks = grounds = 0;
-            reset();
-        }
-        if (canTower() && !Utils.keysDown()) {
-            wasTowering = true;
-            switch ((int) verticalTower.getInput()) {
-                case 1:
-                    mc.thePlayer.motionY = 0.42f;
-                    break;
-                case 2:
-                    if (!aligned) {
+                    case 2:
                         if (mc.thePlayer.onGround) {
-                            if (!aligning) {
-                                blockX = (int) mc.thePlayer.posX;
+                            mc.thePlayer.motionY = 0.4196;
+                        } else {
+                            switch (towerTicks) {
+                                case 3:
+                                case 4:
+                                    mc.thePlayer.motionY = 0;
+                                    break;
+                                case 5:
+                                    mc.thePlayer.motionY = 0.4191;
+                                    break;
+                                case 6:
+                                    mc.thePlayer.motionY = 0.3275;
+                                    break;
+                                case 11:
+                                    mc.thePlayer.motionY = -0.5;
 
-                                firstX = mc.thePlayer.posX - 10;
-                                firstY = mc.thePlayer.posY;
-                                firstZ = mc.thePlayer.posZ;
                             }
-                            mc.thePlayer.motionX = 0.22;
-                            aligning = true;
                         }
-                        if (aligning && (int) mc.thePlayer.posX > blockX) {
-                            aligned = true;
+                        break;
+                    case 3:
+                        if (mc.thePlayer.posY % 1 == 0 && mc.thePlayer.onGround && !setLowMotion) {
+                            towering = true;
                         }
-                        yaw = RotationUtils.getRotations(firstX, firstY, firstZ)[0];
-                        pitch = 0;
+                        if (towering) {
+                            if (valY == 0) {
+                                mc.thePlayer.motionY = 0.42f;
+                                Utils.setSpeed(getTowerGroundSpeed(getSpeedLevel()));
+                                startedTowerInAir = false;
+                            } else if (valY > 4000 && valY < 4300) {
+                                mc.thePlayer.motionY = 0.33f;
+                                Utils.setSpeed(getTowerSpeed(getSpeedLevel()));
+                                speed = true;
+                            } else if (valY > 7000) {
+                                if (setLowMotion) {
+                                    towering = false;
+                                }
+                                mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1f;
+                            }
+                        } else if (setLowMotion) {
+                            ++cMotionTicks;
+                            if (cMotionTicks == 1) {
+                                mc.thePlayer.motionY = 0.08F;
+                                Utils.setSpeed(getTowerSpeed(getSpeedLevel()));
+                            } else if (cMotionTicks == 4) {
+                                cMotionTicks = 0;
+                                setLowMotion = false;
+                                towering = true;
+                                Utils.setSpeed(getTowerGroundSpeed(getSpeedLevel()) - 0.02);
+                            }
+                        }
+                        break;
+                    case 4:
+                        if (mc.thePlayer.posY % 1 == 0 && mc.thePlayer.onGround) {
+                            towering = true;
+                        }
+                        if (towering) {
+                            towerTicks = mc.thePlayer.onGround ? 0 : ++towerTicks;
+                            switch (simpleY) {
+                                case 0:
+                                    mc.thePlayer.motionY = 0.42f;
+                                    if (towerTicks == 6) {
+                                        mc.thePlayer.motionY = -0.078400001525879;
+                                    }
+                                    Utils.setSpeed(getTowerSpeed(getSpeedLevel()));
+                                    speed = true;
+                                    break;
+                                case 42:
+                                    mc.thePlayer.motionY = 0.33f;
+                                    Utils.setSpeed(getTowerSpeed(getSpeedLevel()));
+                                    speed = true;
+                                    break;
+                                case 75:
+                                    mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1f;
+                                    break;
+                            }
+                        }
+                        break;
+                    case 5:
+                        if (mc.thePlayer.posY % 1 == 0 && mc.thePlayer.onGround) {
+                            towering = true;
+                        }
+                        if (towering) {
+                            towerTicks = mc.thePlayer.onGround ? 0 : ++towerTicks;
+                            switch (towerTicks) {
+                                case 0:
+                                    mc.thePlayer.motionY = 0.42f;
+                                    Utils.setSpeed(get15tickspeed(getSpeedLevel())); // Speed + Strafe tick
+                                    speed = true;
+                                    break;
+                                case 1:
+                                    mc.thePlayer.motionY = 0.33f;
+                                    Utils.setSpeed(Utils.getHorizontalSpeed()); // Strafe tick
+                                    break;
+                                case 2:
+                                    mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1f;
+                                    break;
+                                case 3:
+                                    mc.thePlayer.motionY = 0.42f;
+                                    Utils.setSpeed(Utils.getHorizontalSpeed()); // Strafe tick
+                                    break;
+                                case 4:
+                                    mc.thePlayer.motionY = 0.33f;
+                                    Utils.setSpeed(Utils.getHorizontalSpeed()); // Strafe tick
+                                    break;
+                                case 5:
+                                    mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1f + 0.0000001;
+                                    break;
+                                case 6:
+                                    mc.thePlayer.motionY = -0.01;
+                                    break;
+                            }
+                        }
+                        break;
+                    case 6:
+                        if (mc.thePlayer.posY % 1 == 0 && mc.thePlayer.onGround) {
+                            grounds++;
+                        }
+                        if (mc.thePlayer.posY % 1 == 0) {
+                            towering = true;
+                        }
+                        if (towering) {
+                            towerTicks = mc.thePlayer.onGround ? 0 : ++towerTicks;
+                            switch (towerTicks) {
+                                case 0:
+                                    mc.thePlayer.motionY = 0.42f;
+                                    Utils.setSpeed(get1tickspeed(getSpeedLevel())); // Speed + Strafe tick
+                                    speed = true;
+                                    break;
+                                case 1:
+                                    mc.thePlayer.motionY = 0.33f;
+                                    Utils.setSpeed(Utils.getHorizontalSpeed()); // Strafe tick
+                                    break;
+                                case 2:
+                                    mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1f;
+                                    break;
+                                case 3:
+                                    mc.thePlayer.motionY = 0.005;
+                                    break;
+                            }
+                        }
+                        break;
+                    case 7:
+                        if (mc.thePlayer.posY % 1 == 0 && mc.thePlayer.onGround) {
+                            towering = true;
+                        }
+                        if (towering) {
+                            ++towerTicks;
+                            switch (towerTicks) {
+                                case 7:
+                                case 4:
+                                case 1:
+                                    mc.thePlayer.motionY = 0.42f;
+                                    Utils.setSpeed(getTowerSpeed(getSpeedLevel())); // Speed + Strafe tick
+                                    speed = true;
+                                    break;
+                                case 8:
+                                case 5:
+                                case 2:
+                                    mc.thePlayer.motionY = 0.33f;
+                                    Utils.setSpeed(Utils.getHorizontalSpeed()); // Strafe tick
+                                    break;
+                                case 6:
+                                case 3:
+                                    mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1f;
+                                    break;
+                                case 9:
+                                    mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1f + 0.0000001;
+                                    break;
+                                case 10:
+                                    mc.thePlayer.motionY = -0.01;
+                                    towerTicks = 0;
+                                    Utils.setSpeed(getTowerSpeed(getSpeedLevel())); // Speed + Strafe tick
+                                    speed = true;
+                                    break;
+                            }
+                        }
+                        break;
+
+                }
+            } else {
+                if (finishedTower) {
+                    finishedTower = false;
+                }
+                if (hasTowered) {
+                    finishedTower = true;
+                }
+                if (wasTowering && modulesEnabled()) {
+                    if (slowedTicks.getInput() > 0 && slowedTicks.getInput() != 100 && slowTicks++ < slowedTicks.getInput()) {
+                        mc.thePlayer.motionX *= slowedSpeed.getInput() / 100;
+                        mc.thePlayer.motionZ *= slowedSpeed.getInput() / 100;
+                    } else {
+                        ModuleUtils.handleSlow();
                     }
-                    if (aligned) {
-                        if (placed) {
-                            yaw = 0;
-                            pitch = 89.9F;
-                        }
-                        else {
+                    if (slowTicks >= slowedTicks.getInput()) {
+                        slowTicks = 0;
+                        wasTowering = false;
+                    }
+                } else {
+                    if (wasTowering) {
+                        wasTowering = false;
+                    }
+                    slowTicks = 0;
+                }
+                if (speed || hasTowered && mc.thePlayer.onGround) {
+                    Utils.setSpeed(Utils.getHorizontalSpeed(mc.thePlayer) / 1.6);
+                }
+                hasTowered = towering = firstJump = startedTowerInAir = setLowMotion = speed = false;
+                cMotionTicks = placeTicks = towerTicks = grounds = 0;
+                reset();
+            }
+        }
+        if (verticalTower.getInput() > 0) {
+            if (canTower() && !Utils.keysDown()) {
+                wasTowering = true;
+                switch ((int) verticalTower.getInput()) {
+                    case 1:
+                        mc.thePlayer.motionY = 0.42f;
+                        break;
+                    case 2:
+                        if (!aligned) {
+                            if (mc.thePlayer.onGround) {
+                                if (!aligning) {
+                                    blockX = (int) mc.thePlayer.posX;
+
+                                    firstX = mc.thePlayer.posX - 10;
+                                    firstY = mc.thePlayer.posY;
+                                    firstZ = mc.thePlayer.posZ;
+                                }
+                                mc.thePlayer.motionX = 0.22;
+                                aligning = true;
+                            }
+                            if (aligning && (int) mc.thePlayer.posX > blockX) {
+                                aligned = true;
+                            }
                             yaw = RotationUtils.getRotations(firstX, firstY, firstZ)[0];
                             pitch = 0;
                         }
-                        placeExtraBlock = true;
-                        mc.thePlayer.motionX = 0;
-                        mc.thePlayer.motionY = verticalTowerValue();
-                        mc.thePlayer.motionZ = 0;
-                    }
-                    break;
+                        if (aligned) {
+                            if (placed) {
+                                yaw = 0;
+                                pitch = 89.9F;
+                            } else {
+                                yaw = RotationUtils.getRotations(firstX, firstY, firstZ)[0];
+                                pitch = 0;
+                            }
+                            placeExtraBlock = true;
+                            mc.thePlayer.motionX = 0;
+                            mc.thePlayer.motionY = verticalTowerValue();
+                            mc.thePlayer.motionZ = 0;
+                        }
+                        break;
+                }
+            } else {
+                yaw = pitch = 0;
+                aligning = aligned = placed = false;
+                firstX = 0;
+                placeExtraBlock = false;
             }
-        } else {
-            yaw = pitch = 0;
-            aligning = aligned = placed = false;
-            firstX = 0;
-            placeExtraBlock = false;
         }
     }
 
@@ -468,7 +508,7 @@ public class Tower extends Module {
     }
 
     private boolean modulesEnabled() {
-        return (ModuleManager.scaffold.moduleEnabled && ModuleManager.scaffold.holdingBlocks() && ModuleManager.scaffold.hasSwapped && !ModuleManager.LongJump.function);
+        return (ModuleManager.scaffold.moduleEnabled && ModuleManager.scaffold.holdingBlocks() && ModuleManager.scaffold.hasSwapped && !LongJump.function);
     }
 
     private int getSpeedLevel() {
@@ -535,6 +575,21 @@ public class Tower extends Module {
             return (speedSetting.getInput() / 10) + 0.12;
         } else if (speedLevel == 4) {
             return (speedSetting.getInput() / 10) + 0.13;
+        }
+        return (speedSetting.getInput() / 10);
+    }
+
+    private double get1tickspeed(int speedLevel) {
+        if (speedLevel == 0) {
+            return (speedSetting.getInput() / 10);
+        } else if (speedLevel == 1) {
+            return (speedSetting.getInput() / 10) + 0.03;
+        } else if (speedLevel == 2) {
+            return (speedSetting.getInput() / 10) + 0.06;
+        } else if (speedLevel == 3) {
+            return (speedSetting.getInput() / 10) + 0.1;
+        } else if (speedLevel == 4) {
+            return (speedSetting.getInput() / 10) + 0.11;
         }
         return (speedSetting.getInput() / 10);
     }

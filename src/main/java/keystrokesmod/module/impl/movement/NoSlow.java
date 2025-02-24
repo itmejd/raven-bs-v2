@@ -193,6 +193,7 @@ public class NoSlow extends Module {
         if (!floatConditions()) {
             grounded = 0;
             didC = true;
+            requireJump = true;
         }
         else if (didC) {
             grounded++;
@@ -209,23 +210,17 @@ public class NoSlow extends Module {
         }
         noSlowing = true;
 
-        if (!floatConditions() || requireJump) {
-            requireJump = true;
+        if (requireJump) {
             offset = false;
             return;
         }
-        if (offsetDelay <= 2) {
+        /*if (offsetDelay <= 2) {
             ++offsetDelay;
             return;
-        }
-        if (mc.thePlayer.motionY >= -0.0784000015258789) {
-            e.setPosY(e.getPosY() + ModuleUtils.offsetValue);
-        }
-        else {
-            e.setPosY(e.getPosY() - ModuleUtils.offsetValue);
-        }
-        ModuleManager.scaffold.offsetDelay = 2;
+        }*/
         offset = true;
+        e.setPosY(e.getPosY() + ModuleUtils.offsetValue);
+        ModuleManager.scaffold.offsetDelay = 2;
         if (groundSpeedOption.isToggled()) {
             if (!ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !Utils.jumpDown() && mc.thePlayer.moveForward <= -0.5 && mc.thePlayer.moveStrafing == 0 && offset && Utils.isMoving() && mc.thePlayer.onGround) {
                 float yaw = mc.thePlayer.rotationYaw;
@@ -268,11 +263,11 @@ public class NoSlow extends Module {
 
     private boolean floatConditions() {
         Block block = BlockUtils.getBlock(new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ));
-        int edgeY = (int) Math.round((mc.thePlayer.posY % 1.0D) * 100.0D);
+        int edge = (int) Math.round((mc.thePlayer.posY % 1.0D) * 100.0D);
         if (mc.thePlayer.posY % 1 == 0) {
             return true;
         }
-        if (edgeY < 10) {
+        if (edge < 10) {
             return true;
         }
         if (!mc.thePlayer.onGround) {

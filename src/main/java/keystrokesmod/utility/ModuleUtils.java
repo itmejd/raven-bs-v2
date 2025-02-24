@@ -18,6 +18,7 @@ import net.minecraft.network.play.client.*;
 import net.minecraft.network.play.server.S12PacketEntityVelocity;
 import net.minecraft.network.play.server.S27PacketExplosion;
 import net.minecraft.util.BlockPos;
+import net.minecraft.util.MathHelper;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
@@ -60,7 +61,9 @@ public class ModuleUtils {
 
     private int edgeTick;
 
-    public static boolean canSlow, didSlow, setSlow;
+    private boolean dontCheckFD;
+
+    public static boolean canSlow, didSlow, setSlow, hasSlowed;
     private static boolean allowFriction;
 
     @SubscribeEvent
@@ -174,11 +177,21 @@ public class ModuleUtils {
         if (!Utils.nullCheck()) {
             return;
         }
+        if (e.getPacket() instanceof S27PacketExplosion) {
+            firstDamage = false;
+
+            dontCheckFD = true;
+        }
         if (e.getPacket() instanceof S12PacketEntityVelocity) {
             if (((S12PacketEntityVelocity) e.getPacket()).getEntityID() == mc.thePlayer.getEntityId()) {
 
-                damage = firstDamage = true;
+                damage = true;
                 damageTicks = 0;
+
+                if (!dontCheckFD) {
+                    firstDamage = true;
+                }
+                dontCheckFD = false;
 
             }
         }
@@ -224,23 +237,30 @@ public class ModuleUtils {
     @SubscribeEvent
     public void onPreUpdate(PreUpdateEvent e) {
 
+        double ed = Math.toDegrees(Math.atan2(mc.thePlayer.motionZ, mc.thePlayer.motionX));
+        //Utils.print("" + ed);
+
         if (swapTick > 0) {
             --swapTick;
         }
 
-        if ((canSlow || ModuleManager.scaffold.moduleEnabled && !ModuleManager.tower.canTower()) && !mc.thePlayer.onGround) {
+        if (canSlow || ModuleManager.scaffold.moduleEnabled && !ModuleManager.tower.canTower()) {
             double motionVal = 0.9507832 - ((double) inAirTicks / 10000) - Utils.randomizeDouble(0.00001, 0.00006);
-            if (mc.thePlayer.hurtTime == 0 && inAirTicks >= 5 && !setSlow) {
+            if (!hasSlowed) motionVal = motionVal - 0.15;
+            if (mc.thePlayer.hurtTime == 0 && inAirTicks >= 3 && !setSlow) {
                 mc.thePlayer.motionX *= motionVal;
                 mc.thePlayer.motionZ *= motionVal;
-                setSlow = true;
+                setSlow = hasSlowed = true;
                 //Utils.print("Slow " + motionVal);
             }
             didSlow = true;
             //Utils.print(mc.thePlayer.ticksExisted + " : " + Utils.getHorizontalSpeed());
         }
-        else if (didSlow) {
+        if (didSlow && mc.thePlayer.onGround) {
             canSlow = didSlow = false;
+        }
+        if (groundTicks > 1) {
+            hasSlowed = false;
         }
         if (mc.thePlayer.onGround || mc.thePlayer.hurtTime != 0) {
             setSlow = false;
@@ -436,7 +456,7 @@ public class ModuleUtils {
             }
         }
 
-        if (ModuleManager.bhop.setRotation) {
+        if (ModuleManager.bhop.setRotation && ModuleManager.bhop.rotateYaw.isToggled()) {
             if (!ModuleManager.killAura.isTargeting && !ModuleManager.scaffold.isEnabled) {
                 float yaw = mc.thePlayer.rotationYaw - 55;
                 e.setYaw(yaw);

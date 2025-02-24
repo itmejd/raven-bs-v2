@@ -98,14 +98,17 @@ public class Safewalk extends Module {
         if (!sneakState) {
             unsneakDelayTicks = 0;
         }
-        if (!sneakState && Utils.isBindDown(mc.gameSettings.keyBindSneak)) {
+        if (Utils.isBindDown(mc.gameSettings.keyBindSneak)) {
             return;
         }
         canSneak = sneakState;
         mc.thePlayer.movementInput.sneak = sneakState;
-        mc.thePlayer.setSneaking(sneakState);
         this.isSneaking = sneakState;
-        //Utils.print("Edge " + mc.thePlayer.movementInput.sneak + " " + sneakState + " " + mc.thePlayer.ticksExisted);
+        if (sneakState) {
+            double val = 0;
+            mc.thePlayer.motionX *= val;
+            mc.thePlayer.motionZ *= val;
+        }
 
     }
 
@@ -140,6 +143,10 @@ public class Safewalk extends Module {
         }
         if (pitchCheck.isToggled() && mc.thePlayer.rotationPitch < 70.0f) {
             return false;
+        }
+        if (!mc.thePlayer.onGround) {
+            return false;
+
         }
         return true;
     }
