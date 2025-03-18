@@ -2,6 +2,7 @@ package keystrokesmod.mixin.impl.entity;
 
 import keystrokesmod.event.StrafeEvent;
 import keystrokesmod.module.ModuleManager;
+import keystrokesmod.module.impl.player.Fences;
 import keystrokesmod.module.impl.player.Safewalk;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
@@ -29,6 +30,11 @@ public abstract class MixinEntity {
 
         if (entity == mc.thePlayer && entity.onGround) {
             if (Safewalk.canSafeWalk() || ModuleManager.scaffold.canSafewalk()) {
+                return true;
+            }
+        }
+        if (entity == mc.thePlayer) {
+            if (Fences.canFence()) {
                 return true;
             }
         }

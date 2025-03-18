@@ -44,7 +44,7 @@ public class ModuleUtils {
     private long FIREBALL_TIMEOUT = 500L, fireballTime = 0;
     public static int inAirTicks, groundTicks, stillTicks;
     public static int fadeEdge;
-    public static double offsetValue = 0.0000000000003;
+    public static double offsetValue = 4e-12;
     public static boolean isAttacking;
     private int attackingTicks;
     private int unTargetTicks;
@@ -66,6 +66,8 @@ public class ModuleUtils {
     public static boolean canSlow, didSlow, setSlow, hasSlowed;
     private static boolean allowFriction;
 
+    private float yaw;
+
     @SubscribeEvent
     public void onWorldJoin(EntityJoinWorldEvent e) {
         if (e.entity == mc.thePlayer) {
@@ -84,12 +86,7 @@ public class ModuleUtils {
         }
 
         // isBlocked
-        EntityLivingBase g = Utils.raytrace(3);
-
-        if (e.getPacket() instanceof C08PacketPlayerBlockPlacement && Utils.holdingSword() && !BlockUtils.isInteractable(mc.objectMouseOver) && !isBlocked) {
-            isBlocked = true;
-        }
-        else if (e.getPacket() instanceof C07PacketPlayerDigging && isBlocked) {
+        if (e.getPacket() instanceof C07PacketPlayerDigging && isBlocked) {
             C07PacketPlayerDigging c07 = (C07PacketPlayerDigging) e.getPacket();
             String edger;
             edger = String.valueOf(c07.getStatus());
@@ -97,8 +94,11 @@ public class ModuleUtils {
                 isBlocked = false;
             }
         }
-        else if (e.getPacket() instanceof C09PacketHeldItemChange && isBlocked) {
+        if (e.getPacket() instanceof C09PacketHeldItemChange && isBlocked) {
             isBlocked = false;
+        }
+        if (e.getPacket() instanceof C08PacketPlayerBlockPlacement && Utils.holdingSword() && !BlockUtils.isInteractable(mc.objectMouseOver) && !isBlocked) {
+            isBlocked = true;
         }
 
         //
@@ -120,12 +120,7 @@ public class ModuleUtils {
         }
 
         // isBlocked
-        EntityLivingBase g = Utils.raytrace(3);
-
-        if (e.getPacket() instanceof C08PacketPlayerBlockPlacement && Utils.holdingSword() && !BlockUtils.isInteractable(mc.objectMouseOver) && !isBlocked) {
-            isBlocked = true;
-        }
-        else if (e.getPacket() instanceof C07PacketPlayerDigging && isBlocked) {
+        if (e.getPacket() instanceof C07PacketPlayerDigging && isBlocked) {
             C07PacketPlayerDigging c07 = (C07PacketPlayerDigging) e.getPacket();
             String edger;
             edger = String.valueOf(c07.getStatus());
@@ -133,8 +128,11 @@ public class ModuleUtils {
                 isBlocked = false;
             }
         }
-        else if (e.getPacket() instanceof C09PacketHeldItemChange && isBlocked) {
+        if (e.getPacket() instanceof C09PacketHeldItemChange && isBlocked) {
             isBlocked = false;
+        }
+        if (e.getPacket() instanceof C08PacketPlayerBlockPlacement && Utils.holdingSword() && !BlockUtils.isInteractable(mc.objectMouseOver) && !isBlocked) {
+            isBlocked = true;
         }
 
         //
@@ -367,7 +365,7 @@ public class ModuleUtils {
                     }
                 }
                 else if (ModuleManager.bhop.didMove) {
-                    if (mc.thePlayer.isCollidedHorizontally || mc.thePlayer.isCollidedVertically || ModuleUtils.damage || !ModuleManager.bhop.lowhop && (!(block instanceof BlockAir) || !(blockAbove instanceof BlockAir) || blockBelow instanceof BlockSlab || (blockBelow instanceof BlockAir && blockBelow2 instanceof BlockAir))) {
+                    if (mc.thePlayer.isCollidedVertically || ModuleUtils.damage && Velocity.vertical.getInput() != 0) {// || !ModuleManager.bhop.lowhop && (!(block instanceof BlockAir) || !(blockAbove instanceof BlockAir) || blockBelow instanceof BlockSlab || (blockBelow instanceof BlockAir && blockBelow2 instanceof BlockAir))) {
                         resetLowhop();
                     }
                     switch ((int) ModuleManager.bhop.mode.getInput()) {
@@ -406,20 +404,20 @@ public class ModuleUtils {
                             if (inAirTicks == 3) {
                                 mc.thePlayer.motionY = 0.08842400075912;
                             }
-                            if (inAirTicks == 4) {
+                            if (inAirTicks == 4 && Utils.distanceToGround(mc.thePlayer) < 2) {
                                 mc.thePlayer.motionY = -0.19174457909538;
                             }
-                            if (inAirTicks == 5) {
+                            if (inAirTicks == 5 && Utils.distanceToGround(mc.thePlayer) < 2) {
                                 mc.thePlayer.motionY = -0.26630949469659;
                             }
-                            if (inAirTicks == 6) {
+                            if (inAirTicks == 6 && Utils.distanceToGround(mc.thePlayer) < 2) {
                                 mc.thePlayer.motionY = -0.26438340940798;
                             }
-                            if (inAirTicks == 7) {
+                            if (inAirTicks == 7 && Utils.distanceToGround(mc.thePlayer) < 2) {
                                 mc.thePlayer.motionY = -0.33749574778843;
                             }
                             //strafe
-                            if (inAirTicks >= 6) {
+                            if (inAirTicks >= 6 && Utils.isMoving()) {
                                 Utils.setSpeed(Utils.getHorizontalSpeed(mc.thePlayer));
                             }
                             //disable
@@ -456,10 +454,13 @@ public class ModuleUtils {
             }
         }
 
-        if (ModuleManager.bhop.setRotation && ModuleManager.bhop.rotateYaw.isToggled()) {
+        if (ModuleManager.bhop.setRotation) {
             if (!ModuleManager.killAura.isTargeting && !ModuleManager.scaffold.isEnabled) {
-                float yaw = mc.thePlayer.rotationYaw - 55;
+                yaw = ModuleManager.scaffold.getMotionYaw() - 130.625F * Math.signum(
+                        MathHelper.wrapAngleTo180_float(ModuleManager.scaffold.getMotionYaw() - yaw)
+                );
                 e.setYaw(yaw);
+                RotationUtils.setFakeRotations(mc.thePlayer.rotationYaw, mc.thePlayer.rotationPitch);
             }
             if (mc.thePlayer.onGround) {
                 ModuleManager.bhop.setRotation = false;

@@ -1647,4 +1647,22 @@ public class Utils {
         }
         return false;
     }
+
+    public static boolean isReplay() {
+        if (Utils.isHypixel()) {
+            if (!Utils.nullCheck()) {
+                return false;
+            }
+            final Scoreboard scoreboard = mc.theWorld.getScoreboard();
+            if (scoreboard == null) {
+                return false;
+            }
+            final ScoreObjective objective = scoreboard.getObjectiveInDisplaySlot(1);
+            if (objective == null || !stripString(objective.getDisplayName()).contains("REPLAY")) {
+                return false;
+            }
+            return true;
+        }
+        return false;
+    }
 }

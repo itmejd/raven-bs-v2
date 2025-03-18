@@ -133,7 +133,7 @@ public class NoSlow extends Module {
         if (!Mouse.isButtonDown(1) || (mc.thePlayer.getHeldItem() == null || !holdingConsumable(mc.thePlayer.getHeldItem()))) {
             return;
         }
-        if (!mc.thePlayer.onGround) {
+        if (!mc.thePlayer.onGround || ModuleUtils.groundTicks <= 8) {
             canFloat = true;
         }
         else {
@@ -214,12 +214,16 @@ public class NoSlow extends Module {
             offset = false;
             return;
         }
-        /*if (offsetDelay <= 2) {
+        if (!canFloat) {
+            return;
+        }
+        if (!reSendConsume && offsetDelay <= 2) {
             ++offsetDelay;
             return;
-        }*/
+        }
         offset = true;
         e.setPosY(e.getPosY() + ModuleUtils.offsetValue);
+        ModuleUtils.groundTicks = 0;
         ModuleManager.scaffold.offsetDelay = 2;
         if (groundSpeedOption.isToggled()) {
             if (!ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !Utils.jumpDown() && mc.thePlayer.moveForward <= -0.5 && mc.thePlayer.moveStrafing == 0 && offset && Utils.isMoving() && mc.thePlayer.onGround) {

@@ -74,6 +74,8 @@ public class ModuleManager {
     public static Blink blink;
     public static Velocity velocity;
     public static TargetStrafe targetStrafe;
+    public static Criticals criticals;
+    public static Fences fences;
 
     public void register() {
         this.addModule(autoClicker = new AutoClicker());
@@ -173,6 +175,8 @@ public class ModuleManager {
         this.addModule(new Shaders());
         this.addModule(ctwFly = new CTWFly());
         this.addModule(targetStrafe = new TargetStrafe());
+        this.addModule(criticals = new Criticals());
+        this.addModule(fences = new Fences());
         antiBot.enable();
         Collections.sort(this.modules, Comparator.comparing(Module::getName));
     }

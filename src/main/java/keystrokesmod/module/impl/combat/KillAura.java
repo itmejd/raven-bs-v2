@@ -53,6 +53,7 @@ public class KillAura extends Module {
     private SliderSetting swingRange;
     private SliderSetting blockRange;
     private SliderSetting rotationMode;
+    private SliderSetting rotateMode;
     private SliderSetting rotationSmoothing;
     private SliderSetting sortMode;
     private SliderSetting switchDelay;
@@ -72,8 +73,9 @@ public class KillAura extends Module {
 
     private String[] autoBlockModes = new String[] { "Manual", "Vanilla", "Partial", "Interact A", "Interact B" };
     private String[] interactAModes = new String[] { "10", "5", "6.5" };
-    private String[] interactBModes = new String[] { "10", "7", "8.5" };
+    private String[] interactBModes = new String[] { "10", "7", "9.5" };
     private String[] rotationModes = new String[] { "Silent", "Lock view", "None" };
+    private String[] rotateModes = new String[] { "Attacking", "Swinging" };
     private String[] sortModes = new String[] { "Distance", "Health", "Hurttime", "Yaw" };
 
     // autoblock related
@@ -87,7 +89,7 @@ public class KillAura extends Module {
     private List<Entity> hostileMobs = new ArrayList<>();
     private Map<Integer, Boolean> golems = new HashMap<>(); // entity id, is teammate
     public boolean justUnTargeted;
-    private final double reachVal = 0.007;
+    private final double reachVal = 0.008;
 
     // blocking related
     public boolean blockingClient;
@@ -125,6 +127,7 @@ public class KillAura extends Module {
     private int disableCTicks;
 
     public boolean blocked;
+    private int lastAttack;
 
     public KillAura() {
         super("KillAura", category.combat);
@@ -137,6 +140,7 @@ public class KillAura extends Module {
         this.registerSetting(swingRange = new SliderSetting("Range (swing)", 3.3, 3.0, 8.0, 0.05));
         this.registerSetting(blockRange = new SliderSetting("Range (block)", 6.0, 3.0, 12.0, 0.05));
         this.registerSetting(rotationMode = new SliderSetting("Rotation mode", 0, rotationModes));
+        this.registerSetting(rotateMode = new SliderSetting("Rotate", 0, rotateModes));
         this.registerSetting(rotationSmoothing = new SliderSetting("Rotation smoothing", 0, 0, 10, 1));
         this.registerSetting(sortMode = new SliderSetting("Sort mode", 0, sortModes));
         this.registerSetting(switchDelay = new SliderSetting("Switch delay", "ms", 200.0, 50.0, 1000.0, 25.0));
@@ -179,7 +183,7 @@ public class KillAura extends Module {
     public void onDisable() {
         handleBlocking(false);
         hitMap.clear();
-        if (blinkAutoBlock() || autoBlockMode.getInput() == 2) { // interact autoblock
+        if (autoBlockOverride()) { // interact autoblock
             resetBlinkState(true);
         }
         blinking.set(false);
@@ -231,6 +235,9 @@ public class KillAura extends Module {
     public void onPreUpdate(PreUpdateEvent e) {
         if (!Utils.nullCheck()) {
             return;
+        }
+        if (lastAttack > 0) {
+            --lastAttack;
         }
         if (target == null || !manualBlock() && manualBlock.isToggled()) {
             if (ModuleUtils.swapTick == 0 && !ModuleUtils.isBlocked) {
@@ -442,7 +449,7 @@ public class KillAura extends Module {
             return;
         }
         if (rotationMode.getInput() != 2) {
-            if (inRange(target, attackRange.getInput() - reachVal)) {
+            if (inRange(target, attackRange.getInput() - reachVal) || rotateMode.getInput() == 1 && inRange(target, swingRange.getInput())) {
                 float[] rotations = RotationUtils.getRotations(target, e.getYaw(), e.getPitch());
                 float[] smoothedRotations = getRotationsSmoothed(rotations);
                 if (rotationMode.getInput() == 0) { // silent
@@ -468,6 +475,9 @@ public class KillAura extends Module {
     }
 
     public void onUpdate() {
+        if (attackRange.getInput() > swingRange.getInput()) {
+            swingRange.setValue(attackRange.getInput());
+        }
         if (rotationMode.getInput() == 1 && target != null) {
             if (inRange(target, attackRange.getInput() - reachVal)) {
                 float[] rotations = RotationUtils.getRotations(target, mc.thePlayer.rotationYaw, mc.thePlayer.rotationPitch);
@@ -729,7 +739,7 @@ public class KillAura extends Module {
             }
         }
 
-        if (!attackTargets.isEmpty()) {
+        if (!attackTargets.isEmpty() && lastAttack > 0) {
             // Switch aura
             int ticksExisted = mc.thePlayer.ticksExisted;
             int switchDelayTicks = (int) (switchDelay.getInput() / 50);
@@ -765,24 +775,24 @@ public class KillAura extends Module {
 
     private void handleSwingAndAttack(double distance, boolean swung) {
         boolean inAttackDistance = inRange(target, attackRange.getInput() - reachVal);
-        if ((distance <= swingRange.getInput() || inAttackDistance) && shouldAttack && !swung) { // swing if in swing range or needs to attack
-            if (!mc.thePlayer.isBlocking() || !disableWhileBlocking.isToggled()) {
+        if (ModuleManager.bedAura.rotate) {
+            return;
+        }
+        if (!isLookingAtEntity()) {
+            return;
+        }
+        if ((distance <= swingRange.getInput() || inAttackDistance && shouldAttack)) { // swing if in swing range or needs to attack
+            if ((!mc.thePlayer.isBlocking() || autoBlockMode.getInput() > 0 && manualBlock()) || !disableWhileBlocking.isToggled()) {
                 swingItem();
             }
         }
         if (inAttackDistance) {
-            attackingEntity = target;
             if (shouldAttack) {
                 shouldAttack = false;
-                if (ModuleManager.bedAura.rotate) {
-                    return;
-                }
-                if (!isLookingAtEntity()) {
-                    return;
-                }
+                attackingEntity = target;
                 if (!mc.thePlayer.isBlocking() || !disableWhileBlocking.isToggled()) {
-                    swingItem();
                     mc.playerController.attackEntity(mc.thePlayer, target);
+                    lastAttack = (int) (switchDelay.getInput() / 50);
                 }
             }
         }
@@ -840,7 +850,7 @@ public class KillAura extends Module {
     }
 
     public boolean autoBlockOverride() {
-        return (blinkAutoBlock() || autoBlockMode.getInput() == 2) && Utils.holdingSword() && manualBlock();
+        return (blinkAutoBlock() || autoBlockMode.getInput() == 1 || autoBlockMode.getInput() == 2) && Utils.holdingSword() && manualBlock();
     }
 
     public boolean blinkAutoBlock() {
@@ -873,12 +883,23 @@ public class KillAura extends Module {
         if (ModuleManager.bedAura.stopAutoblock) {
             resetBlinkState(false);
             blockingServer = false;
+            interactTicks = 0;
             return;
         }
         lag = true;
         switch ((int) autoBlockMode.getInput()) {
+            case 1: // vanilla
+                if (interactTicks == 0) {
+                    handleInteractAndAttack(distance, true, true, swung);
+                    sendBlockPacket();
+                }
+                else {
+                    handleInteractAndAttack(distance, true, true, swung);
+                }
+                interactTicks++;
+                break;
             case 2: // partial
-                if (interactTicks >= 3) {
+                if (interactTicks >= 4) {
                     interactTicks = 0;
                 }
                 interactTicks++;
@@ -969,6 +990,9 @@ public class KillAura extends Module {
         interactTicks++;
         firstEdge++;
         if (firstCycle) {
+            if (interactTicks > 2) {
+                interactTicks = 0;
+            }
             switch (interactTicks) {
                 case 1:
                     blinking.set(true);
@@ -986,6 +1010,9 @@ public class KillAura extends Module {
             }
         }
         else {
+            if (interactTicks > 4) {
+                interactTicks = 0;
+            }
             switch (interactTicks) {
                 case 1:
                     blinking.set(true);
@@ -1066,17 +1093,8 @@ public class KillAura extends Module {
                 case 1:
                     blinking.set(true);
                     if (ModuleUtils.isBlocked) {
-                        if (firstGyatt == 2) {
-                            setSwapSlot();
-                            swapped = true;
-                        }
-                        else {
-                            sendUnBlockPacket();
-                        }
-                        firstGyatt++;
-                        if (firstGyatt > 3) {
-                            firstGyatt = 0;
-                        }
+                        setSwapSlot();
+                        swapped = true;
                     }
                     break;
                 case 2:
@@ -1087,9 +1105,12 @@ public class KillAura extends Module {
                     handleInteractAndAttack(distance, true, true, swung);
                     sendBlockPacket();
                     releasePackets(); // release
-                    break;
-                case 3:
-                    firstCycle = false;
+                    interactTicks = 0;
+                    ++firstEdge;
+                    if (firstEdge > 5) {
+                        firstCycle = false;
+                        firstEdge = 0;
+                    }
                     break;
             }
         }
@@ -1102,17 +1123,8 @@ public class KillAura extends Module {
                 case 1:
                     blinking.set(true);
                     if (ModuleUtils.isBlocked) {
-                        if (firstEdge == 0) {
-                            setSwapSlot();
-                            swapped = true;
-                        }
-                        else {
-                            sendUnBlockPacket();
-                        }
-                        firstEdge++;
-                        if (firstEdge > 3) {
-                            firstEdge = 0;
-                        }
+                        setSwapSlot();
+                        swapped = true;
                     }
                     break;
                 case 2:
@@ -1123,6 +1135,8 @@ public class KillAura extends Module {
                     handleInteractAndAttack(distance, true, true, swung);
                     sendBlockPacket();
                     releasePackets(); // release
+                    break;
+                case 3:
                     firstCycle = true;
                     interactTicks = 0;
                     break;
@@ -1371,15 +1385,15 @@ public class KillAura extends Module {
     }
 
     public void resetBlinkState(boolean unblock) {
-        //Utils.print("blink state reset");
         blockingServer = false;
         blinking.set(false);
         releasePackets();
-        if (Raven.packetsHandler.playerSlot.get() != mc.thePlayer.inventory.currentItem && swapped) {
+        if (Raven.packetsHandler.playerSlot.get() != mc.thePlayer.inventory.currentItem) {
             mc.thePlayer.sendQueue.addToSendQueue(new C09PacketHeldItemChange(mc.thePlayer.inventory.currentItem));
             Raven.packetsHandler.playerSlot.set(mc.thePlayer.inventory.currentItem);
+            ModuleUtils.isBlocked = true;
         }
-        else if (unblock && ModuleUtils.isBlocked && !ModuleManager.scaffold.isEnabled) {
+        if (unblock) {
             unBlockDelay = 1;
             sendUnBlock = true;
         }
@@ -1393,7 +1407,6 @@ public class KillAura extends Module {
             return;
         }
         mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, DOWN));
-        //Utils.print("Unblock");
     }
 
     private void releasePackets() {
@@ -1472,7 +1485,7 @@ public class KillAura extends Module {
     }
 
     private boolean manualBlock() {
-        return (!manualBlock.isToggled() || Mouse.isButtonDown(1) && Utils.tabbedIn()) && Utils.holdingSword();
+        return (!manualBlock.isToggled() || Mouse.isButtonDown(1) && Utils.tabbedIn() && Utils.holdingSword());
     }
 
     static class KillAuraTarget {

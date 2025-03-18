@@ -28,6 +28,7 @@ public class Tower extends Module {
     private GroupSetting cancelKnockbackGroup;
     private final ButtonSetting cancelKnockback;
     private ButtonSetting cancelVelocityRequired;
+    public ButtonSetting capUpFaces;
 
     final private String[] towerMoveModes = new String[]{"None", "Vanilla", "Low", "Edge", "2.5 tick", "1.5 tick", "1 tick", "10 tick"};
     final private String[] verticalTowerModes = new String[]{"None", "Vanilla", "Extra block"};
@@ -54,6 +55,8 @@ public class Tower extends Module {
 
     private int grounds;
 
+    public int upFaces;
+
     public Tower() {
         super("Tower", category.player);
         this.registerSetting(towerMove = new SliderSetting("Tower Move", 0, towerMoveModes));
@@ -65,6 +68,7 @@ public class Tower extends Module {
         this.registerSetting(cancelKnockbackGroup = new GroupSetting("Cancel knockback"));
         this.registerSetting(cancelKnockback = new ButtonSetting(cancelKnockbackGroup, "Enable Cancel knockback", false));
         this.registerSetting(cancelVelocityRequired = new ButtonSetting(cancelKnockbackGroup, "Require velocity enabled", false));
+        //this.registerSetting(capUpFaces = new ButtonSetting("Cap up faces", false));
 
         this.canBeEnabled = false;
     }
@@ -190,12 +194,12 @@ public class Tower extends Module {
                                 if (setLowMotion) {
                                     towering = false;
                                 }
-                                mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1f;
+                                mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1;
                             }
                         } else if (setLowMotion) {
                             ++cMotionTicks;
                             if (cMotionTicks == 1) {
-                                mc.thePlayer.motionY = 0.08F;
+                                mc.thePlayer.motionY = 0.08f;
                                 Utils.setSpeed(getTowerSpeed(getSpeedLevel()));
                             } else if (cMotionTicks == 4) {
                                 cMotionTicks = 0;
@@ -226,7 +230,7 @@ public class Tower extends Module {
                                     speed = true;
                                     break;
                                 case 75:
-                                    mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1f;
+                                    mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1;
                                     break;
                             }
                         }
@@ -248,7 +252,7 @@ public class Tower extends Module {
                                     Utils.setSpeed(Utils.getHorizontalSpeed()); // Strafe tick
                                     break;
                                 case 2:
-                                    mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1f;
+                                    mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1;
                                     break;
                                 case 3:
                                     mc.thePlayer.motionY = 0.42f;
@@ -262,7 +266,7 @@ public class Tower extends Module {
                                     mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1f + 0.0000001;
                                     break;
                                 case 6:
-                                    mc.thePlayer.motionY = -0.01;
+                                    mc.thePlayer.motionY = -0.01f;
                                     break;
                             }
                         }
@@ -287,7 +291,7 @@ public class Tower extends Module {
                                     Utils.setSpeed(Utils.getHorizontalSpeed()); // Strafe tick
                                     break;
                                 case 2:
-                                    mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1f;
+                                    mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1;
                                     break;
                                 case 3:
                                     mc.thePlayer.motionY = 0.005;
@@ -317,13 +321,13 @@ public class Tower extends Module {
                                     break;
                                 case 6:
                                 case 3:
-                                    mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1f;
+                                    mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1;
                                     break;
                                 case 9:
-                                    mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1f + 0.0000001;
+                                    mc.thePlayer.motionY = 1 - mc.thePlayer.posY % 1 + 0.0000001;
                                     break;
                                 case 10:
-                                    mc.thePlayer.motionY = -0.01;
+                                    mc.thePlayer.motionY = -0.01f;
                                     towerTicks = 0;
                                     Utils.setSpeed(getTowerSpeed(getSpeedLevel())); // Speed + Strafe tick
                                     speed = true;
@@ -361,7 +365,7 @@ public class Tower extends Module {
                     Utils.setSpeed(Utils.getHorizontalSpeed(mc.thePlayer) / 1.6);
                 }
                 hasTowered = towering = firstJump = startedTowerInAir = setLowMotion = speed = false;
-                cMotionTicks = placeTicks = towerTicks = grounds = 0;
+                cMotionTicks = placeTicks = towerTicks = grounds = upFaces = 0;
                 reset();
             }
         }
@@ -449,19 +453,22 @@ public class Tower extends Module {
         if (e.getPacket() instanceof C08PacketPlayerBlockPlacement) {
             if (canTower() && Utils.isMoving()) {
                 ++placeTicks;
-                if (((C08PacketPlayerBlockPlacement) e.getPacket()).getPlacedBlockDirection() == 1 && placeTicks > 5 && hasTowered) {
-                    dCount++;
-                    if (dCount >= 2) {
-                        //Utils.sendMessage("Hey");
-                        setLowMotion = true;
+                if (((C08PacketPlayerBlockPlacement) e.getPacket()).getPlacedBlockDirection() == 1 && hasTowered) {
+                    upFaces++;
+                    if (placeTicks > 5) {
+                        dCount++;
+                        if (dCount >= 2) {
+                            //Utils.sendMessage("Hey");
+                            setLowMotion = true;
+                        }
                     }
                 }
                 else {
-                    dCount = 0;
+                    dCount = upFaces = 0;
                 }
             }
             else {
-                placeTicks = 0;
+                placeTicks = upFaces = 0;
             }
 
             if (aligned) {
@@ -529,7 +536,7 @@ public class Tower extends Module {
         } else if (valY > 4000 && valY < 4300) {
             value = 0.33f;
         } else if (valY > 7000) {
-            value = 1 - mc.thePlayer.posY % 1f;
+            value = 1 - mc.thePlayer.posY % 1;
         }
         return value;
     }

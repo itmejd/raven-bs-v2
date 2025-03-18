@@ -7,12 +7,12 @@ import keystrokesmod.mixin.impl.accessor.IAccessorMinecraft;
 import keystrokesmod.mixin.interfaces.IMixinItemRenderer;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
+import keystrokesmod.module.impl.render.HUD;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.KeySetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
-import keystrokesmod.utility.ModuleUtils;
-import keystrokesmod.utility.PacketUtils;
-import keystrokesmod.utility.Utils;
+import keystrokesmod.utility.*;
+import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.Packet;
@@ -23,7 +23,10 @@ import net.minecraft.network.play.server.*;
 import net.minecraft.potion.PotionEffect;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.input.Keyboard;
+
+import java.awt.*;
 
 public class LongJump extends Module {
     private SliderSetting mode;
@@ -44,6 +47,7 @@ public class LongJump extends Module {
     public ButtonSetting spoofItem;
     private ButtonSetting beginFlat;
     private ButtonSetting silentSwing;
+    private ButtonSetting renderFloatProgress;
 
     private KeySetting verticalKey;
     private SliderSetting pitchVal;
@@ -76,6 +80,13 @@ public class LongJump extends Module {
 
     private int firstSlot = -1;
 
+    private int color = new Color(0, 187, 255, 255).getRGB();
+    private float barWidth = 60;
+    private float barHeight = 4;
+    private float filledWidth;
+    private float barX;
+    private float barY;
+
     public LongJump() {
         super("Long Jump", category.movement);
         this.registerSetting(mode = new SliderSetting("Mode", 0, modes));
@@ -93,6 +104,7 @@ public class LongJump extends Module {
         this.registerSetting(hideExplosion = new ButtonSetting("Hide explosion", false));
         this.registerSetting(spoofItem = new ButtonSetting("Spoof item", false));
         this.registerSetting(silentSwing = new ButtonSetting("Silent swing", false));
+        this.registerSetting(renderFloatProgress = new ButtonSetting("Render float progress", false));
 
         this.registerSetting(beginFlat = new ButtonSetting("Begin flat", false));
         this.registerSetting(verticalKey = new KeySetting("Vertical key", Keyboard.KEY_SPACE));
@@ -104,6 +116,8 @@ public class LongJump extends Module {
         this.disableKey.setVisible(manual.isToggled(), this);
         this.spoofItem.setVisible(!manual.isToggled(), this);
         this.silentSwing.setVisible(!manual.isToggled(), this);
+
+        this.renderFloatProgress.setVisible(mode.getInput() == 0, this);
 
         this.verticalMotion.setVisible(mode.getInput() == 0, this);
         this.motionDecay.setVisible(mode.getInput() == 0, this);
@@ -124,6 +138,11 @@ public class LongJump extends Module {
             }
             enabled();
         }
+        filledWidth = 0;
+        final ScaledResolution scaledResolution = new ScaledResolution(mc);
+        int[] disp = {scaledResolution.getScaledWidth(), scaledResolution.getScaledHeight(), scaledResolution.getScaleFactor()};
+        barX = disp[0] / 2 - barWidth / 2;
+        barY = disp[1] / 2 + 12;
     }
 
     public void onDisable() {
@@ -230,6 +249,8 @@ public class LongJump extends Module {
             }
         }
 
+        filledWidth = (barWidth * boostTicks / (!notMoving ? 32 : 33));
+
         if (stopMovement.isToggled() && !notMoving) {
             if (stopTime > 0) {
                 ++stopTime;
@@ -243,6 +264,21 @@ public class LongJump extends Module {
         if (firstSlot != -1) {
             mc.thePlayer.inventory.currentItem = firstSlot;
         }
+    }
+
+    @SubscribeEvent
+    public void onRenderTick(TickEvent.RenderTickEvent ev) {
+        if (!Utils.nullCheck()) {
+            return;
+        }
+        if (ev.phase == TickEvent.Phase.END) {
+            if (mc.currentScreen != null || !renderFloatProgress.isToggled() || mode.getInput() != 0) {
+                return;
+            }
+        }
+        color = Theme.getGradient((int) HUD.theme.getInput(), 0);
+        RenderUtils.drawRoundedRectangle(barX, barY, barX + barWidth, barY + barHeight, 3, 0xFF555555);
+        RenderUtils.drawRoundedRectangle(barX, barY, barX + filledWidth, barY + barHeight, 3, color);
     }
 
     @SubscribeEvent
@@ -305,7 +341,6 @@ public class LongJump extends Module {
                 disabled();
             }
         }
-
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST) // called last in order to apply fix

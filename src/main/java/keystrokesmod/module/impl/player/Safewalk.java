@@ -104,11 +104,6 @@ public class Safewalk extends Module {
         canSneak = sneakState;
         mc.thePlayer.movementInput.sneak = sneakState;
         this.isSneaking = sneakState;
-        if (sneakState) {
-            double val = 0;
-            mc.thePlayer.motionX *= val;
-            mc.thePlayer.motionZ *= val;
-        }
 
     }
 

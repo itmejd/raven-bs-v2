@@ -31,6 +31,7 @@ public class TargetHUD extends Module {
     private ButtonSetting renderEsp;
     private ButtonSetting showStatus;
     private ButtonSetting healthColor;
+    private ButtonSetting animations;
     private Timer fadeTimer;
     private Timer healthBarTimer = null;
     private EntityLivingBase target;
@@ -53,6 +54,7 @@ public class TargetHUD extends Module {
         this.registerSetting(renderEsp = new ButtonSetting("Render ESP", true));
         this.registerSetting(showStatus = new ButtonSetting("Show win or loss", true));
         this.registerSetting(healthColor = new ButtonSetting("Traditional health color", false));
+        this.registerSetting(animations = new ButtonSetting("Animations", false));
     }
 
     public void onDisable() {
@@ -88,7 +90,7 @@ public class TargetHUD extends Module {
                 health = 0;
             }
             if (health != lastHealth) {
-                (healthBarTimer = new Timer(mode.getInput() == 0 ? 500 : 350)).start();
+                (healthBarTimer = new Timer(animations.isToggled() ? (mode.getInput() == 0 ? 500 : 350) : 0)).start();
             }
             lastHealth = health;
             playerInfo += " " + Utils.getHealthStr(target, true);

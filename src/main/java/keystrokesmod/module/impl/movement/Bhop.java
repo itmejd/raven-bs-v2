@@ -24,7 +24,7 @@ public class Bhop extends Module {
     public ButtonSetting disablerOnly;
     private ButtonSetting sneakDisable;
     private ButtonSetting jumpMoving;
-    public ButtonSetting rotateYaw, slowBackwards, damageBoost, strafe, damageBoostRequireKey;
+    public ButtonSetting slowBackwards, damageBoost, strafe, damageBoostRequireKey;
     public GroupSetting damageBoostGroup, strafeGroup;
     private SliderSetting strafeDegrees;
     public KeySetting damageBoostKey;
@@ -42,7 +42,6 @@ public class Bhop extends Module {
         this.registerSetting(liquidDisable = new ButtonSetting("Disable in liquid", true));
         this.registerSetting(sneakDisable = new ButtonSetting("Disable while sneaking", true));
         this.registerSetting(jumpMoving = new ButtonSetting("Only jump when moving", true));
-        this.registerSetting(rotateYaw = new ButtonSetting("Rotate yaw", false));
         this.registerSetting(slowBackwards = new ButtonSetting("Slow backwards", false));
 
         this.registerSetting(damageBoostGroup = new GroupSetting("Damage boost"));
@@ -92,7 +91,7 @@ public class Bhop extends Module {
         }
         if (mode.getInput() >= 1) {
             if (mc.thePlayer.onGround && (!jumpMoving.isToggled() || Utils.isMoving())) {
-                if (mc.thePlayer.moveForward <= -0.5 && mc.thePlayer.moveStrafing == 0 && !ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !ModuleManager.scaffold.isEnabled && !mc.thePlayer.isCollidedHorizontally) {
+                if (mc.thePlayer.moveForward <= -0.5 && !ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !ModuleManager.scaffold.isEnabled) {
                     setRotation = true;
                 }
                 if (mode.getInput() != 3) {

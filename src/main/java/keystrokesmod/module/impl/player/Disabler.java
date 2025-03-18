@@ -38,8 +38,8 @@ public class Disabler extends Module {
     long activationDelayMillis;
     final long checkDisabledTime = 4000;
     private int color = new Color(0, 187, 255, 255).getRGB();
-    private float barWidth = 100;
-    private float barHeight = 6;
+    private float barWidth = 60;
+    private float barHeight = 4;
     private float filledWidth;
     private float barX;
     private float barY;
@@ -100,6 +100,7 @@ public class Disabler extends Module {
         if (finished != 0 && mc.thePlayer.onGround && now - finished > checkDisabledTime) {
             Utils.print("&7[&dR&7] &adisabler enabled");
             finished = 0;
+            filledWidth = 0;
             disablerLoaded = true;
         }
         if (!shouldRun) {
@@ -175,7 +176,7 @@ public class Disabler extends Module {
         final ScaledResolution scaledResolution = new ScaledResolution(mc);
         int[] disp = {scaledResolution.getScaledWidth(), scaledResolution.getScaledHeight(), scaledResolution.getScaleFactor()};
         barX = disp[0] / 2 - barWidth / 2;
-        barY = disp[1] / 2 + 20;
+        barY = disp[1] / 2 + 12;
     }
 
     @SubscribeEvent()
@@ -199,7 +200,7 @@ public class Disabler extends Module {
             }
         }
         color = Theme.getGradient((int) HUD.theme.getInput(), 0);
-        RenderUtils.drawRect(barX, barY, barX + barWidth, barY + barHeight, 0xFF555555);
-        RenderUtils.drawRect(barX, barY, barX + filledWidth, barY + barHeight, color);
+        RenderUtils.drawRoundedRectangle(barX, barY, barX + barWidth, barY + barHeight, 3, 0xFF555555);
+        RenderUtils.drawRoundedRectangle(barX, barY, barX + filledWidth, barY + barHeight, 3, color);
     }
 }

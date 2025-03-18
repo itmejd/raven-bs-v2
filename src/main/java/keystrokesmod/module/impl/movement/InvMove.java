@@ -1,11 +1,8 @@
 package keystrokesmod.module.impl.movement;
 
 import keystrokesmod.clickgui.ClickGui;
-import keystrokesmod.event.PrePlayerInputEvent;
+import keystrokesmod.event.*;
 import net.minecraft.client.gui.GuiChat;
-import keystrokesmod.event.JumpEvent;
-import keystrokesmod.event.PreUpdateEvent;
-import keystrokesmod.event.SendPacketEvent;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.client.Settings;
@@ -44,7 +41,23 @@ public class InvMove extends Module {
     }
 
     @SubscribeEvent
+    public void onSendPacketNoEvent(NoEventPacketEvent e) {
+        if (!Utils.nullCheck()) {
+            return;
+        }
+        if (e.getPacket() instanceof C0EPacketClickWindow) {
+            if (modes.getInput() == 1) {
+                stopMoving = true;
+                ticks = 0;
+            }
+        }
+    }
+
+    @SubscribeEvent
     public void onSendPacket(SendPacketEvent e) {
+        if (!Utils.nullCheck()) {
+            return;
+        }
         if (e.getPacket() instanceof C0EPacketClickWindow) {
             if (modes.getInput() == 1) {
                 stopMoving = true;

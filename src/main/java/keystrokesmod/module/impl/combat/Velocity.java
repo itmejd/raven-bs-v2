@@ -30,12 +30,12 @@ public class Velocity extends Module {
     private ButtonSetting zzWhileNotTargeting;
     public ButtonSetting allowSelfFireball;
     public static ButtonSetting reverseDebug;
-    private KeySetting switchToReverse, switchToHypixel;
+    private KeySetting switchToReverse, switchToPacket;
     private boolean stopFBvelo;
     public boolean disableVelo;
     private long delay;
 
-    private String[] velocityModesString = new String[] { "Normal", "Hypixel", "Reverse" };
+    private String[] velocityModesString = new String[] { "Normal", "Packet", "Reverse" };
 
 
     public Velocity() {
@@ -61,7 +61,7 @@ public class Velocity extends Module {
         this.registerSetting(allowSelfFireball = new ButtonSetting("Allow self fireball", false));
 
         this.registerSetting(switchToReverse = new KeySetting("Switch to reverse", Keyboard.KEY_SPACE));
-        this.registerSetting(switchToHypixel = new KeySetting("Switch to hypixel", Keyboard.KEY_SPACE));
+        this.registerSetting(switchToPacket = new KeySetting("Switch to packet", Keyboard.KEY_SPACE));
 
         this.registerSetting(reverseDebug = new ButtonSetting("Show reverse debug messages", false));
     }
@@ -75,7 +75,7 @@ public class Velocity extends Module {
         this.zzWhileNotTargeting.setVisible(velocityModes.getInput() == 1, this);
 
         this.switchToReverse.setVisible(velocityModes.getInput() == 1, this);
-        this.switchToHypixel.setVisible(velocityModes.getInput() == 2, this);
+        this.switchToPacket.setVisible(velocityModes.getInput() == 2, this);
 
 
 
@@ -100,16 +100,15 @@ public class Velocity extends Module {
                 delay = Utils.time();
                 Utils.print(Utils.formatColor("&7[&dR&7]&7 Switched to &bReverse&7 Velocity mode"));
             }
-            if (switchToHypixel.isPressed() && velocityModes.getInput() == 2 && delay == 0) {
+            if (switchToPacket.isPressed() && velocityModes.getInput() == 2 && delay == 0) {
                 velocityModes.setValue(1);
                 delay = Utils.time();
-                Utils.print(Utils.formatColor("&7[&dR&7]&7 Switched to &bHypixel&7 Velocity mode"));
+                Utils.print(Utils.formatColor("&7[&dR&7]&7 Switched to &bPacket&7 Velocity mode"));
             }
         }
         if (delay > 0 && (Utils.time() - delay) > 100) {
             delay = 0;
         }
-
     }
 
     @SubscribeEvent
@@ -143,6 +142,7 @@ public class Velocity extends Module {
                         mc.thePlayer.motionZ += s27PacketExplosion.func_149147_e() * explosionsHorizontal.getInput() / 100.0;
                     }
                 }
+
                 stopFBvelo = true;
                 e.setCanceled(true);
                 disableVelo = false;
@@ -179,6 +179,7 @@ public class Velocity extends Module {
                             }
                         }
                     }
+
                     stopFBvelo = false;
                     if (!disableVelo) {
                         e.setCanceled(true);

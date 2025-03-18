@@ -105,7 +105,7 @@ public class BedAura extends Module {
             reset(true, true);
             return;
         }
-        if (Utils.isBedwarsPractice()) {
+        if (Utils.isBedwarsPractice() || Utils.isReplay()) {
             return;
         }
         if (!mc.thePlayer.capabilities.allowEdit || mc.thePlayer.isSpectator()) {
@@ -171,7 +171,7 @@ public class BedAura extends Module {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onPreMotion(PreMotionEvent e) {
         aiming = false;
-        if (currentBlock != null && !RotationUtils.inRange(currentBlock, range.getInput())) {
+        if (currentBlock == null || !RotationUtils.inRange(currentBlock, range.getInput())) {
             stopAutoblock = false;
             return;
         }

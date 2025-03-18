@@ -6,13 +6,11 @@ import keystrokesmod.mixin.impl.accessor.IAccessorEntityPlayerSP;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.player.Safewalk;
+import keystrokesmod.module.impl.render.HUD;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.DescriptionSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
-import keystrokesmod.utility.BlockUtils;
-import keystrokesmod.utility.ModuleUtils;
-import keystrokesmod.utility.RenderUtils;
-import keystrokesmod.utility.Utils;
+import keystrokesmod.utility.*;
 import net.minecraft.block.*;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
@@ -28,6 +26,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
+import java.awt.*;
 import java.io.IOException;
 
 public class Sprint extends Module {
@@ -35,12 +34,14 @@ public class Sprint extends Module {
     private ButtonSetting rainbow;
     public SliderSetting omniDirectional;
     private SliderSetting floatSetting;
+    private ButtonSetting renderJumpRequired;
     public ButtonSetting disableBackwards;
     public String text = "[Sprint (Toggled)]";
     public float posX = 5;
     public float posY = 5;
     private float limit;
-    private boolean canFloat, requireJump;
+    public boolean canFloat, requireJump;
+    private int color = new Color(255, 0, 0, 255).getRGB();
 
     private String[] omniDirectionalModes = new String[] { "Disabled", "Vanilla", "Hypixel", "Float" };
 
@@ -54,12 +55,14 @@ public class Sprint extends Module {
         this.registerSetting(rainbow = new ButtonSetting("Rainbow", false));
         this.registerSetting(omniDirectional = new SliderSetting("Omni-Directional", 0, omniDirectionalModes));
         this.registerSetting(floatSetting = new SliderSetting("Float speed", "%", 100, 0.0, 100.0, 1.0));
+        this.registerSetting(renderJumpRequired = new ButtonSetting("Render jump required", false));
         this.registerSetting(disableBackwards = new ButtonSetting("Disable backwards", false));
         this.closetModule = true;
     }
 
     public void guiUpdate() {
         this.floatSetting.setVisible(omniDirectional.getInput() == 3, this);
+        this.renderJumpRequired.setVisible(omniDirectional.getInput() == 3, this);
     }
 
     @SubscribeEvent
@@ -77,22 +80,24 @@ public class Sprint extends Module {
 
         if (canFloat && floatConditions() && !requireJump && omniSprint()) {
             e.setPosY(e.getPosY() + ModuleUtils.offsetValue);
+            ModuleUtils.groundTicks = 0;
             if (Utils.isMoving()) Utils.setSpeed(getFloatSpeed(getSpeedLevel()));
         }
 
         if (rotationConditions()) {
             float yaw = mc.thePlayer.rotationYaw;
             e.setYaw(yaw - 55);
+            RotationUtils.setFakeRotations(mc.thePlayer.rotationYaw, mc.thePlayer.rotationPitch);
         }
     }
 
     private boolean floatConditions() {
         int edgeY = (int) Math.round((mc.thePlayer.posY % 1.0D) * 100.0D);
-        if (ModuleUtils.stillTicks > 20) {
+        if (ModuleUtils.stillTicks > 200) {
             requireJump = true;
             return false;
         }
-        if (!(mc.thePlayer.posY % 1 == 0) && edgeY >= 10 && !allowedBlocks()) {
+        if (edgeY >= 10 && !allowedBlocks()) {
             requireJump = true;
             return false;
         }
@@ -197,13 +202,25 @@ public class Sprint extends Module {
 
     @SubscribeEvent
     public void onRenderTick(TickEvent.RenderTickEvent e) {
-        if (e.phase != TickEvent.Phase.END || !displayText.isToggled() || !Utils.nullCheck()) {
+        if (e.phase != TickEvent.Phase.END || !Utils.nullCheck()) {
             return;
         }
-        if (mc.currentScreen != null || mc.gameSettings.showDebugInfo) {
+        if (mc.currentScreen != null) {
             return;
         }
-        mc.fontRendererObj.drawStringWithShadow(text, posX, posY, rainbow.isToggled() ? Utils.getChroma(2, 0) : -1);
+        if (displayText.isToggled() && !mc.gameSettings.showDebugInfo) {
+            mc.fontRendererObj.drawStringWithShadow(text, posX, posY, rainbow.isToggled() ? Utils.getChroma(2, 0) : -1);
+        }
+
+        if (omniDirectional.getInput() != 3 || !renderJumpRequired.isToggled() || !requireJump || ModuleManager.scaffold.isEnabled || ModuleManager.bhop.isEnabled()) {
+            return;
+        }
+
+        String text = "§c[Sprint]: Jump required to re-activate float";
+        int width = mc.fontRendererObj.getStringWidth(text) + Utils.getBoldWidth(text) / 2;
+        final ScaledResolution scaledResolution = new ScaledResolution(mc);
+        int[] display = {scaledResolution.getScaledWidth(), scaledResolution.getScaledHeight(), scaledResolution.getScaleFactor()};
+        mc.fontRendererObj.drawString(text, display[0] / 2 - width + 104, display[1] / 2 + 272, color, true);
     }
 
     public boolean omniSprint() {

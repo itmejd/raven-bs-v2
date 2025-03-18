@@ -38,6 +38,8 @@ public class NoFall extends Module {
     private double dynamic;
     private boolean isFalling;
 
+    private int n;
+
     public NoFall() {
         super("NoFall", category.player);
         this.registerSetting(mode = new SliderSetting("Mode", 2, modes));
@@ -77,6 +79,7 @@ public class NoFall extends Module {
             Utils.resetTimer();
             initialY = mc.thePlayer.posY;
             isFalling = false;
+            n = 0;
             return;
         }
         else if ((double) mc.thePlayer.fallDistance >= minFallDistance.getInput()) {
@@ -97,18 +100,16 @@ public class NoFall extends Module {
         }
         if (isFalling && mode.getInput() == 2) {
             if (distanceFallen >= dynamic) {
-                Utils.getTimer().timerSpeed = 0.7099789F;
+                Utils.getTimer().timerSpeed = 0.6799789F;
                 mc.getNetHandler().addToSendQueue(new C03PacketPlayer(true));
                 initialY = mc.thePlayer.posY;
             }
         }
         //Utils.print("" + dynamic);
         if (isFalling && mode.getInput() == 3) {
+            Utils.resetTimer();
             if (mc.thePlayer.ticksExisted % 2 == 0) {
-                Utils.getTimer().timerSpeed = 0.5F;
-            }
-            else {
-                Utils.getTimer().timerSpeed = 1F;
+                Utils.getTimer().timerSpeed = 0.47F;
             }
             if (distanceFallen >= 3) {
                 mc.getNetHandler().addToSendQueue(new C03PacketPlayer(true));
@@ -116,7 +117,7 @@ public class NoFall extends Module {
             }
         }
         if (isFalling && mode.getInput() == 4) {
-            Utils.getTimer().timerSpeed = 1F;
+            Utils.resetTimer();
             if (distanceFallen >= 7) {
                 Utils.getTimer().timerSpeed = 0.7F;
                 mc.getNetHandler().addToSendQueue(new C03PacketPlayer(true));
@@ -158,6 +159,9 @@ public class NoFall extends Module {
             return true;
         }
         if (Utils.spectatorCheck()) {
+            return true;
+        }
+        if (Utils.isReplay()) {
             return true;
         }
         if (mc.thePlayer.onGround) {
