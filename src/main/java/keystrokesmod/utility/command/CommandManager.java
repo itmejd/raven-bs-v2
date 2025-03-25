@@ -25,6 +25,7 @@ public class CommandManager {
         registerCommand(new Enemy());
         registerCommand(new Profiles());
         registerCommand(new Q());
+        registerCommand(new QList());
         registerCommand(new Status());
     }
 
