@@ -95,6 +95,7 @@ public class Scaffold extends Module {
     private boolean floatWasEnabled;
     private boolean floatKeepY;
     public int offsetDelay;
+    public boolean placedVP;
 
     //disable checks
     public boolean moduleEnabled;
@@ -117,6 +118,8 @@ public class Scaffold extends Module {
     private float maxOffset;
     private int sameMouse;
     private int randomF, yawChanges, dynamic;
+    private boolean getVTR;
+    private float VTRY;
     //fake rotations
     private float fakeYaw, fakePitch;
     private float fakeYaw1, fakeYaw2;
@@ -301,7 +304,10 @@ public class Scaffold extends Module {
         switch ((int) rotation.getInput()) {
             case 1:
                 yaw = mc.thePlayer.rotationYaw - hardcodedYaw();
-                pitch = 78F;
+                pitch = 76F;
+                if (!Utils.isDiagonal(true)) {
+                    //yaw -= 45;
+                }
                 e.setRotations(yaw, pitch);
                 break;
             case 2:
@@ -318,34 +324,34 @@ public class Scaffold extends Module {
 
                 if (quad <= 5 || quad >= 85) {
                     yawAngle = 125.625F;
-                    minOffset = 18;
+                    minOffset = 10;
                 }
                 if (quad > 5 && quad <= 15 || quad >= 75 && quad < 85) {
                     yawAngle = 127.625F;
-                    minOffset = 16;
+                    minOffset = 10;
                 }
                 if (quad > 15 && quad <= 25 || quad >= 65 && quad < 75) {
                     yawAngle = 129.625F;
-                    minOffset = 14;
+                    minOffset = 8;
                 }
                 if (quad > 25 && quad <= 32 || quad >= 58 && quad < 65) {
                     yawAngle = 132.625F;
-                    minOffset = 12;
+                    minOffset = 8;
                 }
                 if (quad > 32 && quad <= 38 || quad >= 52 && quad < 58) {
                     yawAngle = 134.625F;
-                    minOffset = 9;
+                    minOffset = 7;
                 }
                 if (quad > 38 && quad <= 42 || quad >= 48 && quad < 52) {
                     yawAngle = 136.625F;
-                    minOffset = 7;
+                    minOffset = 6;
                 }
                 if (quad > 42 && quad <= 45 || quad >= 45 && quad < 48) {
                     yawAngle = 139.625F;
                     minOffset = 5;
 
                 }
-                minPitch = 78.55F;
+                minPitch = 80.45F;
                 //Utils.print("" + minOffset);
                 //float offsetAmountD = ((((float) offsetAmount.getInput() / 10) - 10) * -2) - (((float) offsetAmount.getInput() / 10) - 10);
                 //yawAngle += offsetAmountD;
@@ -367,7 +373,7 @@ public class Scaffold extends Module {
                 if (firstStroke > 0 && (System.currentTimeMillis() - firstStroke) > strokeDelay) {
                     firstStroke = 0;
                 }
-                if (enabledOffGround) {
+                if (enabledOffGround && Utils.distanceToGround(mc.thePlayer) > 2) {
                     if (blockRotations != null) {
                         yaw = blockRotations[0];
                         pitch = blockRotations[1];
@@ -378,12 +384,15 @@ public class Scaffold extends Module {
                     e.setRotations(yaw, pitch);
                     break;
                 }
+                else {
+                    enabledOffGround = false;
+                }
 
                 if (blockRotations != null) {
                     blockYaw = blockRotations[0];
                     pitch = blockRotations[1];
                     yawOffset = blockYawOffset;
-                    if (pitch < minPitch) {
+                    if (pitch < minPitch && ModuleManager.tower.activeTicks <= 3) {
                         pitch = minPitch;
                     }
                 } else {
@@ -547,9 +556,19 @@ public class Scaffold extends Module {
             rotatingForward = false;
         }
 
-        if (ModuleManager.tower.isVerticalTowering()) {
+        if (rotation.getInput() == 2 && mc.thePlayer.motionX == 0.0D && mc.thePlayer.motionZ == 0.0D) {
             if (blockRotations != null) {
                 e.setYaw(blockRotations[0]);
+            }
+        }
+
+        if (ModuleManager.tower.isVerticalTowering()) {
+            if (blockRotations != null && (!getVTR || ModuleManager.tower.ebDelay <= 1 || !ModuleManager.tower.firstVTP)) {
+                VTRY = blockRotations[0];
+                getVTR = true;
+            }
+            if (getVTR) {
+                e.setYaw(VTRY);
             }
             if (ModuleManager.tower.yaw != 0) {
                 e.setYaw(ModuleManager.tower.yaw);
@@ -557,6 +576,9 @@ public class Scaffold extends Module {
             if (ModuleManager.tower.pitch != 0) {
                 e.setPitch(ModuleManager.tower.pitch);
             }
+        }
+        else {
+            getVTR = false;
         }
 
         //pitch fix
@@ -611,7 +633,7 @@ public class Scaffold extends Module {
 
     @SubscribeEvent
     public void onSlotUpdate(SlotUpdateEvent e) {
-        if (isEnabled) {
+        if (isEnabled && autoSwap.isToggled()) {
             lastSlot.set(e.slot);
             e.setCanceled(true);
         }
@@ -650,12 +672,19 @@ public class Scaffold extends Module {
 
             hasSwapped = true;
             int mode = (int) fastScaffold.getInput();
-            if (rotation.getInput() == 0 || rotationDelay == 0) {
+            if (!ModuleManager.tower.placeExtraBlock) {
+                if (rotation.getInput() == 0 || rotationDelay == 0) {
+                    placeBlock(0, 0);
+                }
+            }
+            else if ((ModuleManager.tower.ebDelay == 0 || !ModuleManager.tower.firstVTP)) {
                 placeBlock(0, 0);
+                placedVP = true;
             }
             if (ModuleManager.tower.placeExtraBlock) {
                 placeBlock(0, -1);
             }
+
             if (fastScaffoldKeepY && !ModuleManager.tower.canTower()) {
                 ++keepYTicks;
                 if ((int) mc.thePlayer.posY > (int) startYPos) {
@@ -780,7 +809,7 @@ public class Scaffold extends Module {
 
     public boolean sprint() {
         if (isEnabled) {
-            return handleFastScaffolds() > 0 || !holdingBlocks();
+            return handleFastScaffolds() > 0;
         }
         return false;
     }
@@ -824,6 +853,9 @@ public class Scaffold extends Module {
                 if (holdingBlocks()) {
                     mc.getItemRenderer().resetEquippedProgress();
                 }
+            }
+            if (ModuleManager.tower.placeExtraBlock) {
+                ModuleManager.tower.firstVTP = true;
             }
             highlight.put(block.blockPos.offset(block.enumFacing), null);
             hasPlaced = true;
@@ -1028,7 +1060,15 @@ public class Scaffold extends Module {
 
     private boolean placeConditions(EnumFacing enumFacing, int yCondition, int xCondition) {
         if (xCondition == -1) {
-            return enumFacing == EnumFacing.EAST;
+            if (!ModuleManager.tower.placeExtraBlock) {
+                return enumFacing == EnumFacing.EAST;
+            }
+            else {
+                return enumFacing == EnumFacing.DOWN;
+            }
+        }
+        else if (ModuleManager.tower.placeExtraBlock) {
+            return enumFacing == EnumFacing.WEST;
         }
         if (yCondition == 1) {
             return enumFacing == EnumFacing.DOWN;
@@ -1105,7 +1145,7 @@ public class Scaffold extends Module {
     }
 
     private void handleMotion() {
-        if (handleFastScaffolds() > 0 || ModuleManager.tower.canTower()) {
+        if (handleFastScaffolds() > 0 || ModuleManager.tower.canTower() || motion.getInput() == 100) {
             return;
         }
         double input = (motion.getInput() / 100);

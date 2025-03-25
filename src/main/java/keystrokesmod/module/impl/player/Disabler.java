@@ -47,6 +47,7 @@ public class Disabler extends Module {
     private double firstY;
     private boolean reset;
     private float savedYaw, savedPitch;
+    private boolean worldJoin;
 
     public boolean disablerLoaded, running;
 
@@ -81,6 +82,7 @@ public class Disabler extends Module {
         finished = 0;
         shouldRender = false;
         reset = false;
+        worldJoin = false;
         activationDelayMillis = (long)(activationDelay.getInput() * 1000);
     }
 
@@ -112,18 +114,29 @@ public class Disabler extends Module {
         }
 
         if (waitingForGround) {
+            savedYaw = e.getYaw();
+            savedPitch = e.getPitch();
+            if (!running) {
+                //mc.thePlayer.motionY = 0;
+            }
             running = true;
-            if (mc.thePlayer.onGround) {
-                savedYaw = e.getYaw();
-                savedPitch = e.getPitch();
+            /*if (mc.thePlayer.ticksExisted <= 3) {
                 mc.thePlayer.motionY = 0.42f;
                 waitingForGround = false;
+                worldJoin = true;
             }
+            else */if (mc.thePlayer.onGround) {
+                mc.thePlayer.motionY = 0.42f;
+                waitingForGround = false;
+                worldJoin = false;
+            }
+            e.setRotations(savedYaw, savedPitch);
             return;
         }
+        e.setRotations(savedYaw, savedPitch);
 
         airTicks = mc.thePlayer.onGround ? 0 : airTicks + 1;
-        if (airTicks >= 10) {
+        if (airTicks >= 10 || worldJoin) {
             if (!applyingMotion) {
                 applyingMotion = true;
                 firstY = mc.thePlayer.posY;
@@ -136,14 +149,12 @@ public class Disabler extends Module {
                 mc.thePlayer.motionY = 0;
                 mc.thePlayer.motionZ = 0;
 
-                e.setRotations(savedYaw, savedPitch);
-
                 if (mc.thePlayer.posY != firstY) {
                     if (!reset) {
                         resetState();
-                        activationDelayMillis = 4000;
+                        activationDelayMillis = 5000;
                         reset = true;
-                        Utils.print("&7[&dR&7] &adisabler reset, wait 4s");
+                        Utils.print("&7[&dR&7] &adisabler reset, wait 5s");
                     }
                     else {
                         shouldRun = false;

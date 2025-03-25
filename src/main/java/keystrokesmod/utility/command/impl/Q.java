@@ -40,7 +40,7 @@ public class Q extends Command {
         hypixelPlayCommands.put("swsi", "solo_insane");
         hypixelPlayCommands.put("swtn", "teams_normal");
         hypixelPlayCommands.put("swti", "teams_insane");
-        hypixelPlayCommands.put("bowd", "duels_bow_duel");
+        hypixelPlayCommands.put("bowduel", "duels_bow_duel");
         hypixelPlayCommands.put("classicduel", "duels_classic_duel");
         hypixelPlayCommands.put("opduel", "duels_op_duel");
         hypixelPlayCommands.put("uhcduel", "duels_uhc_duel");

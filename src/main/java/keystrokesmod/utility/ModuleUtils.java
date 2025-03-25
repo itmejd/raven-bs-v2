@@ -9,6 +9,7 @@ import keystrokesmod.utility.command.CommandManager;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockAir;
 import net.minecraft.block.BlockSlab;
+import net.minecraft.block.BlockSnow;
 import net.minecraft.client.Minecraft;
 import keystrokesmod.module.ModuleManager;
 import net.minecraft.client.settings.KeyBinding;
@@ -44,12 +45,13 @@ public class ModuleUtils {
     private long FIREBALL_TIMEOUT = 500L, fireballTime = 0;
     public static int inAirTicks, groundTicks, stillTicks;
     public static int fadeEdge;
-    public static double offsetValue = 4e-12;
+    public static double offsetValue = 6e-14;
     public static boolean isAttacking;
     private int attackingTicks;
     private int unTargetTicks;
     public static int profileTicks = -1, swapTick;
-    public static boolean lastTickOnGround, lastTickPos1;
+    public static int lastY, thisY;
+    public static boolean lastTickOnGround, lastTickPos1, lastYDif;
     private boolean thisTickOnGround, thisTickPos1;
     public static boolean firstDamage;
 
@@ -245,7 +247,7 @@ public class ModuleUtils {
         if (canSlow || ModuleManager.scaffold.moduleEnabled && !ModuleManager.tower.canTower()) {
             double motionVal = 0.9507832 - ((double) inAirTicks / 10000) - Utils.randomizeDouble(0.00001, 0.00006);
             if (!hasSlowed) motionVal = motionVal - 0.15;
-            if (mc.thePlayer.hurtTime == 0 && inAirTicks >= 3 && !setSlow) {
+            if (mc.thePlayer.hurtTime == 0 && inAirTicks >= 3 && !setSlow && ModuleManager.scaffold.rotation.getInput() == 2) {
                 mc.thePlayer.motionX *= motionVal;
                 mc.thePlayer.motionZ *= motionVal;
                 setSlow = hasSlowed = true;
@@ -337,6 +339,16 @@ public class ModuleUtils {
         lastTickPos1 = thisTickPos1;
         thisTickPos1 = mc.thePlayer.posY % 1 == 0;
 
+        lastY = thisY;
+        thisY = (int) mc.thePlayer.posY;
+
+        if (thisY >= lastY + 2 || thisY <= lastY - 2) {
+            lastYDif = true;
+        }
+        else {
+            lastYDif = false;
+        }
+
         inAirTicks = mc.thePlayer.onGround ? 0 : ++inAirTicks;
         groundTicks = !mc.thePlayer.onGround ? 0 : ++groundTicks;
         stillTicks = Utils.isMoving() ? 0 : ++stillTicks;
@@ -348,6 +360,9 @@ public class ModuleUtils {
 
 
         if ((ModuleManager.bhop.didMove || ModuleManager.scaffold.lowhop) && (!ModuleManager.bhop.disablerOnly.isToggled() || ModuleManager.bhop.disablerOnly.isToggled() && ModuleManager.disabler.disablerLoaded)) {
+            if (ModuleUtils.damage && Velocity.vertical.getInput() != 0 || block instanceof BlockSlab) {
+                resetLowhop();
+            }
             if (!ModuleUtils.damage || Velocity.vertical.getInput() == 0) {
 
                 if (ModuleManager.scaffold.lowhop) {
@@ -394,6 +409,7 @@ public class ModuleUtils {
                                 resetLowhop();
                                 break;
                             }
+                            boolean g1 = Utils.distanceToGround(mc.thePlayer) <= 1.3;
                             if (inAirTicks == 1) {
                                 mc.thePlayer.motionY = 0.38999998569488;
                                 ModuleManager.bhop.lowhop = true;
@@ -404,16 +420,16 @@ public class ModuleUtils {
                             if (inAirTicks == 3) {
                                 mc.thePlayer.motionY = 0.08842400075912;
                             }
-                            if (inAirTicks == 4 && Utils.distanceToGround(mc.thePlayer) < 2) {
+                            if (inAirTicks == 4 && g1) {
                                 mc.thePlayer.motionY = -0.19174457909538;
                             }
-                            if (inAirTicks == 5 && Utils.distanceToGround(mc.thePlayer) < 2) {
+                            if (inAirTicks == 5 && g1) {
                                 mc.thePlayer.motionY = -0.26630949469659;
                             }
-                            if (inAirTicks == 6 && Utils.distanceToGround(mc.thePlayer) < 2) {
+                            if (inAirTicks == 6 && g1) {
                                 mc.thePlayer.motionY = -0.26438340940798;
                             }
-                            if (inAirTicks == 7 && Utils.distanceToGround(mc.thePlayer) < 2) {
+                            if (inAirTicks == 7 && g1) {
                                 mc.thePlayer.motionY = -0.33749574778843;
                             }
                             //strafe
@@ -421,7 +437,7 @@ public class ModuleUtils {
                                 Utils.setSpeed(Utils.getHorizontalSpeed(mc.thePlayer));
                             }
                             //disable
-                            if (inAirTicks >= 8) {
+                            if (inAirTicks >= 8 || inAirTicks >= 4 && !g1) {
                                 resetLowhop();
                             }
                             break;

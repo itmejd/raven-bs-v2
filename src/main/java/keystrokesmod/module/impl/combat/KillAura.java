@@ -72,8 +72,8 @@ public class KillAura extends Module {
     private ButtonSetting weaponOnly;
 
     private String[] autoBlockModes = new String[] { "Manual", "Vanilla", "Partial", "Interact A", "Interact B" };
-    private String[] interactAModes = new String[] { "10", "5", "6.5" };
-    private String[] interactBModes = new String[] { "10", "7", "9.5" };
+    private String[] interactAModes = new String[] { "10", "9.5" };
+    private String[] interactBModes = new String[] { "10", "9.5" };
     private String[] rotationModes = new String[] { "Silent", "Lock view", "None" };
     private String[] rotateModes = new String[] { "Attacking", "Swinging" };
     private String[] sortModes = new String[] { "Distance", "Health", "Hurttime", "Yaw" };
@@ -198,36 +198,6 @@ public class KillAura extends Module {
         if (isTargeting) {
             isTargeting = false;
             justUnTargeted = true;
-        }
-    }
-
-    @SubscribeEvent(priority = EventPriority.HIGH)
-    public void onSendPacket(SendPacketEvent e) {
-        if (!Utils.nullCheck()) {
-            return;
-        }
-        Packet packet = e.getPacket();
-        if (packet.getClass().getSimpleName().startsWith("S")) {
-            return;
-        }
-        if (packet instanceof C08PacketPlayerBlockPlacement) {
-            if (delayTicks >= 0) {
-                if (((C08PacketPlayerBlockPlacement) packet).getStack() != null && ((C08PacketPlayerBlockPlacement) packet).getStack().getItem() instanceof ItemSword && ((C08PacketPlayerBlockPlacement) packet).getPlacedBlockDirection() != 255) {
-                    e.setCanceled(true);
-                }
-            }
-        }
-        if (blinking.get() && !e.isCanceled()) { // blink
-            if (packet instanceof C00PacketLoginStart || packet instanceof C00Handshake) {
-                return;
-            }
-            blinkedPackets.add(packet);
-            e.setCanceled(true);
-        }
-        if (!lag && target != null && Utils.holdingSword() && autoBlockMode.getInput() >= 2) {
-            if (packet instanceof C08PacketPlayerBlockPlacement) {
-                e.setCanceled(true);
-            }
         }
     }
 
@@ -423,6 +393,36 @@ public class KillAura extends Module {
                 onCustomMouse(1, false);
             }
             lastPressedRight = pressedRight;
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGH)
+    public void onSendPacket(SendPacketEvent e) {
+        if (!Utils.nullCheck()) {
+            return;
+        }
+        Packet packet = e.getPacket();
+        if (packet.getClass().getSimpleName().startsWith("S")) {
+            return;
+        }
+        if (packet instanceof C08PacketPlayerBlockPlacement) {
+            if (delayTicks >= 0) {
+                if (((C08PacketPlayerBlockPlacement) packet).getStack() != null && ((C08PacketPlayerBlockPlacement) packet).getStack().getItem() instanceof ItemSword && ((C08PacketPlayerBlockPlacement) packet).getPlacedBlockDirection() != 255) {
+                    e.setCanceled(true);
+                }
+            }
+        }
+        if (blinking.get() && !e.isCanceled()) { // blink
+            if (packet instanceof C00PacketLoginStart || packet instanceof C00Handshake) {
+                return;
+            }
+            blinkedPackets.add(packet);
+            e.setCanceled(true);
+        }
+        if (!lag && target != null && Utils.holdingSword() && autoBlockMode.getInput() >= 2) {
+            if (packet instanceof C08PacketPlayerBlockPlacement) {
+                e.setCanceled(true);
+            }
         }
     }
 
@@ -923,9 +923,6 @@ public class KillAura extends Module {
                     case 1:
                         getInteractA1(distance, swung);
                         break;
-                    case 2:
-                        getInteractA2(distance, swung);
-                        break;
                 }
                 break;
             case 4: // interact b
@@ -935,9 +932,6 @@ public class KillAura extends Module {
                         break;
                     case 1:
                         getInteractB1(distance, swung);
-                        break;
-                    case 2:
-                        getInteractB2(distance, swung);
                         break;
                 }
                 break;
@@ -965,34 +959,11 @@ public class KillAura extends Module {
     }
 
     private void getInteractA1(double distance, boolean swung) {
-        if (interactTicks >= 4) {
+        if (interactTicks >= 3) {
             interactTicks = 0;
         }
         interactTicks++;
-        switch (interactTicks) {
-            case 1:
-                blinking.set(true);
-                if (ModuleUtils.isBlocked) {
-                    sendUnBlockPacket();
-                }
-                break;
-            case 2:
-                handleInteractAndAttack(distance, true, true, swung);
-                sendBlockPacket();
-                break;
-            case 3:
-                releasePackets(); // release
-                break;
-        }
-    }
-
-    private void getInteractA2(double distance, boolean swung) {
-        interactTicks++;
-        firstEdge++;
         if (firstCycle) {
-            if (interactTicks > 2) {
-                interactTicks = 0;
-            }
             switch (interactTicks) {
                 case 1:
                     blinking.set(true);
@@ -1003,31 +974,31 @@ public class KillAura extends Module {
                 case 2:
                     handleInteractAndAttack(distance, true, true, swung);
                     sendBlockPacket();
-                    firstCycle = false;
-                    interactTicks = 0;
                     releasePackets(); // release
+                    interactTicks = 0;
+                    firstCycle = false;
                     break;
             }
         }
         else {
-            if (interactTicks > 4) {
-                interactTicks = 0;
-            }
             switch (interactTicks) {
                 case 1:
                     blinking.set(true);
                     if (ModuleUtils.isBlocked) {
-                        sendUnBlockPacket();
+                        setSwapSlot();
+                        swapped = true;
                     }
                     break;
                 case 2:
+                    if (swapped) {
+                        setCurrentSlot();
+                        swapped = false;
+                    }
                     handleInteractAndAttack(distance, true, true, swung);
                     sendBlockPacket();
-                    break;
-                case 4:
+                    releasePackets(); // release
                     firstCycle = true;
                     interactTicks = 0;
-                    releasePackets(); // release
                     break;
             }
         }
@@ -1059,31 +1030,6 @@ public class KillAura extends Module {
     }
 
     private void getInteractB1(double distance, boolean swung) {
-        if (interactTicks >= 3) {
-            interactTicks = 0;
-        }
-        interactTicks++;
-        switch (interactTicks) {
-            case 1:
-                blinking.set(true);
-                if (ModuleUtils.isBlocked) {
-                    setSwapSlot();
-                    swapped = true;
-                }
-                break;
-            case 2:
-                if (swapped) {
-                    setCurrentSlot();
-                    swapped = false;
-                }
-                handleInteractAndAttack(distance, true, true, swung);
-                sendBlockPacket();
-                releasePackets(); // release
-                break;
-        }
-    }
-
-    private void getInteractB2(double distance, boolean swung) {
         if (interactTicks >= 3) {
             interactTicks = 0;
         }

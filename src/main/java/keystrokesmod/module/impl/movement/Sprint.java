@@ -1,5 +1,6 @@
 package keystrokesmod.module.impl.movement;
 
+import keystrokesmod.event.PostPlayerInputEvent;
 import keystrokesmod.event.PreMotionEvent;
 import keystrokesmod.event.PreUpdateEvent;
 import keystrokesmod.mixin.impl.accessor.IAccessorEntityPlayerSP;
@@ -41,6 +42,7 @@ public class Sprint extends Module {
     public float posY = 5;
     private float limit;
     public boolean canFloat, requireJump;
+    public boolean sprintFloat;
     private int color = new Color(255, 0, 0, 255).getRGB();
 
     private String[] omniDirectionalModes = new String[] { "Disabled", "Vanilla", "Hypixel", "Float" };
@@ -66,6 +68,13 @@ public class Sprint extends Module {
     }
 
     @SubscribeEvent
+    public void onPostPlayerInput(PostPlayerInputEvent e) {
+        if (Utils.jumpDown() && mc.thePlayer.onGround) {
+            requireJump = true;
+        }
+    }
+
+    @SubscribeEvent
     public void onPreMotion(PreMotionEvent e) {
 
         if (ModuleUtils.groundTicks <= 8 || floatConditions()) {
@@ -80,8 +89,12 @@ public class Sprint extends Module {
 
         if (canFloat && floatConditions() && !requireJump && omniSprint()) {
             e.setPosY(e.getPosY() + ModuleUtils.offsetValue);
+            sprintFloat = true;
             ModuleUtils.groundTicks = 0;
             if (Utils.isMoving()) Utils.setSpeed(getFloatSpeed(getSpeedLevel()));
+        }
+        else {
+            sprintFloat = false;
         }
 
         if (rotationConditions()) {
@@ -91,7 +104,7 @@ public class Sprint extends Module {
         }
     }
 
-    private boolean floatConditions() {
+    boolean floatConditions() {
         int edgeY = (int) Math.round((mc.thePlayer.posY % 1.0D) * 100.0D);
         if (ModuleUtils.stillTicks > 200) {
             requireJump = true;

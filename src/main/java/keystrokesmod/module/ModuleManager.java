@@ -76,6 +76,7 @@ public class ModuleManager {
     public static TargetStrafe targetStrafe;
     public static Criticals criticals;
     public static Fences fences;
+    public static FastFall fastFall;
 
     public void register() {
         this.addModule(autoClicker = new AutoClicker());
@@ -177,6 +178,7 @@ public class ModuleManager {
         this.addModule(targetStrafe = new TargetStrafe());
         this.addModule(criticals = new Criticals());
         this.addModule(fences = new Fences());
+        this.addModule(fastFall = new FastFall());
         antiBot.enable();
         Collections.sort(this.modules, Comparator.comparing(Module::getName));
     }

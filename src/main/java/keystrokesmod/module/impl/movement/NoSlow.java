@@ -133,7 +133,7 @@ public class NoSlow extends Module {
         if (!Mouse.isButtonDown(1) || (mc.thePlayer.getHeldItem() == null || !holdingConsumable(mc.thePlayer.getHeldItem()))) {
             return;
         }
-        if (!mc.thePlayer.onGround || ModuleUtils.groundTicks <= 8) {
+        if (!mc.thePlayer.onGround || ModuleManager.sprint.sprintFloat) {
             canFloat = true;
         }
         else {
@@ -217,10 +217,10 @@ public class NoSlow extends Module {
         if (!canFloat) {
             return;
         }
-        if (!reSendConsume && offsetDelay <= 2) {
+        /*if (!reSendConsume && offsetDelay <= 2) {
             ++offsetDelay;
             return;
-        }
+        }*/
         offset = true;
         e.setPosY(e.getPosY() + ModuleUtils.offsetValue);
         ModuleUtils.groundTicks = 0;

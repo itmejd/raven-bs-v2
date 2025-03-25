@@ -32,11 +32,12 @@ public class NoFall extends Module {
     private ButtonSetting disableAdventure;
     private ButtonSetting ignoreVoid;
     private ButtonSetting hideSound;
-    private String[] modes = new String[]{"Spoof", "NoGround", "Packet A", "Packet B", "CTW Packet"};
+    private String[] modes = new String[]{"Spoof", "NoGround", "Packet A", "Packet B", "CTW Packet", "Prediction"};
 
     private double initialY;
     private double dynamic;
     private boolean isFalling;
+    private double timerVal = 1;
 
     private int n;
 
@@ -72,6 +73,13 @@ public class NoFall extends Module {
         }
     }*/
 
+    @SubscribeEvent
+    public void onReceivePacket(ReceivePacketEvent e) {
+        if (e.getPacket() instanceof S08PacketPlayerPosLook && n > 0) {
+            n = 34;
+        }
+    }
+
 
     @SubscribeEvent
     public void onPreUpdate(PreUpdateEvent e) {
@@ -80,6 +88,7 @@ public class NoFall extends Module {
             initialY = mc.thePlayer.posY;
             isFalling = false;
             n = 0;
+            timerVal = 1;
             return;
         }
         else if ((double) mc.thePlayer.fallDistance >= minFallDistance.getInput()) {
@@ -89,29 +98,55 @@ public class NoFall extends Module {
 
         double predictedY = mc.thePlayer.posY + mc.thePlayer.motionY;
         double distanceFallen = initialY - predictedY;
-        if (mc.thePlayer.motionY >= -1.0) {
-            dynamic = 3.0;
-        }
-        if (mc.thePlayer.motionY < -1.0) {
-            dynamic = 4.0;
-        }
-        if (mc.thePlayer.motionY < -2.0) {
-            dynamic = 5.0;
-        }
         if (isFalling && mode.getInput() == 2) {
+            if (mc.thePlayer.motionY >= -1.0) {
+                dynamic = 3.0;
+            }
+            if (mc.thePlayer.motionY < -1.0) {
+                dynamic = 4.0;
+            }
+            if (mc.thePlayer.motionY < -2.0) {
+                dynamic = 5.0;
+            }
             if (distanceFallen >= dynamic) {
-                Utils.getTimer().timerSpeed = 0.6799789F;
+                if (mc.thePlayer.motionY < -0.01) {
+                    timerVal = 0.8;
+                }
+                if (mc.thePlayer.motionY < -1.0) {
+                    timerVal = 0.7;
+                }
+                if (mc.thePlayer.motionY < -1.6) {
+                    timerVal = 0.6;
+                }
+                Utils.getTimer().timerSpeed = (float) timerVal;
                 mc.getNetHandler().addToSendQueue(new C03PacketPlayer(true));
                 initialY = mc.thePlayer.posY;
             }
         }
-        //Utils.print("" + dynamic);
         if (isFalling && mode.getInput() == 3) {
+            if (mc.thePlayer.motionY < -2.0) {
+                dynamic = 4.0;
+            }
+            else {
+                dynamic = 3.0;
+            }
             Utils.resetTimer();
             if (mc.thePlayer.ticksExisted % 2 == 0) {
-                Utils.getTimer().timerSpeed = 0.47F;
+                if (mc.thePlayer.motionY < -0.01) {
+                    timerVal = 0.65;
+                }
+                if (mc.thePlayer.motionY < -1.0) {
+                    timerVal = 0.54;
+                }
+                if (mc.thePlayer.motionY < -1.6) {
+                    timerVal = 0.46;
+                }
+                if (mc.thePlayer.motionY < -2.1) {
+                    timerVal = 0.41;
+                }
+                Utils.getTimer().timerSpeed = (float) timerVal;
             }
-            if (distanceFallen >= 3) {
+            if (distanceFallen >= dynamic) {
                 mc.getNetHandler().addToSendQueue(new C03PacketPlayer(true));
                 initialY = mc.thePlayer.posY;
             }
@@ -122,6 +157,12 @@ public class NoFall extends Module {
                 Utils.getTimer().timerSpeed = 0.7F;
                 mc.getNetHandler().addToSendQueue(new C03PacketPlayer(true));
                 initialY = mc.thePlayer.posY;
+            }
+        }
+        if (isFalling && mode.getInput() == 5) {
+            if (distanceFallen >= 3 && n <= 4) {
+                mc.thePlayer.motionY = 0;
+                n++;
             }
         }
         //Utils.print("" + mc.thePlayer.ticksExisted + " " + mc.thePlayer.motionY + " " + edging);
