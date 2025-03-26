@@ -5,6 +5,7 @@ import keystrokesmod.event.PreUpdateEvent;
 import keystrokesmod.event.ReceivePacketEvent;
 import keystrokesmod.event.SendPacketEvent;
 import keystrokesmod.module.Module;
+import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
 import keystrokesmod.script.classes.Block;
@@ -93,6 +94,10 @@ public class NoFall extends Module {
         }
         else if ((double) mc.thePlayer.fallDistance >= minFallDistance.getInput()) {
            isFalling = true;
+        }
+
+        if (ModuleManager.antiVoid.started) {
+            return;
         }
 
 

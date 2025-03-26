@@ -317,7 +317,20 @@ public class KillAura extends Module {
             disableCheckUsing = true;
             return;
         }
-
+        if (ModuleManager.antiVoid.started) {
+            if (blinking.get() || lag) {
+                resetBlinkState(true);
+            }
+            setTarget(null);
+            return;
+        }
+        if (target != null && attackingEntity != null && inRange(target, attackRange.getInput())) {
+            isTargeting = true;
+        }
+        else if (isTargeting) {
+            isTargeting = false;
+            justUnTargeted = true;
+        }
         if (ModuleManager.fly.isEnabled() && ModuleManager.fly.mode.getInput() == 3) {
             if (blinking.get() || lag) {
                 resetBlinkState(true);
@@ -488,13 +501,6 @@ public class KillAura extends Module {
         }
         if (target != null) {
             checkUsing = true;
-        }
-        if (target != null && attackingEntity != null && inRange(target, attackRange.getInput())) {
-            isTargeting = true;
-        }
-        else if (isTargeting) {
-            isTargeting = false;
-            justUnTargeted = true;
         }
     }
 

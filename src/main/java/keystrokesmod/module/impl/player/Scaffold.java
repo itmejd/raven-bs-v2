@@ -73,7 +73,7 @@ public class Scaffold extends Module {
     private int blockSlot = -1;
 
     //placements related
-    private boolean hasPlaced, finishProcedure, canPlace;
+    private boolean hasPlaced, finishProcedure, stopUpdate, stopUpdate2;
     private PlaceData lastPlacement;
     private EnumFacing[] facings = { EnumFacing.EAST, EnumFacing.WEST, EnumFacing.NORTH, EnumFacing.SOUTH, EnumFacing.UP };
     private BlockPos[] offsets = { new BlockPos(-1, 0, 0), new BlockPos(1, 0, 0), new BlockPos(0, 0, 1), new BlockPos(0, 0, -1), new BlockPos(0, -1, 0) };
@@ -347,7 +347,7 @@ public class Scaffold extends Module {
                     minOffset = 6;
                 }
                 if (quad > 42 && quad <= 45 || quad >= 45 && quad < 48) {
-                    yawAngle = 139.625F;
+                    yawAngle = 140.125F;
                     minOffset = 5;
 
                 }
@@ -445,7 +445,7 @@ public class Scaffold extends Module {
                         was451 = false;
                     }
                 }
-                double minSwitch = (!Utils.scaffoldDiagonal(false)) ? 4 : 15;
+                double minSwitch = (!Utils.scaffoldDiagonal(false)) ? 9 : 15;
                 if (side >= 0) {
                     if (yawOffset <= -minSwitch && firstStroke == 0 && dynamic > 0) {
                         if (quad <= 5 || quad >= 85) {
@@ -641,6 +641,7 @@ public class Scaffold extends Module {
 
     @SubscribeEvent
     public void onPreUpdate(PreUpdateEvent e) {
+        stopUpdate = stopUpdate2 = false;
         if (!isEnabled) {
             return;
         }
@@ -648,77 +649,77 @@ public class Scaffold extends Module {
             startYPos = -1;
         }
         if (LongJump.stopModules) {
-            return;
+            stopUpdate2 = true;
         }
         if (ModuleManager.killAura.isTargeting || ModuleManager.killAura.justUnTargeted) {
-            return;
+            stopUpdate2 = true;
         }
-        if (holdingBlocks() && setSlot()) {
-            if (moduleEnabled && !finishProcedure) {
-                if (Utils.distanceToGround(mc.thePlayer) < 2) {
-                    canPlace = true;
-                    finishProcedure = true;
-                }
-                if (Utils.distanceToGround(mc.thePlayer) > 5) {
-                    canPlace = true;
-                    if (hasPlaced) {
+        if (!stopUpdate2) {
+            if (holdingBlocks() && setSlot()) {
+                if (moduleEnabled && !finishProcedure) {
+                    if (Utils.distanceToGround(mc.thePlayer) < 2) {
                         finishProcedure = true;
                     }
-                }
-                else if (!finishProcedure) {
-                    return;
-                }
-            }
-
-            hasSwapped = true;
-            int mode = (int) fastScaffold.getInput();
-            if (!ModuleManager.tower.placeExtraBlock) {
-                if (rotation.getInput() == 0 || rotationDelay == 0) {
-                    placeBlock(0, 0);
-                }
-            }
-            else if ((ModuleManager.tower.ebDelay == 0 || !ModuleManager.tower.firstVTP)) {
-                placeBlock(0, 0);
-                placedVP = true;
-            }
-            if (ModuleManager.tower.placeExtraBlock) {
-                placeBlock(0, -1);
-            }
-
-            if (fastScaffoldKeepY && !ModuleManager.tower.canTower()) {
-                ++keepYTicks;
-                if ((int) mc.thePlayer.posY > (int) startYPos) {
-                    switch (mode) {
-                        case 1:
-                            if (!firstKeepYPlace && keepYTicks == 3) {
-                                placeBlock(1, 0);
-                                firstKeepYPlace = true;
-                            }
-                            break;
-                        case 2:
-                            if (!firstKeepYPlace && keepYTicks == 8 || keepYTicks == 11) {
-                                placeBlock(1, 0);
-                                firstKeepYPlace = true;
-                            }
-                            break;
-                        case 3:
-                            if (!firstKeepYPlace && keepYTicks == 8 || firstKeepYPlace && keepYTicks == 7) {
-                                placeBlock(1, 0);
-                                firstKeepYPlace = true;
-                            }
-                            break;
-                        case 4:
-                            if (!firstKeepYPlace && keepYTicks == 7) {
-                                placeBlock(1, 0);
-                                firstKeepYPlace = true;
-                            }
-                            break;
+                    if (Utils.distanceToGround(mc.thePlayer) > 5) {
+                        if (hasPlaced) {
+                            finishProcedure = true;
+                        }
+                    } else if (!finishProcedure) {
+                        stopUpdate = true;
                     }
                 }
-                if (mc.thePlayer.onGround) keepYTicks = 0;
-                if ((int) mc.thePlayer.posY == (int) startYPos) firstKeepYPlace = false;
+                if (!stopUpdate) {
+
+                    hasSwapped = true;
+                    int mode = (int) fastScaffold.getInput();
+                    if (!ModuleManager.tower.placeExtraBlock) {
+                        if (rotation.getInput() == 0 || rotationDelay == 0) {
+                            placeBlock(0, 0);
+                        }
+                    } else if ((ModuleManager.tower.ebDelay == 0 || !ModuleManager.tower.firstVTP)) {
+                        placeBlock(0, 0);
+                        placedVP = true;
+                    }
+                    if (ModuleManager.tower.placeExtraBlock) {
+                        placeBlock(0, -1);
+                    }
+
+                    if (fastScaffoldKeepY && !ModuleManager.tower.canTower()) {
+                        ++keepYTicks;
+                        if ((int) mc.thePlayer.posY > (int) startYPos) {
+                            switch (mode) {
+                                case 1:
+                                    if (!firstKeepYPlace && keepYTicks == 3) {
+                                        placeBlock(1, 0);
+                                        firstKeepYPlace = true;
+                                    }
+                                    break;
+                                case 2:
+                                    if (!firstKeepYPlace && keepYTicks == 8 || keepYTicks == 11) {
+                                        placeBlock(1, 0);
+                                        firstKeepYPlace = true;
+                                    }
+                                    break;
+                                case 3:
+                                    if (!firstKeepYPlace && keepYTicks == 8 || firstKeepYPlace && keepYTicks == 7) {
+                                        placeBlock(1, 0);
+                                        firstKeepYPlace = true;
+                                    }
+                                    break;
+                                case 4:
+                                    if (!firstKeepYPlace && keepYTicks == 7) {
+                                        placeBlock(1, 0);
+                                        firstKeepYPlace = true;
+                                    }
+                                    break;
+                            }
+                        }
+                        if (mc.thePlayer.onGround) keepYTicks = 0;
+                        if ((int) mc.thePlayer.posY == (int) startYPos) firstKeepYPlace = false;
+                    }
+                    handleMotion();
+                }
             }
-            handleMotion();
         }
 
         if (disabledModule) {
@@ -762,7 +763,7 @@ public class Scaffold extends Module {
                 blockInfo = null;
                 blockRotations = null;
                 fastScaffoldKeepY = firstKeepYPlace = rotateForward = rotatingForward = floatStarted = floatJumped = floatWasEnabled = towerEdge =
-                was451 = was452 = enabledOffGround = finishProcedure = canPlace = false;
+                was451 = was452 = enabledOffGround = finishProcedure = false;
                 rotationDelay = keepYTicks = scaffoldTicks = 0;
                 firstStroke = 0;
                 startYPos = -1;

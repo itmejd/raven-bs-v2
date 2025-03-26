@@ -35,7 +35,6 @@ public class NoSlow extends Module {
     public static ButtonSetting disablePotions;
     public static ButtonSetting swordOnly;
     public static ButtonSetting vanillaSword;
-    public static ButtonSetting groundSpeedOption;
     private String[] modes = new String[]{"Vanilla", "Pre", "Post", "Alpha", "Float"};
     private boolean postPlace;
     public static boolean canFloat;
@@ -54,7 +53,6 @@ public class NoSlow extends Module {
         this.registerSetting(disablePotions = new ButtonSetting("Disable potions", false));
         this.registerSetting(swordOnly = new ButtonSetting("Sword only", false));
         this.registerSetting(vanillaSword = new ButtonSetting("Vanilla sword", false));
-        this.registerSetting(groundSpeedOption = new ButtonSetting("Ground Speed", false));
     }
 
     @Override
@@ -106,13 +104,6 @@ public class NoSlow extends Module {
 
     @SubscribeEvent
     public void onPostPlayerInput(PostPlayerInputEvent e) {
-        if (canFloat && noSlowing && offset && mc.thePlayer.onGround) {
-            if (groundSpeedOption.isToggled() && !Utils.jumpDown() && !ModuleManager.bhop.isEnabled() && Utils.keysDown() && !Utils.bowBackwards()) {
-                Utils.setSpeed(getFloatSpeed(getSpeedLevel()));
-                //Utils.print("ground speed");
-            }
-        }
-
         handleFloatSetup();
     }
 
@@ -225,12 +216,6 @@ public class NoSlow extends Module {
         e.setPosY(e.getPosY() + ModuleUtils.offsetValue);
         ModuleUtils.groundTicks = 0;
         ModuleManager.scaffold.offsetDelay = 2;
-        if (groundSpeedOption.isToggled()) {
-            if (!ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !Utils.jumpDown() && mc.thePlayer.moveForward <= -0.5 && mc.thePlayer.moveStrafing == 0 && offset && Utils.isMoving() && mc.thePlayer.onGround) {
-                float yaw = mc.thePlayer.rotationYaw;
-                e.setYaw(yaw - 55);
-            }
-        }
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST) // called last in order to apply fix
@@ -287,10 +272,6 @@ public class NoSlow extends Module {
             return true;
         }
         return false;
-    }
-
-    public static boolean groundSpeed() {
-        return groundSpeedOption.isToggled() && noSlowing && canFloat && offset && Utils.isMoving() && !Utils.jumpDown() && !Utils.noSlowingBackWithBow();
     }
 
     @Override

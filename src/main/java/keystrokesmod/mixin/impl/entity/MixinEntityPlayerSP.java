@@ -291,11 +291,11 @@ public abstract class MixinEntityPlayerSP extends AbstractClientPlayer {
             }
         }
 
-        if (!this.isSprinting() && this.mc.gameSettings.keyBindSprint.isKeyDown() && (this.movementInput.moveForward != 0 || this.movementInput.moveStrafe != 0)  && (ModuleManager.sprint.omniSprint() || ModuleManager.scaffold.sprint() || NoSlow.groundSpeed() || this.movementInput.moveForward >= f && flag3) && (!(this.isUsingItem() || mc.thePlayer.isBlocking()) || !stopSprint) && !this.isPotionActive(Potion.blindness)) {
+        if (!this.isSprinting() && this.mc.gameSettings.keyBindSprint.isKeyDown() && (this.movementInput.moveForward != 0 || this.movementInput.moveStrafe != 0)  && (ModuleManager.sprint.omniSprint() || ModuleManager.scaffold.sprint() || this.movementInput.moveForward >= f && flag3) && (!(this.isUsingItem() || mc.thePlayer.isBlocking()) || !stopSprint) && !this.isPotionActive(Potion.blindness)) {
             this.setSprinting(true);
         }
 
-        if (this.isSprinting() && (!ModuleManager.sprint.omniSprint() && !NoSlow.groundSpeed() && !ModuleManager.scaffold.sprint() && (this.movementInput.moveForward < f || !flag3)) || this.isCollidedHorizontally || ModuleManager.sprint.disableBackwards() || ModuleUtils.setSlow || (this.movementInput.moveForward == 0 && this.movementInput.moveStrafe == 0) || this.mc.gameSettings.keyBindSneak.isKeyDown() || (ModuleManager.scaffold != null && ModuleManager.scaffold.isEnabled && (!ModuleManager.scaffold.sprint() || ModuleManager.tower.canTower())) || (ModuleManager.wTap.isEnabled() && WTap.stopSprint) || ModuleManager.sprint.isEnabled() && ModuleManager.sprint.omniDirectional.getInput() > 0 && !ModuleManager.sprint.omniSprint()) {
+        if (this.isSprinting() && (!ModuleManager.sprint.omniSprint() && !ModuleManager.scaffold.sprint() && (this.movementInput.moveForward < f || !flag3)) || this.isCollidedHorizontally || ModuleManager.sprint.disableBackwards() || ModuleUtils.setSlow || (this.movementInput.moveForward == 0 && this.movementInput.moveStrafe == 0) || this.mc.gameSettings.keyBindSneak.isKeyDown() || (ModuleManager.scaffold != null && ModuleManager.scaffold.isEnabled && (!ModuleManager.scaffold.sprint() || ModuleManager.tower.canTower())) || (ModuleManager.wTap.isEnabled() && WTap.stopSprint) || ModuleManager.sprint.isEnabled() && ModuleManager.sprint.omniDirectional.getInput() > 0 && !ModuleManager.sprint.omniSprint()) {
             this.setSprinting(false);
             WTap.stopSprint = false;
         }

@@ -77,6 +77,7 @@ public class ModuleManager {
     public static Criticals criticals;
     public static Fences fences;
     public static FastFall fastFall;
+    public static AntiVoid antiVoid;
 
     public void register() {
         this.addModule(autoClicker = new AutoClicker());
@@ -179,6 +180,7 @@ public class ModuleManager {
         this.addModule(criticals = new Criticals());
         this.addModule(fences = new Fences());
         this.addModule(fastFall = new FastFall());
+        this.addModule(antiVoid = new AntiVoid());
         antiBot.enable();
         Collections.sort(this.modules, Comparator.comparing(Module::getName));
     }

@@ -942,6 +942,24 @@ public class Utils {
         return fallDistance - 1;
     }
 
+    public static double distanceToGround(Entity entity, int x, int z) {
+        if (entity.onGround) {
+            return 0;
+        }
+        double fallDistance = -1;
+        double y = entity.posY;
+        if (entity.posY % 1 == 0) {
+            y--;
+        }
+        for (int i = (int) Math.floor(y); i > -1; i--) {
+            if (!isPlaceable(new BlockPos(x, i, z))) {
+                fallDistance = y - i;
+                break;
+            }
+        }
+        return fallDistance - 1;
+    }
+
     public static double distanceToGroundPos(Entity entity, int groundPos) {
         if (entity.onGround) {
             return 0;

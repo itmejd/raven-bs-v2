@@ -45,7 +45,7 @@ public class ModuleUtils {
     private long FIREBALL_TIMEOUT = 500L, fireballTime = 0;
     public static int inAirTicks, groundTicks, stillTicks;
     public static int fadeEdge;
-    public static double offsetValue = 6e-14;
+    public static double offsetValue = 4e-14;
     public static boolean isAttacking;
     private int attackingTicks;
     private int unTargetTicks;

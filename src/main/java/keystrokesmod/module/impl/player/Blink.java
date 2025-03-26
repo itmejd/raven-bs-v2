@@ -83,6 +83,10 @@ public class Blink extends Module {
             this.disable();
             return;
         }
+        if (ModuleManager.antiVoid.started) {
+            disable();
+            return;
+        }
         if (ModuleManager.killAura.isTargeting || ModuleManager.killAura.justUnTargeted) {
             return;
         }
