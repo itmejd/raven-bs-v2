@@ -10,8 +10,8 @@ import org.lwjgl.opengl.GL11;
 
 public class ScaffoldBlockCount {
     private final Minecraft mc;
-    private Timer fadeTimer;
-    private Timer fadeInTimer;
+    public static Timer fadeTimer;
+    public static Timer fadeInTimer;
     private float previousAlpha;
 
     public ScaffoldBlockCount(Minecraft mc) {
@@ -72,8 +72,8 @@ public class ScaffoldBlockCount {
     }
 
     public void onDisable() {
+        ScaffoldBlockCount.fadeInTimer = null;
+        ScaffoldBlockCount.fadeTimer = null;
         FMLCommonHandler.instance().bus().unregister(this);
-        fadeInTimer = null;
-        fadeTimer = null;
     }
 }

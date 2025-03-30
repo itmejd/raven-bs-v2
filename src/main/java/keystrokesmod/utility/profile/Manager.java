@@ -3,6 +3,7 @@ package keystrokesmod.utility.profile;
 import keystrokesmod.Raven;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.setting.impl.ButtonSetting;
+import keystrokesmod.utility.ScaffoldBlockCount;
 import keystrokesmod.utility.Utils;
 
 import java.awt.*;

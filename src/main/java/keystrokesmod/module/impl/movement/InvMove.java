@@ -41,20 +41,7 @@ public class InvMove extends Module {
     }
 
     @SubscribeEvent
-    public void onSendPacketNoEvent(NoEventPacketEvent e) {
-        if (!Utils.nullCheck()) {
-            return;
-        }
-        if (e.getPacket() instanceof C0EPacketClickWindow) {
-            if (modes.getInput() == 1) {
-                stopMoving = true;
-                ticks = 0;
-            }
-        }
-    }
-
-    @SubscribeEvent
-    public void onSendPacket(SendPacketEvent e) {
+    public void onSendPacketAll(SendAllPacketsEvent e) {
         if (!Utils.nullCheck()) {
             return;
         }

@@ -2,9 +2,12 @@ package keystrokesmod.module.impl.player;
 
 import keystrokesmod.Raven;
 import keystrokesmod.event.PreUpdateEvent;
+import keystrokesmod.event.ReceiveAllPacketsEvent;
+import keystrokesmod.event.ReceivePacketEvent;
 import keystrokesmod.event.SendPacketEvent;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
+import keystrokesmod.module.impl.movement.LongJump;
 import keystrokesmod.module.impl.render.HUD;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.DescriptionSetting;
@@ -23,6 +26,7 @@ import net.minecraft.network.login.client.C01PacketEncryptionResponse;
 import net.minecraft.network.play.client.C00PacketKeepAlive;
 import net.minecraft.network.play.client.C02PacketUseEntity;
 import net.minecraft.network.play.client.C0FPacketConfirmTransaction;
+import net.minecraft.network.play.server.*;
 import net.minecraft.network.status.client.C00PacketServerQuery;
 import net.minecraft.network.status.client.C01PacketPing;
 import net.minecraft.util.AxisAlignedBB;
@@ -33,6 +37,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static keystrokesmod.module.impl.render.HUD.theme;
@@ -47,7 +52,8 @@ public class Blink extends Module {
     //final private int color = Theme.getGradient((int) theme.getInput(), 255);
     private int color = new Color(0, 187, 255, 255).getRGB();
     private int blinkTicks;
-    private boolean started;
+    public boolean started;
+
     public Blink() {
         super("Blink", category.player);
         this.registerSetting(maximumBlinkTicks = new SliderSetting("Max Blink Ticks", "", 0, 0, 40, 1));

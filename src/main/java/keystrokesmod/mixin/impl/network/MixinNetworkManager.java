@@ -1,9 +1,7 @@
 package keystrokesmod.mixin.impl.network;
 
 import io.netty.channel.ChannelHandlerContext;
-import keystrokesmod.event.NoEventPacketEvent;
-import keystrokesmod.event.ReceivePacketEvent;
-import keystrokesmod.event.SendPacketEvent;
+import keystrokesmod.event.*;
 import keystrokesmod.utility.PacketUtils;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.Packet;
@@ -16,6 +14,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class MixinNetworkManager {
     @Inject(method = "sendPacket(Lnet/minecraft/network/Packet;)V", at = @At("HEAD"), cancellable = true)
     public void sendPacket(Packet p_sendPacket_1_, CallbackInfo ci) {
+        SendAllPacketsEvent sendAllPacketsEvent = new SendAllPacketsEvent(p_sendPacket_1_);
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(sendAllPacketsEvent);
+        if (sendAllPacketsEvent.isCanceled()) {
+            ci.cancel();
+        }
         if (PacketUtils.skipSendEvent.contains(p_sendPacket_1_)) {
             PacketUtils.skipSendEvent.remove(p_sendPacket_1_);
             net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new NoEventPacketEvent(p_sendPacket_1_));
@@ -32,6 +35,11 @@ public class MixinNetworkManager {
 
     @Inject(method = "channelRead0(Lio/netty/channel/ChannelHandlerContext;Lnet/minecraft/network/Packet;)V", at = @At("HEAD"), cancellable = true)
     public void receivePacket(ChannelHandlerContext p_channelRead0_1_, Packet p_channelRead0_2_, CallbackInfo ci) {
+        ReceiveAllPacketsEvent receiveAllPacketsEvent = new ReceiveAllPacketsEvent(p_channelRead0_2_);
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(receiveAllPacketsEvent);
+        if (receiveAllPacketsEvent.isCanceled()) {
+            ci.cancel();
+        }
         if (PacketUtils.skipReceiveEvent.contains(p_channelRead0_2_)) {
             PacketUtils.skipReceiveEvent.remove(p_channelRead0_2_);
             return;

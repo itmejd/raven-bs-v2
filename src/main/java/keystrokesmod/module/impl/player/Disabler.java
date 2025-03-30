@@ -6,6 +6,7 @@ import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.render.HUD;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
+import keystrokesmod.utility.ModuleUtils;
 import keystrokesmod.utility.RenderUtils;
 import keystrokesmod.utility.Theme;
 import keystrokesmod.utility.Utils;
@@ -27,7 +28,6 @@ public class Disabler extends Module {
 
     int tickCounter = 0;
     boolean waitingForGround = false;
-    int airTicks = 0;
     boolean applyingMotion = false;
     int stateTickCounter = 0;
     boolean warningDisplayed = false;
@@ -53,7 +53,7 @@ public class Disabler extends Module {
 
     public Disabler() {
         super("Disabler", Module.category.player);
-        this.registerSetting(disablerTicks = new SliderSetting("Ticks", "", 150, 110, 150, 5));
+        this.registerSetting(disablerTicks = new SliderSetting("Ticks", "", 150, 85, 150, 5));
         this.registerSetting(activationDelay = new SliderSetting("Activation delay", " seconds", 0, 0, 4, 0.5));
     }
 
@@ -71,7 +71,6 @@ public class Disabler extends Module {
     private void resetState() {
         shouldRun = true;
         tickCounter = 0;
-        airTicks = 0;
         applyingMotion = false;
         waitingForGround = true;
         stateTickCounter = 0;
@@ -112,16 +111,15 @@ public class Disabler extends Module {
         if ((now - lobbyTime) < activationDelayMillis) {
             return;
         }
-
-        if (waitingForGround) {
+        if (!running) {
             savedYaw = e.getYaw();
             savedPitch = e.getPitch();
-            if (!running) {
-                //mc.thePlayer.motionY = 0;
-            }
             running = true;
+        }
+        e.setRotations(savedYaw, savedPitch);
+
+        if (waitingForGround) {
             /*if (mc.thePlayer.ticksExisted <= 3) {
-                mc.thePlayer.motionY = 0.42f;
                 waitingForGround = false;
                 worldJoin = true;
             }
@@ -130,13 +128,10 @@ public class Disabler extends Module {
                 waitingForGround = false;
                 worldJoin = false;
             }
-            e.setRotations(savedYaw, savedPitch);
             return;
         }
-        e.setRotations(savedYaw, savedPitch);
 
-        airTicks = mc.thePlayer.onGround ? 0 : airTicks + 1;
-        if (airTicks >= 10 || worldJoin) {
+        if (ModuleUtils.inAirTicks >= 10 || worldJoin) {
             if (!applyingMotion) {
                 applyingMotion = true;
                 firstY = mc.thePlayer.posY;
@@ -166,9 +161,6 @@ public class Disabler extends Module {
 
                 if (mc.thePlayer.ticksExisted % 2 == 0) {
                     e.setPosZ(e.getPosZ() + 0.075);
-                    e.setPosX(e.getPosX() + 0.075);
-                    e.setPosY(e.getPosY() + 0.075);
-                    //e.setYaw(e.getYaw() + 8);
                 }
 
                 tickCounter++;

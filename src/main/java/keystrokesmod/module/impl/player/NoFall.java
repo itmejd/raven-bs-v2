@@ -31,7 +31,7 @@ public class NoFall extends Module {
     public SliderSetting mode;
     private SliderSetting minFallDistance;
     private ButtonSetting disableAdventure;
-    private ButtonSetting ignoreVoid;
+    private ButtonSetting ignoreVoid, voidC;
     private ButtonSetting hideSound;
     private String[] modes = new String[]{"Spoof", "NoGround", "Packet A", "Packet B", "CTW Packet", "Prediction"};
 
@@ -47,7 +47,8 @@ public class NoFall extends Module {
         this.registerSetting(mode = new SliderSetting("Mode", 2, modes));
         this.registerSetting(disableAdventure = new ButtonSetting("Disable adventure", false));
         this.registerSetting(minFallDistance = new SliderSetting("Minimum fall distance", 3, 0, 10, 0.1));
-        this.registerSetting(ignoreVoid = new ButtonSetting("Ignore void", true));
+        this.registerSetting(ignoreVoid = new ButtonSetting("Ignore void", false));
+        this.registerSetting(voidC = new ButtonSetting("Experimental void check", true));
         //this.registerSetting(hideSound = new ButtonSetting("Hide fall damage sound", false));
     }
 
@@ -138,10 +139,10 @@ public class NoFall extends Module {
             Utils.resetTimer();
             if (mc.thePlayer.ticksExisted % 2 == 0) {
                 if (mc.thePlayer.motionY < -0.01) {
-                    timerVal = 0.65;
+                    timerVal = 0.64;
                 }
                 if (mc.thePlayer.motionY < -1.0) {
-                    timerVal = 0.54;
+                    timerVal = 0.53;
                 }
                 if (mc.thePlayer.motionY < -1.6) {
                     timerVal = 0.46;
@@ -228,6 +229,407 @@ public class NoFall extends Module {
         if (mc.thePlayer.capabilities.isFlying) {
             return true;
         }
+        if (voidC.isToggled() && Utils.overVoid(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ) && !dist()) {
+            return true;
+        }
+        return false;
+    }
+
+
+
+
+
+    public boolean dist() {
+        double minMotion = 0.06;
+        // 1x1
+
+        int dist1 = 0;
+        int dist2 = 1;
+        int dist3 = 2;
+        int dist4 = 4;
+
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX, (int) mc.thePlayer.posZ) > dist1) {
+            return true;
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 1, (int) mc.thePlayer.posZ) > dist1) {
+            if (mc.thePlayer.motionX <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 1, (int) mc.thePlayer.posZ) > dist1) {
+            if (mc.thePlayer.motionX >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX, (int) mc.thePlayer.posZ - 1) > dist1) {
+            if (mc.thePlayer.motionZ <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX, (int) mc.thePlayer.posZ + 1) > dist1) {
+            if (mc.thePlayer.motionZ >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 1, (int) mc.thePlayer.posZ - 1) > dist1) {
+            if (mc.thePlayer.motionX <= -minMotion && mc.thePlayer.motionZ <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 1, (int) mc.thePlayer.posZ + 1) > dist1) {
+            if (mc.thePlayer.motionX >= minMotion && mc.thePlayer.motionZ >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 1, (int) mc.thePlayer.posZ + 1) > dist1) {
+            if (mc.thePlayer.motionX <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 1, (int) mc.thePlayer.posZ - 1) > dist1) {
+            if (mc.thePlayer.motionX >= minMotion) {
+                return true;
+            }
+        }
+
+        // 2x2
+
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 2, (int) mc.thePlayer.posZ) > dist2) {
+            if (mc.thePlayer.motionX <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 2, (int) mc.thePlayer.posZ) > dist2) {
+            if (mc.thePlayer.motionX >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX, (int) mc.thePlayer.posZ - 2) > dist2) {
+            if (mc.thePlayer.motionZ <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX, (int) mc.thePlayer.posZ + 2) > dist2) {
+            if (mc.thePlayer.motionZ >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 2, (int) mc.thePlayer.posZ - 1) > dist2) {
+            if (mc.thePlayer.motionX >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 1, (int) mc.thePlayer.posZ - 2) > dist2) {
+            if (mc.thePlayer.motionZ <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 2, (int) mc.thePlayer.posZ + 1) > dist2) {
+            if (mc.thePlayer.motionX <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 1, (int) mc.thePlayer.posZ + 2) > dist2) {
+            if (mc.thePlayer.motionZ >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 2, (int) mc.thePlayer.posZ - 2) > dist2) {
+            if (mc.thePlayer.motionX >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 2, (int) mc.thePlayer.posZ - 2) > dist2) {
+            if (mc.thePlayer.motionX >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 2, (int) mc.thePlayer.posZ + 2) > dist2) {
+            if (mc.thePlayer.motionX >= minMotion && mc.thePlayer.motionZ >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 2, (int) mc.thePlayer.posZ - 2) > dist2) {
+            if (mc.thePlayer.motionX <= -minMotion && mc.thePlayer.motionZ <= -minMotion) {
+                return true;
+            }
+        }
+
+        // 3x3
+
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 3, (int) mc.thePlayer.posZ) > dist3) {
+            if (mc.thePlayer.motionX >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 3, (int) mc.thePlayer.posZ) > dist3) {
+            if (mc.thePlayer.motionX <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX, (int) mc.thePlayer.posZ + 3) > dist3) {
+            if (mc.thePlayer.motionZ >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX, (int) mc.thePlayer.posZ - 3) > dist3) {
+            if (mc.thePlayer.motionZ <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 3, (int) mc.thePlayer.posZ - 3) > dist3) {
+            if (mc.thePlayer.motionX >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 3, (int) mc.thePlayer.posZ + 3) > dist3) {
+            if (mc.thePlayer.motionX <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 3, (int) mc.thePlayer.posZ + 3) > dist3) {
+            if (mc.thePlayer.motionX >= minMotion && mc.thePlayer.motionZ >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 3, (int) mc.thePlayer.posZ - 3) > dist3) {
+            if (mc.thePlayer.motionX <= -minMotion && mc.thePlayer.motionZ <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 3, (int) mc.thePlayer.posZ + 1) > dist3) {
+            if (mc.thePlayer.motionX >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 3, (int) mc.thePlayer.posZ + 2) > dist3) {
+            if (mc.thePlayer.motionX >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 1, (int) mc.thePlayer.posZ + 3) > dist3) {
+            if (mc.thePlayer.motionZ >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 2, (int) mc.thePlayer.posZ + 3) > dist3) {
+            if (mc.thePlayer.motionZ >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 3, (int) mc.thePlayer.posZ - 1) > dist3) {
+            if (mc.thePlayer.motionX <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 3, (int) mc.thePlayer.posZ - 2) > dist3) {
+            if (mc.thePlayer.motionX <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 1, (int) mc.thePlayer.posZ - 3) > dist3) {
+            if (mc.thePlayer.motionZ <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 2, (int) mc.thePlayer.posZ - 3) > dist3) {
+            if (mc.thePlayer.motionZ <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 3, (int) mc.thePlayer.posZ - 1) > dist3) {
+            if (mc.thePlayer.motionX >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 3, (int) mc.thePlayer.posZ - 2) > dist3) {
+            if (mc.thePlayer.motionX >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 1, (int) mc.thePlayer.posZ - 3) > dist3) {
+            if (mc.thePlayer.motionZ <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 2, (int) mc.thePlayer.posZ - 3) > dist3) {
+            if (mc.thePlayer.motionZ <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 3, (int) mc.thePlayer.posZ + 1) > dist3) {
+            if (mc.thePlayer.motionX <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 3, (int) mc.thePlayer.posZ + 2) > dist3) {
+            if (mc.thePlayer.motionX <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 1, (int) mc.thePlayer.posZ + 3) > dist3) {
+            if (mc.thePlayer.motionZ >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 2, (int) mc.thePlayer.posZ + 3) > dist3) {
+            if (mc.thePlayer.motionZ >= minMotion) {
+                return true;
+            }
+        }
+
+        // 4x4
+
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 4, (int) mc.thePlayer.posZ) > dist4) {
+            if (mc.thePlayer.motionX >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 4, (int) mc.thePlayer.posZ) > dist4) {
+            if (mc.thePlayer.motionX <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX, (int) mc.thePlayer.posZ + 4) > dist4) {
+            if (mc.thePlayer.motionZ >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX, (int) mc.thePlayer.posZ - 4) > dist4) {
+            if (mc.thePlayer.motionZ <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 4, (int) mc.thePlayer.posZ + 4) > dist4) {
+            if (mc.thePlayer.motionX >= minMotion && mc.thePlayer.motionZ >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 4, (int) mc.thePlayer.posZ - 4) > dist4) {
+            if (mc.thePlayer.motionX <= -minMotion && mc.thePlayer.motionZ <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 4, (int) mc.thePlayer.posZ + 4) > dist4) {
+            if (mc.thePlayer.motionX <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 4, (int) mc.thePlayer.posZ - 4) > dist4) {
+            if (mc.thePlayer.motionX >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 4, (int) mc.thePlayer.posZ + 3) > dist4) {
+            if (mc.thePlayer.motionX >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 4, (int) mc.thePlayer.posZ + 2) > dist4) {
+            if (mc.thePlayer.motionX >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 4, (int) mc.thePlayer.posZ + 1) > dist4) {
+            if (mc.thePlayer.motionX >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 3, (int) mc.thePlayer.posZ + 4) > dist4) {
+            if (mc.thePlayer.motionZ >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 2, (int) mc.thePlayer.posZ + 4) > dist4) {
+            if (mc.thePlayer.motionZ >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 1, (int) mc.thePlayer.posZ + 4) > dist4) {
+            if (mc.thePlayer.motionZ >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 4, (int) mc.thePlayer.posZ - 3) > dist4) {
+            if (mc.thePlayer.motionX >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 4, (int) mc.thePlayer.posZ - 2) > dist4) {
+            if (mc.thePlayer.motionX >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 4, (int) mc.thePlayer.posZ - 1) > dist4) {
+            if (mc.thePlayer.motionX >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 3, (int) mc.thePlayer.posZ + 4) > dist4) {
+            if (mc.thePlayer.motionZ >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 2, (int) mc.thePlayer.posZ + 4) > dist4) {
+            if (mc.thePlayer.motionZ >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 1, (int) mc.thePlayer.posZ + 4) > dist4) {
+            if (mc.thePlayer.motionZ >= minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 4, (int) mc.thePlayer.posZ + 3) > dist4) {
+            if (mc.thePlayer.motionX <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 4, (int) mc.thePlayer.posZ + 2) > dist4) {
+            if (mc.thePlayer.motionX <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 4, (int) mc.thePlayer.posZ + 1) > dist4) {
+            if (mc.thePlayer.motionX <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 4, (int) mc.thePlayer.posZ - 3) > dist4) {
+            if (mc.thePlayer.motionX <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 4, (int) mc.thePlayer.posZ - 2) > dist4) {
+            if (mc.thePlayer.motionX <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 4, (int) mc.thePlayer.posZ - 1) > dist4) {
+            if (mc.thePlayer.motionX <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 3, (int) mc.thePlayer.posZ - 4) > dist4) {
+            if (mc.thePlayer.motionZ <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 2, (int) mc.thePlayer.posZ - 4) > dist4) {
+            if (mc.thePlayer.motionZ <= -minMotion) {
+                return true;
+            }
+        }
+        if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 1, (int) mc.thePlayer.posZ - 4) > dist4) {
+            if (mc.thePlayer.motionZ <= -minMotion) {
+                return true;
+            }
+        }
+
+
+
+
+
         return false;
     }
 

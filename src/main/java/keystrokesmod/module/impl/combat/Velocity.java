@@ -1,23 +1,28 @@
 package keystrokesmod.module.impl.combat;
 
+import keystrokesmod.Raven;
+import keystrokesmod.event.PreMotionEvent;
 import keystrokesmod.event.PreUpdateEvent;
+import keystrokesmod.event.ReceiveAllPacketsEvent;
 import keystrokesmod.event.ReceivePacketEvent;
-import keystrokesmod.event.SendPacketEvent;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.movement.LongJump;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.KeySetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
+import keystrokesmod.utility.PacketUtils;
 import keystrokesmod.utility.Utils;
 import keystrokesmod.utility.ModuleUtils;
 import net.minecraft.network.Packet;
-import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
 import net.minecraft.network.play.server.S12PacketEntityVelocity;
 import net.minecraft.network.play.server.S27PacketExplosion;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent;
 import org.lwjgl.input.Keyboard;
+
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Velocity extends Module {
     public SliderSetting velocityModes;
@@ -27,7 +32,7 @@ public class Velocity extends Module {
     private ButtonSetting onlyWhileAttacking;
     private ButtonSetting onlyWhileTargeting;
     private ButtonSetting disableS;
-    private ButtonSetting zzWhileNotTargeting;
+    private ButtonSetting zzWhileNotTargeting, delayPacket;
     public ButtonSetting allowSelfFireball;
     public static ButtonSetting reverseDebug;
     private KeySetting switchToReverse, switchToPacket;
@@ -111,8 +116,8 @@ public class Velocity extends Module {
         }
     }
 
-    @SubscribeEvent
-    public void onReceivePacket(ReceivePacketEvent e) {
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public void onReceivePacketAll(ReceiveAllPacketsEvent e) {
         if (velocityModes.getInput() >= 1) {
             if (!Utils.nullCheck() || LongJump.stopVelocity || e.isCanceled() || ModuleManager.bedAura.cancelKnockback() || ModuleManager.tower.cancelKnockback() || velocityModes.getInput() == 2 && ModuleUtils.firstDamage || ModuleManager.bhop.isEnabled() && ModuleManager.bhop.damageBoost.isToggled() && ModuleUtils.firstDamage && (!ModuleManager.bhop.damageBoostRequireKey.isToggled() || ModuleManager.bhop.damageBoostKey.isPressed())) {
                 return;
@@ -204,6 +209,9 @@ public class Velocity extends Module {
                 if (onlyWhileAttacking.isToggled() && !ModuleUtils.isAttacking) {
                     return;
                 }
+                if (dontEditMotion()) {
+                    return;
+                }
                 if (onlyWhileTargeting.isToggled() && (mc.objectMouseOver == null || mc.objectMouseOver.entityHit == null)) {
                     return;
                 }
@@ -231,10 +239,22 @@ public class Velocity extends Module {
     }
 
     private boolean dontEditMotion() {
-        if (zzWhileNotTargeting.isToggled() && !ModuleManager.killAura.isTargeting) {
+        if (velocityModes.getInput() == 1 && zzWhileNotTargeting.isToggled() && !ModuleManager.killAura.isTargeting) {
             return true;
         }
+        return false;
+    }
 
+    private boolean blinkModules() {
+        if (ModuleManager.killAura.isEnabled() && ModuleManager.killAura.blinking.get()) {
+            return true;
+        }
+        if (ModuleManager.blink.isEnabled() && ModuleManager.blink.started) {
+            return true;
+        }
+        if (ModuleManager.antiVoid.isEnabled() && ModuleManager.antiVoid.started) {
+            return true;
+        }
         return false;
     }
 

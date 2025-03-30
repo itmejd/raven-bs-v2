@@ -272,7 +272,7 @@ public class LongJump extends Module {
             return;
         }
         if (ev.phase == TickEvent.Phase.END) {
-            if (mc.currentScreen != null || !renderFloatProgress.isToggled() || mode.getInput() != 0) {
+        if (mc.currentScreen != null || !renderFloatProgress.isToggled() || mode.getInput() != 0 || !function) {
                 return;
             }
         }
@@ -343,12 +343,19 @@ public class LongJump extends Module {
         }
     }
 
+    @SubscribeEvent
+    public void onPostPlayerInput(PostPlayerInputEvent e) {
+        if (!function) {
+            return;
+        }
+        mc.thePlayer.movementInput.jump = false;
+    }
+
     @SubscribeEvent(priority = EventPriority.LOWEST) // called last in order to apply fix
     public void onMoveInput(PrePlayerInputEvent e) {
         if (!function) {
             return;
         }
-        mc.thePlayer.movementInput.jump = false;
         if (rotateTick > 0 || fireballTime > 0) {
             if (Utils.isMoving()) e.setForward(1);
             e.setStrafe(0);
@@ -420,6 +427,7 @@ public class LongJump extends Module {
         boostTicks = -1;
         resetSlot();
         enabled = function = notMoving = stopVelocity = stopModules = swapped = false;
+        filledWidth = 0;
         if (!manual.isToggled()) {
             disable();
         }

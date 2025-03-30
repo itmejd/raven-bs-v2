@@ -40,6 +40,7 @@
     "accessor.IAccessorGuiScreenBook",
     "accessor.IAccessorGuiScreen",
     "accessor.IAccessorS14PacketEntity",
-    "accessor.IAccessorEntityPlayer"
+    "accessor.IAccessorEntityPlayer",
+    "accessor.IAccessorNetworkManager"
   ]
 }

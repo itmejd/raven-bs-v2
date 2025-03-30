@@ -2,6 +2,7 @@ package keystrokesmod.module.impl.player;
 
 import keystrokesmod.Raven;
 import keystrokesmod.event.PreUpdateEvent;
+import keystrokesmod.event.ReceivePacketEvent;
 import keystrokesmod.event.SendPacketEvent;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
@@ -18,6 +19,8 @@ import net.minecraft.network.handshake.client.C00Handshake;
 import net.minecraft.network.login.client.C00PacketLoginStart;
 import net.minecraft.network.play.client.C02PacketUseEntity;
 import net.minecraft.network.play.client.C03PacketPlayer;
+import net.minecraft.network.play.client.C0FPacketConfirmTransaction;
+import net.minecraft.network.play.server.S12PacketEntityVelocity;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.Vec3;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
@@ -65,14 +68,14 @@ public class AntiVoid extends Module {
             wait = false;
             return;
         }
-        if (!started && (Utils.isReplay() || Utils.isBedwarsPractice() && disablePractice.isToggled())) {
+        if (!started && (Utils.isReplay() || Utils.spectatorCheck() || Utils.isBedwarsPractice() && disablePractice.isToggled())) {
             return;
         }
         if (packet.getClass().getSimpleName().startsWith("S")) {
             return;
         }
         if (ModuleManager.killAura.isTargeting || ModuleManager.killAura.justUnTargeted) {
-            return;
+            //return;
         }
         if (wait) {
             return;
@@ -147,11 +150,13 @@ public class AntiVoid extends Module {
         started = false;
     }
 
-    private boolean dist() {
+    public boolean dist() {
         double minMotion = 0.06;
-        // 1x1
-
         int dist1 = 2;
+        int dist2 = 4;
+        int dist3 = 6;
+        int dist4 = 8;
+        // 1x1
 
         if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX, (int) mc.thePlayer.posZ) > dist1) {
             return true;
@@ -198,8 +203,6 @@ public class AntiVoid extends Module {
         }
 
         // 2x2
-
-        int dist2 = 5;
 
         if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX - 2, (int) mc.thePlayer.posZ) > dist2) {
             if (mc.thePlayer.motionX <= -minMotion) {
@@ -263,8 +266,6 @@ public class AntiVoid extends Module {
         }
 
         // 3x3
-
-        int dist3 = 9;
 
         if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 3, (int) mc.thePlayer.posZ) > dist3) {
             if (mc.thePlayer.motionX >= minMotion) {
@@ -388,8 +389,6 @@ public class AntiVoid extends Module {
         }
 
         // 4x4
-
-        int dist4 = 16;
 
         if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX + 4, (int) mc.thePlayer.posZ) > dist4) {
             if (mc.thePlayer.motionX >= minMotion) {

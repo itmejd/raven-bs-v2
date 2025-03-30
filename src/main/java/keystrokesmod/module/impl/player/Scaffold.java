@@ -324,30 +324,30 @@ public class Scaffold extends Module {
 
                 if (quad <= 5 || quad >= 85) {
                     yawAngle = 125.625F;
-                    minOffset = 10;
+                    minOffset = 9;
                 }
                 if (quad > 5 && quad <= 15 || quad >= 75 && quad < 85) {
                     yawAngle = 127.625F;
-                    minOffset = 10;
+                    minOffset = 8;
                 }
                 if (quad > 15 && quad <= 25 || quad >= 65 && quad < 75) {
                     yawAngle = 129.625F;
-                    minOffset = 8;
+                    minOffset = 6;
                 }
                 if (quad > 25 && quad <= 32 || quad >= 58 && quad < 65) {
                     yawAngle = 132.625F;
-                    minOffset = 8;
+                    minOffset = 6;
                 }
                 if (quad > 32 && quad <= 38 || quad >= 52 && quad < 58) {
                     yawAngle = 134.625F;
-                    minOffset = 7;
+                    minOffset = 6;
                 }
                 if (quad > 38 && quad <= 42 || quad >= 48 && quad < 52) {
                     yawAngle = 136.625F;
-                    minOffset = 6;
+                    minOffset = 5;
                 }
                 if (quad > 42 && quad <= 45 || quad >= 45 && quad < 48) {
-                    yawAngle = 140.125F;
+                    yawAngle = 140.175F;
                     minOffset = 5;
 
                 }
@@ -643,7 +643,7 @@ public class Scaffold extends Module {
     public void onPreUpdate(PreUpdateEvent e) {
         stopUpdate = stopUpdate2 = false;
         if (!isEnabled) {
-            return;
+            stopUpdate2 = true;
         }
         if (LongJump.function) {
             startYPos = -1;

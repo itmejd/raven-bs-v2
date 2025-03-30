@@ -74,45 +74,32 @@ public class ModuleUtils {
     public void onWorldJoin(EntityJoinWorldEvent e) {
         if (e.entity == mc.thePlayer) {
             ModuleManager.disabler.disablerLoaded = false;
+            inAirTicks = 0;
         }
     }
 
     @SubscribeEvent
-    public void onSendPacketNoEvent(NoEventPacketEvent e) {
+    public void onSendPacketAll(SendAllPacketsEvent e) {
         if (!Utils.nullCheck()) {
             return;
         }
-
-        if (e.getPacket() instanceof C09PacketHeldItemChange) {
-            swapTick = 2;
-        }
-
-        // isBlocked
-        if (e.getPacket() instanceof C07PacketPlayerDigging && isBlocked) {
-            C07PacketPlayerDigging c07 = (C07PacketPlayerDigging) e.getPacket();
-            String edger;
-            edger = String.valueOf(c07.getStatus());
-            if (Objects.equals(edger, "RELEASE_USE_ITEM")) {
+        Packet packet = e.getPacket();
+        if (packet instanceof C07PacketPlayerDigging && isBlocked) {
+            C07PacketPlayerDigging c07 = (C07PacketPlayerDigging) packet;
+            if (Objects.equals(String.valueOf(c07.getStatus()), "RELEASE_USE_ITEM")) {
                 isBlocked = false;
             }
         }
-        if (e.getPacket() instanceof C09PacketHeldItemChange && isBlocked) {
+        if (packet instanceof C09PacketHeldItemChange && isBlocked) {
             isBlocked = false;
         }
-        if (e.getPacket() instanceof C08PacketPlayerBlockPlacement && Utils.holdingSword() && !BlockUtils.isInteractable(mc.objectMouseOver) && !isBlocked) {
+        if (packet instanceof C08PacketPlayerBlockPlacement && Utils.holdingSword() && !BlockUtils.isInteractable(mc.objectMouseOver) && !isBlocked) {
             isBlocked = true;
         }
-
-        //
-         // isAttacking
-
-            if (e.getPacket() instanceof C02PacketUseEntity) {
-                isAttacking = true;
-                attackingTicks = 5;
-            }
-
-        //
-
+        if (packet instanceof C02PacketUseEntity) {
+            isAttacking = true;
+            attackingTicks = 5;
+        }
     }
 
     @SubscribeEvent
@@ -120,32 +107,6 @@ public class ModuleUtils {
         if (!Utils.nullCheck()) {
             return;
         }
-
-        // isBlocked
-        if (e.getPacket() instanceof C07PacketPlayerDigging && isBlocked) {
-            C07PacketPlayerDigging c07 = (C07PacketPlayerDigging) e.getPacket();
-            String edger;
-            edger = String.valueOf(c07.getStatus());
-            if (Objects.equals(edger, "RELEASE_USE_ITEM")) {
-                isBlocked = false;
-            }
-        }
-        if (e.getPacket() instanceof C09PacketHeldItemChange && isBlocked) {
-            isBlocked = false;
-        }
-        if (e.getPacket() instanceof C08PacketPlayerBlockPlacement && Utils.holdingSword() && !BlockUtils.isInteractable(mc.objectMouseOver) && !isBlocked) {
-            isBlocked = true;
-        }
-
-        //
-         // isAttacking
-
-            if (e.getPacket() instanceof C02PacketUseEntity) {
-                isAttacking = true;
-                attackingTicks = 5;
-            }
-
-        //
 
         if (e.getPacket() instanceof C09PacketHeldItemChange) {
             swapTick = 2;
@@ -173,7 +134,7 @@ public class ModuleUtils {
     }
 
     @SubscribeEvent
-    public void onReceivePacket(ReceivePacketEvent e) {
+    public void onReceivePacketAll(ReceiveAllPacketsEvent e) {
         if (!Utils.nullCheck()) {
             return;
         }

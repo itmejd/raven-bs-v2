@@ -1,9 +1,7 @@
 package keystrokesmod.utility;
 
 
-import keystrokesmod.event.PostUpdateEvent;
-import keystrokesmod.event.ReceivePacketEvent;
-import keystrokesmod.event.SendPacketEvent;
+import keystrokesmod.event.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.network.Packet;
@@ -66,6 +64,57 @@ public class PacketsHandler {
 
     @SubscribeEvent
     public void onReceivePacket(ReceivePacketEvent e) {
+        if (e.getPacket() instanceof S09PacketHeldItemChange) {
+            S09PacketHeldItemChange packet = (S09PacketHeldItemChange) e.getPacket();
+            if (packet.getHeldItemHotbarIndex() >= 0 && packet.getHeldItemHotbarIndex() < InventoryPlayer.getHotbarSize()) {
+                serverSlot.set(packet.getHeldItemHotbarIndex());
+            }
+        }
+        else if (e.getPacket() instanceof S0CPacketSpawnPlayer && Minecraft.getMinecraft().thePlayer != null) {
+            if (((S0CPacketSpawnPlayer) e.getPacket()).getEntityID() != Minecraft.getMinecraft().thePlayer.getEntityId()) {
+                return;
+            }
+            this.playerSlot.set(-1);
+        }
+    }
+
+    public void onSendPacketAll(SendAllPacketsEvent e) {
+        if (e.isCanceled()) {
+            return;
+        }
+        if (e.getPacket() instanceof C02PacketUseEntity) { // sending a C07 on the same tick as C02 can ban, this usually happens when you unblock and attack on the same tick
+            if (C07.get()) {
+                e.setCanceled(true);
+                return;
+            }
+            C02.set(true);
+        }
+        else if (e.getPacket() instanceof C08PacketPlayerBlockPlacement) {
+            C08.set(true);
+        }
+        else if (e.getPacket() instanceof C07PacketPlayerDigging) {
+            C07.set(true);
+        }
+        else if (e.getPacket() instanceof C0APacketAnimation) {
+            if (C07.get()) {
+                e.setCanceled(true);
+                return;
+            }
+            C0A.set(true);
+        }
+        else if (e.getPacket() instanceof C09PacketHeldItemChange) {
+            if (((C09PacketHeldItemChange) e.getPacket()).getSlotId() == playerSlot.get() && ((C09PacketHeldItemChange) e.getPacket()).getSlotId() == serverSlot.get()) {
+                e.setCanceled(true);
+                return;
+            }
+            C09.set(true);
+            playerSlot.set(((C09PacketHeldItemChange) e.getPacket()).getSlotId());
+            serverSlot.set(((C09PacketHeldItemChange) e.getPacket()).getSlotId());
+        }
+    }
+
+    @SubscribeEvent
+    public void onReceivePacketAll(ReceiveAllPacketsEvent e) {
         if (e.getPacket() instanceof S09PacketHeldItemChange) {
             S09PacketHeldItemChange packet = (S09PacketHeldItemChange) e.getPacket();
             if (packet.getHeldItemHotbarIndex() >= 0 && packet.getHeldItemHotbarIndex() < InventoryPlayer.getHotbarSize()) {

@@ -47,6 +47,7 @@ public class Raven {
     public static Profile currentProfile;
     public static PacketsHandler packetsHandler;
     private static boolean firstLoad;
+    public static KnockBackHelper knockBackHelper;
 
     public Raven() {
         moduleManager = new ModuleManager();
@@ -65,6 +66,7 @@ public class Raven {
         MinecraftForge.EVENT_BUS.register(new Ping());
         MinecraftForge.EVENT_BUS.register(packetsHandler = new PacketsHandler());
         MinecraftForge.EVENT_BUS.register(new ModuleUtils(this.mc));
+        MinecraftForge.EVENT_BUS.register(knockBackHelper = new KnockBackHelper());
         Reflection.getFields();
         moduleManager.register();
         scriptManager = new ScriptManager();

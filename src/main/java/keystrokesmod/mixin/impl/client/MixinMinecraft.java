@@ -1,12 +1,10 @@
 package keystrokesmod.mixin.impl.client;
 
+import keystrokesmod.event.*;
+import net.minecraftforge.fml.common.eventhandler.Cancelable;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.objectweb.asm.Opcodes;
-import keystrokesmod.event.GuiUpdateEvent;
-import keystrokesmod.event.PreInputEvent;
-import keystrokesmod.event.PreSlotScrollEvent;
-import keystrokesmod.event.SlotUpdateEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.entity.player.InventoryPlayer;
@@ -57,5 +55,10 @@ public class MixinMinecraft {
             return;
         }
         inventoryPlayer.currentItem = slot;
+    }
+
+    @Inject(method = "runGameLoop", at= @At("HEAD"))
+    public void onRunGameLoop(CallbackInfo ci) {
+        MinecraftForge.EVENT_BUS.post(new RunGameLoopEvent());
     }
 }

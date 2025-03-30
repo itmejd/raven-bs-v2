@@ -749,7 +749,7 @@ public class Utils {
         }
         final Scoreboard scoreboard = mc.theWorld.getScoreboard();
         if (scoreboard == null) {
-            return -1;
+            return -2;
         }
         final ScoreObjective objective = scoreboard.getObjectiveInDisplaySlot(1);
         if (objective == null) {
