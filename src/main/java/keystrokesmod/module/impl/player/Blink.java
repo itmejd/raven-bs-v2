@@ -32,6 +32,7 @@ import net.minecraft.network.status.client.C01PacketPing;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.Vec3;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.opengl.GL11;
@@ -47,6 +48,7 @@ public class Blink extends Module {
     private ButtonSetting initialPosition;
     private ButtonSetting renderTimer;
     private ButtonSetting disableOnBreak, disableOnAttack;
+    public ButtonSetting cancelKnockback;
     private ConcurrentLinkedQueue<Packet> blinkedPackets = new ConcurrentLinkedQueue<>();
     private Vec3 pos;
     //final private int color = Theme.getGradient((int) theme.getInput(), 255);
@@ -62,6 +64,7 @@ public class Blink extends Module {
         this.registerSetting(renderTimer = new ButtonSetting("Render Timer", false));
         this.registerSetting(disableOnBreak = new ButtonSetting("Disable on Break", false));
         this.registerSetting(disableOnAttack = new ButtonSetting("Disable on Attack", false));
+        this.registerSetting(cancelKnockback = new ButtonSetting("Cancel knockback", false));
     }
 
     @Override
@@ -116,6 +119,20 @@ public class Blink extends Module {
             blinkedPackets.add(packet);
             e.setCanceled(true);
         }
+    }
+
+
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public void onReceivePacketAll(ReceiveAllPacketsEvent e) {
+        if (!Utils.nullCheck() || e.isCanceled() || !cancelKnockback.isToggled()) {
+            return;
+        }
+        if (e.getPacket() instanceof S12PacketEntityVelocity) {
+            if (((S12PacketEntityVelocity) e.getPacket()).getEntityID() == mc.thePlayer.getEntityId()) {
+                e.setCanceled(true);
+            }
+        }
+
     }
 
     @Override

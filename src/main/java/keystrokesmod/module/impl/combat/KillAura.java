@@ -76,7 +76,7 @@ public class KillAura extends Module {
     private ButtonSetting silentSwing;
     private ButtonSetting weaponOnly;
 
-    private String[] autoBlockModes = new String[] { "Manual", "Vanilla", "Partial", "Via A", "Via B" };
+    private String[] autoBlockModes = new String[] { "Manual", "Vanilla", "Partial", "Via A", "Via B", "Post", "Swap" };
     private String[] rotationModes = new String[] { "Silent", "Lock view", "None" };
     private String[] rotateModes = new String[] { "Attacking", "Swinging" };
     private String[] sortModes = new String[] { "Distance", "Health", "Hurttime", "Yaw" };
@@ -131,6 +131,8 @@ public class KillAura extends Module {
 
     public boolean blocked;
     private int lastAttack;
+
+    private boolean handleHP2;
 
     public KillAura() {
         super("KillAura", category.combat);
@@ -202,6 +204,7 @@ public class KillAura extends Module {
         if (!Utils.nullCheck()) {
             return;
         }
+        handleHP2 = false;
         if (lastAttack > 0) {
             --lastAttack;
         }
@@ -384,6 +387,7 @@ public class KillAura extends Module {
             } else {
                 handleBlocking(true);
             }
+            handleHP2 = true;
         }
         if (((blinkAutoBlock() || autoBlockMode.getInput() == 2) && !Utils.holdingSword()) || !inBlockRange || !manualBlock()) { // for blink autoblocks
             if (blinking.get() || lag) {
@@ -504,6 +508,13 @@ public class KillAura extends Module {
     public void onRenderTick(TickEvent.RenderTickEvent event) {
         if (!Utils.nullCheck()) {
             return;
+        }
+        if (target == null) {
+            return;
+        }
+        if (handleHP2) {
+            double distanceToBB = getDistanceToBoundingBox(target);
+            handleAutoBlockPost(distanceToBB);
         }
         if (event.phase == TickEvent.Phase.START) {
             if (System.currentTimeMillis() - this.lastTime >= delay && target != null) {
@@ -830,8 +841,10 @@ public class KillAura extends Module {
             case 2: // partial
                 Reflection.setItemInUse(this.blockingClient = ModuleUtils.isBlocked);
                 break;
-            case 3: // interact a
-            case 4: // interact b
+            case 3: // via a
+            case 4: // via b
+            case 5: // post
+            case 6: // swap
                 Reflection.setItemInUse(this.blockingClient = blockState);
                 break;
         }
@@ -852,7 +865,7 @@ public class KillAura extends Module {
     }
 
     public boolean autoBlockOverride() {
-        return (blinkAutoBlock() || autoBlockMode.getInput() == 1 || autoBlockMode.getInput() == 2) && Utils.holdingSword() && manualBlock();
+        return (blinkAutoBlock() || autoBlockMode.getInput() == 1 || autoBlockMode.getInput() == 2 || autoBlockMode.getInput() == 5 || autoBlockMode.getInput() == 6) && Utils.holdingSword() && manualBlock();
     }
 
     public boolean blinkAutoBlock() {
@@ -1012,11 +1025,88 @@ public class KillAura extends Module {
                         break;
                 }
                 break;
+            case 5: //Post 1st part
+                interactTicks++;
+                switch (interactTicks) {
+                    case 3:
+                        if (ModuleUtils.isBlocked) {
+                            setSwapSlot();
+                            swapped = true;
+                        }
+                        interactTicks = 4;
+                }
+                break;
+            case 6: // Swap
+                interactTicks++;
+                if (interactTicks <= 3 && cycleCount1 == 0 || interactTicks <= 1 && cycleCount1 == 1) {
+                    if (ModuleUtils.isBlocked) {
+                        setSwapSlot();
+                        swapped = true;
+                    }
+                    if (swapped) {
+                        setCurrentSlot();
+                        swapped = false;
+                    }
+                    handleInteractAndAttack(distance, true, true, swung);
+                    sendBlockPacket();
+                }
+                else {
+                    interactTicks = 0;
+                    ++cycleCount1;
+                    if (cycleCount1 > 1) {
+                        cycleCount1 = 0;
+                    }
+                }
+                break;
+        }
+    }
+
+    private void handleAutoBlockPost(double distance) {
+        boolean inAttackDistance = inRange(target, attackRange.getInput() - reachVal);
+        if (inAttackDistance) {
+            attackingEntity = target;
+        }
+        boolean swung = false;
+        if ((distance <= swingRange.getInput() || inAttackDistance) && shouldAttack) { // swing if in swing range or needs to attack
+            swung = true;
+            if (!inAttackDistance) {
+                shouldAttack = false;
+            }
+        }
+        if (ModuleManager.bedAura.stopAutoblock) {
+            resetBlinkState(false);
+            blockingServer = false;
+            interactTicks = 0;
+            return;
+        }
+        lag = true;
+        switch ((int) autoBlockMode.getInput()) {
+            case 1:
+
+                break;
+            case 5: //Post 2nd part
+                if (interactTicks > 3) {
+                    if (swapped) {
+                        setCurrentSlot();
+                        swapped = false;
+                    }
+                    handleInteractAndAttack(distance, true, true, swung);
+                    sendBlockPacket();
+                    interactTicks = 0;
+                }
+                break;
         }
     }
 
     private void setSwapSlot() {
         int bestSwapSlot = getBestSwapSlot();
+        mc.thePlayer.sendQueue.addToSendQueue(new C09PacketHeldItemChange(bestSwapSlot));
+        Raven.packetsHandler.playerSlot.set(bestSwapSlot);
+        blocked = false;
+    }
+
+    private void setRandomSlot() {
+        int bestSwapSlot = getRandomSlot();
         mc.thePlayer.sendQueue.addToSendQueue(new C09PacketHeldItemChange(bestSwapSlot));
         Raven.packetsHandler.playerSlot.set(bestSwapSlot);
         blocked = false;
@@ -1157,6 +1247,19 @@ public class KillAura extends Module {
             }
         }
 
+        return bestSlot;
+    }
+
+    public int getRandomSlot() {
+        int bestSlot = 1;
+        int currentSlot = mc.thePlayer.inventory.currentItem;
+        bestSlot = Utils.randomizeInt(0, 8);
+        if (bestSlot == 0 && currentSlot == 0) {
+            bestSlot += 1;
+        }
+        if (bestSlot > 0 && currentSlot == bestSlot) {
+            bestSlot -= 1;
+        }
         return bestSlot;
     }
 

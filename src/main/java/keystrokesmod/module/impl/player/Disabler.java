@@ -53,7 +53,7 @@ public class Disabler extends Module {
 
     public Disabler() {
         super("Disabler", Module.category.player);
-        this.registerSetting(disablerTicks = new SliderSetting("Ticks", "", 150, 85, 150, 5));
+        this.registerSetting(disablerTicks = new SliderSetting("Ticks", "", 100, 85, 150, 5));
         this.registerSetting(activationDelay = new SliderSetting("Activation delay", " seconds", 0, 0, 4, 0.5));
     }
 
@@ -94,7 +94,7 @@ public class Disabler extends Module {
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onPreMotion(PreMotionEvent e) {
-        if (Utils.getLobbyStatus() == 1 || Utils.hypixelStatus() != 1) {
+        if (Utils.getLobbyStatus() == 1 || Utils.hypixelStatus() != 1 || Utils.isReplay()) {
             return;
         }
         long now = System.currentTimeMillis();

@@ -116,10 +116,10 @@ public class Velocity extends Module {
         }
     }
 
-    @SubscribeEvent(priority = EventPriority.LOWEST)
+    @SubscribeEvent
     public void onReceivePacketAll(ReceiveAllPacketsEvent e) {
         if (velocityModes.getInput() >= 1) {
-            if (!Utils.nullCheck() || LongJump.stopVelocity || e.isCanceled() || ModuleManager.bedAura.cancelKnockback() || ModuleManager.tower.cancelKnockback() || velocityModes.getInput() == 2 && ModuleUtils.firstDamage || ModuleManager.bhop.isEnabled() && ModuleManager.bhop.damageBoost.isToggled() && ModuleUtils.firstDamage && (!ModuleManager.bhop.damageBoostRequireKey.isToggled() || ModuleManager.bhop.damageBoostKey.isPressed())) {
+            if (!Utils.nullCheck() || LongJump.stopVelocity || e.isCanceled() || ModuleManager.blink.isEnabled() && ModuleManager.blink.cancelKnockback.isToggled() || ModuleManager.bedAura.cancelKnockback() || ModuleManager.tower.cancelKnockback() || velocityModes.getInput() == 2 && ModuleUtils.firstDamage || ModuleManager.bhop.isEnabled() && ModuleManager.bhop.damageBoost.isToggled() && ModuleUtils.firstDamage && (!ModuleManager.bhop.damageBoostRequireKey.isToggled() || ModuleManager.bhop.damageBoostKey.isPressed())) {
                 return;
             }
             if (e.getPacket() instanceof S27PacketExplosion) {
