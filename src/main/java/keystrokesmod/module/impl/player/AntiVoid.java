@@ -153,9 +153,9 @@ public class AntiVoid extends Module {
     public boolean dist() {
         double minMotion = 0.06;
         int dist1 = 2;
-        int dist2 = 4;
-        int dist3 = 6;
-        int dist4 = 8;
+        int dist2 = 5;
+        int dist3 = 7;
+        int dist4 = 9;
         // 1x1
 
         if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX, (int) mc.thePlayer.posZ) > dist1) {

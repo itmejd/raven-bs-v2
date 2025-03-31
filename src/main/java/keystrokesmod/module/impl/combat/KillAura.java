@@ -454,7 +454,7 @@ public class KillAura extends Module {
             if (packet instanceof C00PacketLoginStart || packet instanceof C00Handshake) {
                 return;
             }
-            if (autoBlockMode.getInput() >= 5 && (packet instanceof C03PacketPlayer || packet instanceof C0BPacketEntityAction)) {
+            if (autoBlockMode.getInput() >= 5 && (packet instanceof C03PacketPlayer || packet instanceof C0BPacketEntityAction || packet instanceof C0FPacketConfirmTransaction)) {
                 return;
             }
             blinkedPackets.add(packet);
@@ -1088,7 +1088,7 @@ public class KillAura extends Module {
                     }
                 }
                 break;
-            case 7: // swap
+            case 7: // delay
                 if (interactTicks >= 2) {
                     interactTicks = 0;
                 }
