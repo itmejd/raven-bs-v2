@@ -2,6 +2,7 @@ package keystrokesmod.module.impl.player;
 
 import keystrokesmod.Raven;
 import keystrokesmod.event.PreUpdateEvent;
+import keystrokesmod.event.ReceiveAllPacketsEvent;
 import keystrokesmod.event.ReceivePacketEvent;
 import keystrokesmod.event.SendPacketEvent;
 import keystrokesmod.module.Module;
@@ -63,7 +64,7 @@ public class AntiVoid extends Module {
             return;
         }
         Packet packet = e.getPacket();
-        if (!started && (!Utils.overVoid(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ) || mc.thePlayer.onGround)) {
+        if (!started && (!Utils.overVoid() || mc.thePlayer.onGround)) {
             y = mc.thePlayer.posY;
             wait = false;
             return;
@@ -74,8 +75,8 @@ public class AntiVoid extends Module {
         if (packet.getClass().getSimpleName().startsWith("S")) {
             return;
         }
-        if (ModuleManager.killAura.isTargeting || ModuleManager.killAura.justUnTargeted) {
-            //return;
+        if (ModuleManager.noFall.isBlinking) {
+            return;
         }
         if (wait) {
             return;
@@ -97,10 +98,10 @@ public class AntiVoid extends Module {
 
     @SubscribeEvent
     public void onPreUpdate(PreUpdateEvent e) {
-        if (!Utils.overVoid(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ) || mc.thePlayer.onGround) {
+        if (!Utils.overVoid() || mc.thePlayer.onGround) {
             release();
         }
-        if (dist() && Utils.overVoid(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ) || disableLJ.isToggled() && LongJump.function) {
+        if (dist() && Utils.overVoid() || disableLJ.isToggled() && LongJump.function) {
             release();
             wait = true;
         }

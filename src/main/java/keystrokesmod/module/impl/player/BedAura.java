@@ -105,6 +105,9 @@ public class BedAura extends Module {
             reset(true, true);
             return;
         }
+        if (ModuleManager.noFall.start) {
+            return;
+        }
         if (Utils.isBedwarsPractice() || Utils.isReplay()) {
             return;
         }

@@ -76,7 +76,7 @@ public class KillAura extends Module {
     private ButtonSetting silentSwing;
     private ButtonSetting weaponOnly;
 
-    private String[] autoBlockModes = new String[] { "Manual", "Vanilla", "Partial", "Via A", "Via B", "Post", "Swap", "Delay" };
+    private String[] autoBlockModes = new String[] { "Manual", "Vanilla", "Partial", "Blink A", "Blink B", "Post", "Swap", "Delay" };
     private String[] rotationModes = new String[] { "Silent", "Lock view", "None" };
     private String[] rotateModes = new String[] { "Attacking", "Swinging" };
     private String[] sortModes = new String[] { "Distance", "Health", "Hurttime", "Yaw" };
@@ -336,6 +336,13 @@ public class KillAura extends Module {
             disable = false;
             disableTicks = 0;
             disableCheckUsing = true;
+            return;
+        }
+        if (ModuleManager.noFall.isBlinking) {
+            if (blinking.get() || lag) {
+                resetBlinkState(true);
+            }
+            setTarget(null);
             return;
         }
         if (ModuleManager.antiVoid.started) {
@@ -960,7 +967,7 @@ public class KillAura extends Module {
                         break;
                 }
                 break;
-            case 3: // via a
+            case 3: // blink a
                 if (interactTicks >= 3) {
                     interactTicks = 0;
                 }
@@ -968,19 +975,10 @@ public class KillAura extends Module {
                 if (firstCycle) {
                     switch (interactTicks) {
                         case 1:
-                            blinking.set(true);
-                            ++cycleCount1;
-                            if (cycleCount1 > 2) {
-                                cycleCount1 = 0;
-                            }
                             if (ModuleUtils.isBlocked) {
-                                if (cycleCount1 <= -1) {
-                                    sendUnBlockPacket();
-                                }
-                                else {
-                                    setSwapSlot();
-                                    swapped = true;
-                                }
+                                blinking.set(true);
+                                setSwapSlot();
+                                swapped = true;
                             }
                             break;
                         case 2:
@@ -991,6 +989,7 @@ public class KillAura extends Module {
                             handleInteractAndAttack(distance, true, true, swung);
                             sendBlockPacket();
                             releasePackets(); // release
+                            blinking.set(false);
                             interactTicks = 0;
                             ++cycleCount2;
                             if (cycleCount2 > 5) {
@@ -1004,6 +1003,7 @@ public class KillAura extends Module {
                     switch (interactTicks) {
                         case 1:
                             if (ModuleUtils.isBlocked) {
+                                blinking.set(true);
                                 setSwapSlot();
                                 swapped = true;
                             }
@@ -1016,6 +1016,7 @@ public class KillAura extends Module {
                             handleInteractAndAttack(distance, true, true, swung);
                             sendBlockPacket();
                             releasePackets(); // release
+                            blinking.set(false);
                             break;
                         case 3:
                             firstCycle = true;
@@ -1024,32 +1025,22 @@ public class KillAura extends Module {
                     }
                 }
                 break;
-            case 4: // via b
+            case 4: // blink b
                 interactTicks++;
                 switch (interactTicks) {
                     case 1:
-                        blinking.set(true);
                         if (ModuleUtils.isBlocked) {
-                            setSwapSlot();
-                            swapped = true;
+                            blinking.set(true);
+                            sendUnBlockPacket();
                         }
                         break;
                     case 2:
-                        if (swapped) {
-                            setCurrentSlot();
-                            swapped = false;
-                        }
                         handleInteractAndAttack(distance, true, true, swung);
                         sendBlockPacket();
-                        if (++cycleCount2 > 1) {
-                            interactTicks = 0;
-                        }
-                        else {
-                            releasePackets(); // release
-                        }
+                        releasePackets(); // release
+                        blinking.set(false);
                         break;
                     case 3:
-                        releasePackets(); // release
                         interactTicks = 0;
                         firstCycle = false;
                         break;
@@ -1095,8 +1086,8 @@ public class KillAura extends Module {
                 interactTicks++;
                 switch (interactTicks) {
                     case 1:
-                        blinking.set(true);
                         if (ModuleUtils.isBlocked) {
+                            blinking.set(true);
                             setSwapSlot();
                             swapped = true;
                         }

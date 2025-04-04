@@ -208,9 +208,9 @@ public class ModuleUtils {
         if (canSlow || ModuleManager.scaffold.moduleEnabled && !ModuleManager.tower.canTower()) {
             double motionVal = 0.9507832 - ((double) inAirTicks / 10000) - Utils.randomizeDouble(0.00001, 0.00006);
             if (!hasSlowed) motionVal = motionVal - 0.15;
-            if (mc.thePlayer.hurtTime == 0 && inAirTicks >= 3 && !setSlow && ModuleManager.scaffold.rotation.getInput() == 2) {
-                mc.thePlayer.motionX *= motionVal;
-                mc.thePlayer.motionZ *= motionVal;
+            if (mc.thePlayer.hurtTime == 0 && !setSlow && !mc.thePlayer.onGround) {
+                //mc.thePlayer.motionX *= motionVal;
+                //mc.thePlayer.motionZ *= motionVal;
                 setSlow = hasSlowed = true;
                 //Utils.print("Slow " + motionVal);
             }

@@ -160,6 +160,10 @@ public class Scaffold extends Module {
         }
         disabledModule = true;
         moduleEnabled = false;
+
+        if (!isEnabled) {
+            scaffoldBlockCount.beginFade();
+        }
     }
 
     public void onEnable() {
@@ -348,7 +352,7 @@ public class Scaffold extends Module {
                 }
                 if (quad > 42 && quad <= 45 || quad >= 45 && quad < 48) {
                     yawAngle = 140F;
-                    minOffset = 5;
+                    minOffset = 4;
 
                 }
                 minPitch = 80.25F;

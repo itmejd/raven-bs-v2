@@ -69,6 +69,8 @@ public class Disabler extends Module {
     }
 
     private void resetState() {
+        savedYaw = mc.thePlayer.rotationYaw;
+        savedPitch = mc.thePlayer.rotationPitch;
         shouldRun = true;
         tickCounter = 0;
         applyingMotion = false;
@@ -111,11 +113,7 @@ public class Disabler extends Module {
         if ((now - lobbyTime) < activationDelayMillis) {
             return;
         }
-        if (!running) {
-            savedYaw = e.getYaw();
-            savedPitch = e.getPitch();
-            running = true;
-        }
+        running = true;
         e.setRotations(savedYaw, savedPitch);
 
         if (waitingForGround) {
@@ -161,6 +159,7 @@ public class Disabler extends Module {
 
                 if (mc.thePlayer.ticksExisted % 2 == 0) {
                     e.setPosZ(e.getPosZ() + 0.075);
+                    e.setPosX(e.getPosX() + 0.075);
                 }
 
                 tickCounter++;

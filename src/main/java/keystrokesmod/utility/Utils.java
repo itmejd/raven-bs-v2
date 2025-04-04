@@ -210,6 +210,15 @@ public class Utils {
         return true;
     }
 
+    public static boolean overVoid() {
+        for (int i = (int) mc.thePlayer.posY; i > -1; i--) {
+            if (!(mc.theWorld.getBlockState(new BlockPos(mc.thePlayer.posX, i, mc.thePlayer.posZ)).getBlock() instanceof BlockAir)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public static boolean canPlayerBeSeen(EntityLivingBase player) {
         double x = player.posX;
         double y = player.posY;
@@ -922,6 +931,24 @@ public class Utils {
 
     public static boolean holdingFood(EntityLivingBase entity) {
         return entity.getHeldItem() != null && entity.getHeldItem().getItem() instanceof ItemFood;
+    }
+
+    public static double fallDist() {
+        if (overVoid()) {
+            return 9999;
+        }
+        double fallDistance = -1;
+        double y = mc.thePlayer.posY;
+        if (mc.thePlayer.posY % 1 == 0) {
+            y--;
+        }
+        for (int i = (int) Math.floor(y); i > -1; i--) {
+            if (!isPlaceable(new BlockPos(mc.thePlayer.posX, i, mc.thePlayer.posZ))) {
+                fallDistance = y - i;
+                break;
+            }
+        }
+        return fallDistance - 1;
     }
 
     public static double distanceToGround(Entity entity) {

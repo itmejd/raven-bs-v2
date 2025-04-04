@@ -122,17 +122,17 @@ public class Blink extends Module {
     }
 
 
-    @SubscribeEvent(priority = EventPriority.LOWEST)
+    @SubscribeEvent
     public void onReceivePacketAll(ReceiveAllPacketsEvent e) {
         if (!Utils.nullCheck() || e.isCanceled() || !cancelKnockback.isToggled()) {
             return;
         }
         if (e.getPacket() instanceof S12PacketEntityVelocity) {
             if (((S12PacketEntityVelocity) e.getPacket()).getEntityID() == mc.thePlayer.getEntityId()) {
+                blinkedPackets.add(e.getPacket());
                 e.setCanceled(true);
             }
         }
-
     }
 
     @Override

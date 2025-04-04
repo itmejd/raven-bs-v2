@@ -1,21 +1,25 @@
 package keystrokesmod.module.impl.player;
 
+import keystrokesmod.Raven;
 import keystrokesmod.event.PreMotionEvent;
 import keystrokesmod.event.PreUpdateEvent;
 import keystrokesmod.event.ReceivePacketEvent;
 import keystrokesmod.event.SendPacketEvent;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
+import keystrokesmod.module.impl.movement.LongJump;
+import keystrokesmod.module.impl.render.HUD;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
 import keystrokesmod.script.classes.Block;
-import keystrokesmod.utility.BlockUtils;
-import keystrokesmod.utility.PacketUtils;
-import keystrokesmod.utility.Reflection;
-import keystrokesmod.utility.Utils;
+import keystrokesmod.utility.*;
 import net.minecraft.client.gui.GuiIngame;
+import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.init.Blocks;
 import net.minecraft.network.Packet;
+import net.minecraft.network.handshake.client.C00Handshake;
+import net.minecraft.network.login.client.C00PacketLoginStart;
+import net.minecraft.network.play.client.C02PacketUseEntity;
 import net.minecraft.network.play.client.C03PacketPlayer;
 import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
 import net.minecraft.network.play.server.*;
@@ -24,16 +28,21 @@ import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.client.event.sound.SoundEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 
+import java.awt.*;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class NoFall extends Module {
     public SliderSetting mode;
     private SliderSetting minFallDistance;
     private ButtonSetting disableAdventure;
     private ButtonSetting ignoreVoid, voidC;
-    private ButtonSetting hideSound;
-    private String[] modes = new String[]{"Spoof", "NoGround", "Packet A", "Packet B", "CTW Packet", "Prediction"};
+    private ButtonSetting hideSound, renderTimer;
+    private String[] modes = new String[]{"Spoof", "NoGround", "Packet A", "Packet B", "CTW Packet", "Prediction", "Blink"};
+
+    private int color = new Color(0, 187, 255, 255).getRGB();
 
     private double initialY;
     private double dynamic;
@@ -42,6 +51,15 @@ public class NoFall extends Module {
 
     private int n;
 
+    private ConcurrentLinkedQueue<Packet> blinkedPackets = new ConcurrentLinkedQueue<>();
+    private ConcurrentLinkedQueue<Packet> regularPackets = new ConcurrentLinkedQueue<>();
+    public boolean isBlinking;
+    public boolean bnFalling, start;
+
+    private int blinkTicks;
+
+    private int y;
+
     public NoFall() {
         super("NoFall", category.player);
         this.registerSetting(mode = new SliderSetting("Mode", 2, modes));
@@ -49,11 +67,22 @@ public class NoFall extends Module {
         this.registerSetting(minFallDistance = new SliderSetting("Minimum fall distance", 3, 0, 10, 0.1));
         this.registerSetting(ignoreVoid = new ButtonSetting("Ignore void", false));
         this.registerSetting(voidC = new ButtonSetting("Experimental void check", true));
+        this.registerSetting(renderTimer = new ButtonSetting("Render Blink Timer", true));
         //this.registerSetting(hideSound = new ButtonSetting("Hide fall damage sound", false));
+    }
+
+    public void guiUpdate() {
+        this.renderTimer.setVisible(mode.getInput() == 6, this);
     }
 
     public void onDisable() {
         Utils.resetTimer();
+
+        if (mc.thePlayer.onGround) {
+            finishBlink();
+        } else {
+            finishBlinkRegular();
+        }
     }
 
     /*@SubscribeEvent
@@ -85,6 +114,34 @@ public class NoFall extends Module {
 
     @SubscribeEvent
     public void onPreUpdate(PreUpdateEvent e) {
+        if (mode.getInput() == 6) {
+            if (Utils.fallDist() >= minFallDistance.getInput() && Utils.isEdgeOfBlock() && mc.thePlayer.onGround && !Utils.jumpDown() && !ModuleManager.scaffold.isEnabled && !ModuleManager.bhop.isEnabled() && !LongJump.function) {
+                start = true;
+                y = (int) mc.thePlayer.posY;
+            }
+            else if (start && !bnFalling && mc.thePlayer.posY > y) {
+                finishBlinkRegular();
+            }
+            if (isBlinking) {
+                ++blinkTicks;
+            }
+            if (mc.thePlayer.posY < y && !mc.thePlayer.onGround && start) {
+                bnFalling = true;
+            }
+            else if (bnFalling) {
+                finishBlink();
+            }
+            if (mc.thePlayer.posY <= y - 31 && start) {
+                finishBlinkRegular();
+            }
+        }
+
+
+
+
+
+
+
         if (reset()) {
             Utils.resetTimer();
             initialY = mc.thePlayer.posY;
@@ -171,7 +228,6 @@ public class NoFall extends Module {
                 n++;
             }
         }
-        //Utils.print("" + mc.thePlayer.ticksExisted + " " + mc.thePlayer.motionY + " " + edging);
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
@@ -183,23 +239,119 @@ public class NoFall extends Module {
             case 1:
                 e.setOnGround(false);
                 break;
+            case 6:
+                if (start) {
+                    e.setOnGround(true);
+                }
+                break;
         }
+    }
+
+    private void finishBlink() {
+        isBlinking = bnFalling = start = false;
+        blinkTicks = 0;
+        if (!blinkedPackets.isEmpty()) {
+            synchronized (blinkedPackets) {
+                for (Packet packet : blinkedPackets) {
+                    Raven.packetsHandler.handlePacket(packet);
+                    PacketUtils.sendPacketNoEvent(packet);
+                }
+            }
+        }
+        blinkedPackets.clear();
+        regularPackets.clear();
+    }
+
+    private void finishBlinkRegular() {
+        isBlinking = bnFalling = start = false;
+        blinkTicks = 0;
+        if (!regularPackets.isEmpty()) {
+            synchronized (regularPackets) {
+                for (Packet packet : regularPackets) {
+                    Raven.packetsHandler.handlePacket(packet);
+                    PacketUtils.sendPacketNoEvent(packet);
+                }
+            }
+        }
+        regularPackets.clear();
+        blinkedPackets.clear();
+    }
+
+    /*
+        if (mc.thePlayer.onGround) {
+            synchronized (blinkedPackets) {
+                for (Packet packet : blinkedPackets) {
+                    Raven.packetsHandler.handlePacket(packet);
+                    PacketUtils.sendPacketNoEvent(packet);
+                }
+            }
+        } else {
+            synchronized (regularPackets) {
+                for (Packet packet : regularPackets) {
+                    Raven.packetsHandler.handlePacket(packet);
+                    PacketUtils.sendPacketNoEvent(packet);
+                }
+            }
+        }
+        blinkedPackets.clear();
+        regularPackets.clear();
+     */
+
+    @SubscribeEvent
+    public void onRenderTick(TickEvent.RenderTickEvent ev) {
+        if (!Utils.nullCheck() || !renderTimer.isToggled() || mode.getInput() != 6 || blinkTicks == 0 || blinkTicks >= 99999) {
+            return;
+        }
+        if (ev.phase == TickEvent.Phase.END) {
+            if (mc.currentScreen != null) {
+                return;
+            }
+        }
+        color = Theme.getGradient((int) HUD.theme.getInput(), 0);
+        int widthOffset = (blinkTicks < 10) ? 4 : (blinkTicks >= 10 && blinkTicks < 100) ? 7 : (blinkTicks >= 100 && blinkTicks < 1000) ? 10 : (blinkTicks >= 1000) ? 13 : 16;
+        String text = ("" + blinkTicks);
+        int width = mc.fontRendererObj.getStringWidth(text) + Utils.getBoldWidth(text) / 2;
+        final ScaledResolution scaledResolution = new ScaledResolution(mc);
+        int[] display = {scaledResolution.getScaledWidth(), scaledResolution.getScaledHeight(), scaledResolution.getScaleFactor()};
+        mc.fontRendererObj.drawString(text, display[0] / 2 - width + widthOffset, display[1] / 2 + 8, color, true);
+    }
+
+    @SubscribeEvent
+    public void onSendPacket(SendPacketEvent e) {
+        if (!Utils.nullCheck()) {
+            return;
+        }
+        Packet packet = e.getPacket();
+        if (packet.getClass().getSimpleName().startsWith("S")) {
+            return;
+        }
+        if (packet instanceof C00PacketLoginStart || packet instanceof C00Handshake) {
+            return;
+        }
+        if (!start) {
+            return;
+        }
+        if (!e.isCanceled()) {
+            isBlinking = true;
+            regularPackets.add(packet);
+            blinkedPackets.add(packet);
+            e.setCanceled(true);
+        }
+    }
+
+    private boolean otherc03(Packet packet) {
+        return ((packet instanceof C03PacketPlayer.C04PacketPlayerPosition) || (packet instanceof C03PacketPlayer.C05PacketPlayerLook) || (packet instanceof C03PacketPlayer.C06PacketPlayerPosLook));
     }
 
     @Override
     public String getInfo() {
         return modes[(int) mode.getInput()];
     }
-
-    private boolean isVoid() {
-        return Utils.overVoid(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ);
-    }
-
     private boolean reset() {
         if (disableAdventure.isToggled() && mc.playerController.getCurrentGameType().isAdventure()) {
             return true;
         }
-        if (ignoreVoid.isToggled() && isVoid()) {
+        if (ignoreVoid.isToggled() && Utils.overVoid()) {
             return true;
         }
         if (Utils.isBedwarsPractice()) {
@@ -223,13 +375,13 @@ public class NoFall extends Module {
         if (mc.thePlayer.capabilities.isCreativeMode) {
             return true;
         }
-        if (isVoid() && mc.thePlayer.posY <= 41) {
+        if (Utils.overVoid() && mc.thePlayer.posY <= 41) {
             return true;
         }
         if (mc.thePlayer.capabilities.isFlying) {
             return true;
         }
-        if (voidC.isToggled() && Utils.overVoid(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ) && !dist()) {
+        if (voidC.isToggled() && Utils.overVoid() && !dist()) {
             return true;
         }
         return false;
