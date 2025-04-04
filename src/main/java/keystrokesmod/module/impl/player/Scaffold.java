@@ -52,6 +52,7 @@ public class Scaffold extends Module {
     public ButtonSetting safeWalk;
     public ButtonSetting showBlockCount;
     private ButtonSetting silentSwing;
+    private ButtonSetting prioritizeSprintWithSpeed;
 
     private String[] rotationModes = new String[] { "§cDisabled", "Simple", "Offset", "Precise" };
     private String[] fakeRotationModes = new String[] { "§cDisabled", "Strict", "Smooth", "Spin" };
@@ -131,6 +132,7 @@ public class Scaffold extends Module {
         this.registerSetting(rotation = new SliderSetting("Rotation", 1, rotationModes));
         this.registerSetting(fakeRotation = new SliderSetting("Rotation (fake)", 0, fakeRotationModes));
         this.registerSetting(sprint = new SliderSetting("Sprint mode", 0, sprintModes));
+        this.registerSetting(prioritizeSprintWithSpeed = new ButtonSetting("Prioritize sprint with speed", false));
         this.registerSetting(floatFirstJump = new SliderSetting("§eFloat §rfirst jump speed", "%", 100, 50, 100, 1));
         this.registerSetting(fastScaffold = new SliderSetting("Fast scaffold", 0, fastScaffoldModes));
 
@@ -151,6 +153,7 @@ public class Scaffold extends Module {
     }
 
     public void guiUpdate() {
+        this.prioritizeSprintWithSpeed.setVisible(sprint.getInput() > 0, this);
         this.floatFirstJump.setVisible(sprint.getInput() == 2, this);
     }
 
@@ -207,7 +210,7 @@ public class Scaffold extends Module {
             scaffoldTicks = 0;
         }
         canBlockFade = true;
-        if (Utils.keysDown() && usingFastScaffold() && fastScaffold.getInput() >= 1 && !ModuleManager.tower.canTower() && !LongJump.function) { // jump mode
+        if (Utils.keysDown() && usingFastScaffold() && fastScaffold.getInput() >= 1 && !ModuleManager.tower.canTower() && !LongJump.function && !prioritizeSprint()) { // jump mode
             if (mc.thePlayer.onGround && Utils.isMoving()) {
                 if (scaffoldTicks > 1) {
                     rotateForward();
@@ -833,7 +836,11 @@ public class Scaffold extends Module {
     }
 
     public boolean usingFastScaffold() {
-        return fastScaffold.getInput() > 0 && (!fastOnRMB.isToggled() || (Mouse.isButtonDown(1) || ModuleManager.bhop.isEnabled()) && Utils.tabbedIn());
+        return fastScaffold.getInput() > 0 && (!fastOnRMB.isToggled() || (Mouse.isButtonDown(1) || ModuleManager.bhop.isEnabled()) && Utils.tabbedIn()) && !prioritizeSprint();
+    }
+
+    private boolean prioritizeSprint() {
+        return prioritizeSprintWithSpeed.isToggled() && sprint.getInput() > 0 && getSpeedLevel() > 0;
     }
 
     public boolean safewalk() {
