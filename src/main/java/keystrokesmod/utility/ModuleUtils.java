@@ -6,10 +6,7 @@ import keystrokesmod.module.impl.movement.Bhop;
 import keystrokesmod.module.impl.movement.LongJump;
 import keystrokesmod.module.impl.render.HUD;
 import keystrokesmod.utility.command.CommandManager;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockAir;
-import net.minecraft.block.BlockSlab;
-import net.minecraft.block.BlockSnow;
+import net.minecraft.block.*;
 import net.minecraft.client.Minecraft;
 import keystrokesmod.module.ModuleManager;
 import net.minecraft.client.settings.KeyBinding;
@@ -136,6 +133,9 @@ public class ModuleUtils {
     @SubscribeEvent
     public void onReceivePacketAll(ReceiveAllPacketsEvent e) {
         if (!Utils.nullCheck()) {
+            return;
+        }
+        if (e.isCanceled()) {
             return;
         }
         if (e.getPacket() instanceof S27PacketExplosion) {
@@ -366,7 +366,7 @@ public class ModuleUtils {
                             }
                             break;
                         case 3: // 8 tick
-                            if (!ModuleManager.bhop.isNormalPos) {
+                            if (!ModuleManager.bhop.isNormalPos || (block instanceof BlockStairs)) {
                                 resetLowhop();
                                 break;
                             }
@@ -381,13 +381,13 @@ public class ModuleUtils {
                             if (inAirTicks == 3) {
                                 mc.thePlayer.motionY = 0.08842400075912;
                             }
-                            if (inAirTicks == 4 && g1) {
+                            if (inAirTicks == 4) {
                                 mc.thePlayer.motionY = -0.19174457909538;
                             }
-                            if (inAirTicks == 5 && g1) {
+                            if (inAirTicks == 5) {
                                 mc.thePlayer.motionY = -0.26630949469659;
                             }
-                            if (inAirTicks == 6 && g1) {
+                            if (inAirTicks == 6) {
                                 mc.thePlayer.motionY = -0.26438340940798;
                             }
                             if (inAirTicks == 7 && g1) {

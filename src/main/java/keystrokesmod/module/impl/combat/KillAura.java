@@ -224,9 +224,6 @@ public class KillAura extends Module {
         if (disable && ++disableTicks >= 2) {
             disable = false;
         }
-        if (lastAttack > 0) {
-            --lastAttack;
-        }
         if (target == null || !manualBlock() && manualBlock.isToggled()) {
             if (ModuleUtils.swapTick == 0 && !ModuleUtils.isBlocked) {
                 interactTicks = cycleCount2 = 1;
@@ -490,6 +487,9 @@ public class KillAura extends Module {
             return;
         }
         handleTarget();
+        if (lastAttack > 0) {
+            --lastAttack;
+        }
         if (target == null) {
             if (rotated) {
                 resetYaw(e);
@@ -840,7 +840,7 @@ public class KillAura extends Module {
                 attackingEntity = target;
                 if (!mc.thePlayer.isBlocking() || !disableWhileBlocking.isToggled()) {
                     mc.playerController.attackEntity(mc.thePlayer, target);
-                    lastAttack = (int) (switchDelay.getInput() / 50);
+                    lastAttack = (int) switchDelay.getInput();
                 }
             }
         }
@@ -1080,28 +1080,61 @@ public class KillAura extends Module {
                 }
                 break;
             case 7: // delay
-                if (interactTicks >= 2) {
+                if (interactTicks >= 3) {
                     interactTicks = 0;
                 }
                 interactTicks++;
-                switch (interactTicks) {
-                    case 1:
-                        if (ModuleUtils.isBlocked) {
-                            blinking.set(true);
-                            setSwapSlot();
-                            swapped = true;
-                        }
-                        break;
-                    case 2:
-                        if (swapped) {
-                            setCurrentSlot();
-                            swapped = false;
-                        }
-                        handleInteractAndAttack(distance, true, true, swung);
-                        sendBlockPacket();
-                        releasePackets();
-                        blinking.set(false);
-                        break;
+                if (firstCycle) {
+                    switch (interactTicks) {
+                        case 1:
+                            if (ModuleUtils.isBlocked) {
+                                blinking.set(true);
+                                setSwapSlot();
+                                swapped = true;
+                            }
+                            break;
+                        case 2:
+                            if (swapped) {
+                                setCurrentSlot();
+                                swapped = false;
+                            }
+                            handleInteractAndAttack(distance, true, true, swung);
+                            sendBlockPacket();
+                            releasePackets(); // release
+                            blinking.set(false);
+                            interactTicks = 0;
+                            ++cycleCount2;
+                            if (cycleCount2 > 5) {
+                                firstCycle = false;
+                                cycleCount2 = 0;
+                            }
+                            break;
+                    }
+                }
+                else {
+                    switch (interactTicks) {
+                        case 1:
+                            if (ModuleUtils.isBlocked) {
+                                blinking.set(true);
+                                setSwapSlot();
+                                swapped = true;
+                            }
+                            break;
+                        case 2:
+                            if (swapped) {
+                                setCurrentSlot();
+                                swapped = false;
+                            }
+                            handleInteractAndAttack(distance, true, true, swung);
+                            sendBlockPacket();
+                            releasePackets(); // release
+                            blinking.set(false);
+                            break;
+                        case 3:
+                            firstCycle = true;
+                            interactTicks = 0;
+                            break;
+                    }
                 }
                 break;
         }
@@ -1423,7 +1456,7 @@ public class KillAura extends Module {
     }
 
     public void sendDigPacket() {
-        if (!Utils.holdingSword() || !ModuleUtils.isBlocked) {
+        if (!Utils.holdingSword() || !ModuleUtils.isBlocked || ModuleManager.scaffold.isEnabled) {
             return;
         }
         mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, DOWN));

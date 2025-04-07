@@ -55,7 +55,7 @@ public class Scaffold extends Module {
     private ButtonSetting prioritizeSprintWithSpeed;
 
     private String[] rotationModes = new String[] { "§cDisabled", "Simple", "Offset", "Precise" };
-    private String[] fakeRotationModes = new String[] { "§cDisabled", "Strict", "Smooth", "Spin" };
+    private String[] fakeRotationModes = new String[] { "§cDisabled", "None", "Strict", "Smooth", "Spin" };
     private String[] sprintModes = new String[] { "§cDisabled", "Vanilla", "Float" };
     private String[] fastScaffoldModes = new String[] { "§cDisabled", "Jump A", "Jump B", "Jump B Low", "Jump E", "Keep-Y", "Keep-Y Low" };
     private String[] multiPlaceModes = new String[] { "§cDisabled", "1 extra", "2 extra", "3 extra", "4 extra" };
@@ -121,6 +121,7 @@ public class Scaffold extends Module {
     private int randomF, yawChanges, dynamic;
     private boolean getVTR;
     private float VTRY;
+    private float normalYaw, normalPitch;
     //fake rotations
     private float fakeYaw, fakePitch;
     private float fakeYaw1, fakeYaw2;
@@ -200,6 +201,8 @@ public class Scaffold extends Module {
         if (!Utils.nullCheck()) {
             return;
         }
+        normalYaw = mc.thePlayer.rotationYaw;
+        normalPitch = mc.thePlayer.rotationPitch;
         if (!isEnabled) {
             return;
         }
@@ -329,36 +332,44 @@ public class Scaffold extends Module {
 
                 long strokeDelay = 250;
 
+                float first = 74.25F;
+                float sec = 79.25F;
+
                 if (quad <= 5 || quad >= 85) {
-                    yawAngle = 125.625F;
-                    minOffset = 11;
+                    yawAngle = 123.625F;
+                    minOffset = 9;
+                    minPitch = first;
                 }
                 if (quad > 5 && quad <= 15 || quad >= 75 && quad < 85) {
-                    yawAngle = 127.625F;
-                    minOffset = 11;
+                    yawAngle = 126.625F;
+                    minOffset = 9;
+                    minPitch = first;
                 }
                 if (quad > 15 && quad <= 25 || quad >= 65 && quad < 75) {
-                    yawAngle = 129.625F;
-                    minOffset = 9;
+                    yawAngle = 128.625F;
+                    minOffset = 8;
+                    minPitch = first;
                 }
                 if (quad > 25 && quad <= 32 || quad >= 58 && quad < 65) {
-                    yawAngle = 132.625F;
+                    yawAngle = 131.425F;
                     minOffset = 8;
+                    minPitch = sec;
                 }
                 if (quad > 32 && quad <= 38 || quad >= 52 && quad < 58) {
-                    yawAngle = 134.625F;
+                    yawAngle = 133.825F;
                     minOffset = 7;
+                    minPitch = sec;
                 }
                 if (quad > 38 && quad <= 42 || quad >= 48 && quad < 52) {
-                    yawAngle = 136.625F;
+                    yawAngle = 136.825F;
                     minOffset = 5;
+                    minPitch = sec;
                 }
                 if (quad > 42 && quad <= 45 || quad >= 45 && quad < 48) {
-                    yawAngle = 140F;
+                    yawAngle = 140.325F;
                     minOffset = 4;
-
+                    minPitch = sec;
                 }
-                minPitch = 80.25F;
                 //Utils.print("" + minOffset);
                 //float offsetAmountD = ((((float) offsetAmount.getInput() / 10) - 10) * -2) - (((float) offsetAmount.getInput() / 10) - 10);
                 //yawAngle += offsetAmountD;
@@ -380,7 +391,7 @@ public class Scaffold extends Module {
                 if (firstStroke > 0 && (System.currentTimeMillis() - firstStroke) > strokeDelay) {
                     firstStroke = 0;
                 }
-                if (enabledOffGround && Utils.distanceToGround(mc.thePlayer) > 2) {
+                if (enabledOffGround && Utils.fallDist() > 2) {
                     if (blockRotations != null) {
                         yaw = blockRotations[0];
                         pitch = blockRotations[1];
@@ -399,7 +410,7 @@ public class Scaffold extends Module {
                     blockYaw = blockRotations[0];
                     pitch = blockRotations[1];
                     yawOffset = blockYawOffset;
-                    if (pitch < minPitch && ModuleManager.tower.activeTicks <= 3) {
+                    if (pitch < minPitch) {
                         pitch = minPitch;
                     }
                 } else {
@@ -598,6 +609,9 @@ public class Scaffold extends Module {
         //Fake rotations
         if (fakeRotation.getInput() > 0) {
             if (fakeRotation.getInput() == 1) {
+                RotationUtils.setFakeRotations(normalYaw, normalPitch);
+            }
+            else if (fakeRotation.getInput() == 2) {
                 fakeYaw = fakeYaw1;
                 if (blockRotations != null) {
                     fakePitch = blockRotations[1] + 5;
@@ -605,7 +619,7 @@ public class Scaffold extends Module {
                     fakePitch = 80f;
                 }
             }
-            else if (fakeRotation.getInput() == 2) {
+            else if (fakeRotation.getInput() == 3) {
                 fakeYaw2 = mc.thePlayer.rotationYaw - hardcodedYaw();
                 float yawDifference = getAngleDifference(lastEdge2, fakeYaw2);
                 float smoothingFactor = (1.0f - (65.0f / 100.0f));
@@ -619,7 +633,7 @@ public class Scaffold extends Module {
                     fakePitch = 80f;
                 }
             }
-            else if (fakeRotation.getInput() == 3) {
+            else if (fakeRotation.getInput() == 4) {
                 fakeYaw += 25.71428571428571F;
                 fakePitch = 90F;
             }

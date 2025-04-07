@@ -35,12 +35,11 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class AntiVoid extends Module {
     private static SliderSetting distance;
     private ButtonSetting renderTimer, disableLJ, disablePractice;
-    private ConcurrentLinkedQueue<Packet> blinkedPackets = new ConcurrentLinkedQueue<>();
+    public ConcurrentLinkedQueue<Packet> blinkedPackets = new ConcurrentLinkedQueue<>();
     private int color = new Color(0, 187, 255, 255).getRGB();
-    private int blinkTicks;
-    public boolean started;
-    private boolean wait;
-    private double y;
+    public int blinkTicks;
+    public boolean started, wait;
+    public double y;
     public AntiVoid() {
         super("AntiVoid", category.player);
         this.registerSetting(distance = new SliderSetting("Distance", "", 5, 1, 10, 0.5));
@@ -72,6 +71,9 @@ public class AntiVoid extends Module {
         if (!started && (Utils.isReplay() || Utils.spectatorCheck() || Utils.isBedwarsPractice() && disablePractice.isToggled())) {
             return;
         }
+        if (mc.thePlayer.ticksExisted <= 10) {
+            return;
+        }
         if (packet.getClass().getSimpleName().startsWith("S")) {
             return;
         }
@@ -86,6 +88,11 @@ public class AntiVoid extends Module {
         }
         if (!e.isCanceled()) {
             started = true;
+
+            if (ModuleManager.blink.isEnabled()) {
+                return;
+            }
+
             blinkedPackets.add(packet);
             e.setCanceled(true);
         }
@@ -98,6 +105,7 @@ public class AntiVoid extends Module {
 
     @SubscribeEvent
     public void onPreUpdate(PreUpdateEvent e) {
+
         if (!Utils.overVoid() || mc.thePlayer.onGround) {
             release();
         }
@@ -107,6 +115,10 @@ public class AntiVoid extends Module {
         }
         else if (started) {
             ++blinkTicks;
+
+            if (ModuleManager.blink.isEnabled()) {
+                return;
+            }
 
             if (mc.thePlayer.posY <= y - distance.getInput()) {
                 posPacket();
@@ -118,7 +130,7 @@ public class AntiVoid extends Module {
 
     @SubscribeEvent
     public void onRenderTick(TickEvent.RenderTickEvent ev) {
-        if (!Utils.nullCheck() || !renderTimer.isToggled() || blinkTicks == 0 || blinkTicks >= 99999) {
+        if (!Utils.nullCheck() || !renderTimer.isToggled() || blinkTicks == 0 || blinkTicks >= 99999 || ModuleManager.blink.isEnabled()) {
             return;
         }
         if (ev.phase == TickEvent.Phase.END) {
@@ -135,15 +147,17 @@ public class AntiVoid extends Module {
         mc.fontRendererObj.drawString(text, display[0] / 2 - width + widthOffset, display[1] / 2 + 8, color, true);
     }
 
-    private void posPacket() {
+    public void posPacket() {
         PacketUtils.sendPacketNoEvent(new C03PacketPlayer.C06PacketPlayerPosLook(mc.thePlayer.posX, -0.55, mc.thePlayer.posZ, mc.thePlayer.rotationYaw, mc.thePlayer.rotationPitch, mc.thePlayer.onGround));
     }
 
-    private void release() {
-        synchronized (blinkedPackets) {
-            for (Packet packet : blinkedPackets) {
-                Raven.packetsHandler.handlePacket(packet);
-                PacketUtils.sendPacketNoEvent(packet);
+    public void release() {
+        if (!ModuleManager.blink.isEnabled()) {
+            synchronized (blinkedPackets) {
+                for (Packet packet : blinkedPackets) {
+                    Raven.packetsHandler.handlePacket(packet);
+                    PacketUtils.sendPacketNoEvent(packet);
+                }
             }
         }
         blinkedPackets.clear();
@@ -152,12 +166,16 @@ public class AntiVoid extends Module {
     }
 
     public boolean dist() {
-        double minMotion = 0.06;
-        int dist1 = 2;
-        int dist2 = 5;
+        double minMotion = 0.08;
+        int dist1 = 4;
+        int dist2 = 6;
         int dist3 = 7;
         int dist4 = 9;
         // 1x1
+
+        if (mc.thePlayer.isCollidedHorizontally) {
+            return false;
+        }
 
         if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX, (int) mc.thePlayer.posZ) > dist1) {
             return true;

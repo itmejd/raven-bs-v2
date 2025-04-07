@@ -392,13 +392,16 @@ public class NoFall extends Module {
 
 
     public boolean dist() {
-        double minMotion = 0.06;
-        // 1x1
+        double minMotion = 0.08;
+        int dist1 = 4;
+        int dist2 = 6;
+        int dist3 = 7;
+        int dist4 = 9;
+        //1x1
 
-        int dist1 = 0;
-        int dist2 = 1;
-        int dist3 = 2;
-        int dist4 = 4;
+        if (mc.thePlayer.isCollidedHorizontally) {
+            return false;
+        }
 
         if (Utils.distanceToGround(mc.thePlayer, (int) mc.thePlayer.posX, (int) mc.thePlayer.posZ) > dist1) {
             return true;

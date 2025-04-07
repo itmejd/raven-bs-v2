@@ -74,6 +74,15 @@ public class Blink extends Module {
     }
 
     public void onDisable() {
+        if (ModuleManager.antiVoid.started) {
+            if (mc.thePlayer.posY <= ModuleManager.antiVoid.y - 3) {
+                ModuleManager.antiVoid.posPacket();
+            }
+            ModuleManager.antiVoid.wait = true;
+            ModuleManager.antiVoid.started = false;
+            ModuleManager.antiVoid.blinkedPackets.clear();
+            ModuleManager.antiVoid.blinkTicks = 0;
+        }
         synchronized (blinkedPackets) {
             for (Packet packet : blinkedPackets) {
                 Raven.packetsHandler.handlePacket(packet);
@@ -90,10 +99,6 @@ public class Blink extends Module {
     public void onSendPacket(SendPacketEvent e) {
         if (!Utils.nullCheck()) {
             this.disable();
-            return;
-        }
-        if (ModuleManager.antiVoid.started) {
-            disable();
             return;
         }
         if (ModuleManager.killAura.isTargeting || ModuleManager.killAura.justUnTargeted) {
