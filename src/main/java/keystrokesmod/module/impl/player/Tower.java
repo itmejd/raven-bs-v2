@@ -419,7 +419,7 @@ public class Tower extends Module {
                                     firstY = mc.thePlayer.posY;
                                     firstZ = mc.thePlayer.posZ;
                                 }
-                                mc.thePlayer.motionX = 0.22;
+                                mc.thePlayer.motionX = 0.2;
                                 aligning = true;
                             }
                             if (aligning && mc.thePlayer.posX >= blockX) {

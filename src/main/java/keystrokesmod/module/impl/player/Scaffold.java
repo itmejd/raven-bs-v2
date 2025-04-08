@@ -110,7 +110,7 @@ public class Scaffold extends Module {
     private boolean was451, was452;
     private float minPitch, minOffset, pOffset;
     private float edge;
-    private long firstStroke, yawEdge;
+    private long firstStroke, yawEdge, vlS;
     private float lastEdge2, yawAngle, theYaw;
     private boolean enabledOffGround = false;
     private float[] blockRotations;
@@ -122,6 +122,7 @@ public class Scaffold extends Module {
     private boolean getVTR;
     private float VTRY;
     private float normalYaw, normalPitch;
+    private int switchvl;
     //fake rotations
     private float fakeYaw, fakePitch;
     private float fakeYaw1, fakeYaw2;
@@ -337,7 +338,7 @@ public class Scaffold extends Module {
 
                 if (quad <= 5 || quad >= 85) {
                     yawAngle = 123.625F;
-                    minOffset = 9;
+                    minOffset = 11;
                     minPitch = first;
                 }
                 if (quad > 5 && quad <= 15 || quad >= 75 && quad < 85) {
@@ -352,17 +353,17 @@ public class Scaffold extends Module {
                 }
                 if (quad > 25 && quad <= 32 || quad >= 58 && quad < 65) {
                     yawAngle = 131.425F;
-                    minOffset = 8;
+                    minOffset = 7;
                     minPitch = sec;
                 }
                 if (quad > 32 && quad <= 38 || quad >= 52 && quad < 58) {
                     yawAngle = 133.825F;
-                    minOffset = 7;
+                    minOffset = 6;
                     minPitch = sec;
                 }
                 if (quad > 38 && quad <= 42 || quad >= 48 && quad < 52) {
                     yawAngle = 136.825F;
-                    minOffset = 5;
+                    minOffset = 4;
                     minPitch = sec;
                 }
                 if (quad > 42 && quad <= 45 || quad >= 45 && quad < 48) {
@@ -386,8 +387,21 @@ public class Scaffold extends Module {
                 else {
                     nigger = -10;
                 }
-
-
+                if (switchvl > 0) {
+                    if (vlS > 0 && (System.currentTimeMillis() - vlS) > strokeDelay) {
+                        firstStroke = 0;
+                        switchvl = 0;
+                        vlS = 0;
+                    }
+                    if (switchvl > 1) {
+                        firstStroke = Utils.time();
+                        switchvl = 0;
+                        vlS = 0;
+                    }
+                }
+                else {
+                    vlS = Utils.time();
+                }
                 if (firstStroke > 0 && (System.currentTimeMillis() - firstStroke) > strokeDelay) {
                     firstStroke = 0;
                 }
@@ -444,7 +458,7 @@ public class Scaffold extends Module {
                             }
                         }
                         if (was452) {
-                            firstStroke = Utils.time();
+                            switchvl++;
                         }
                         was451 = true;
                         was452 = false;
@@ -457,7 +471,7 @@ public class Scaffold extends Module {
                             }
                         }
                         if (was451) {
-                            firstStroke = Utils.time();
+                            switchvl++;
                         }
                         was452 = true;
                         was451 = false;
@@ -468,7 +482,7 @@ public class Scaffold extends Module {
                     if (yawOffset <= -minSwitch && firstStroke == 0 && dynamic > 0) {
                         if (quad <= 5 || quad >= 85) {
                             if (set2) {
-                                firstStroke = Utils.time();
+                                switchvl++;
                             }
                             set2 = false;
                         }
@@ -476,7 +490,7 @@ public class Scaffold extends Module {
                         if (quad <= 5 || quad >= 85) {
                             if (yawOffset >= minSwitch) {
                                 if (!set2) {
-                                    firstStroke = Utils.time();
+                                    switchvl++;
                                 }
                                 set2 = true;
                             }
@@ -493,7 +507,7 @@ public class Scaffold extends Module {
                     if (yawOffset >= minSwitch && firstStroke == 0 && dynamic > 0) {
                         if (quad <= 5 || quad >= 85) {
                             if (set2) {
-                                firstStroke = Utils.time();
+                                switchvl++;
                             }
                             set2 = false;
                         }
@@ -501,7 +515,7 @@ public class Scaffold extends Module {
                         if (quad <= 5 || quad >= 85) {
                             if (yawOffset <= -minSwitch) {
                                 if (!set2) {
-                                    firstStroke = Utils.time();
+                                    switchvl++;
                                 }
                                 set2 = true;
                             }
@@ -540,7 +554,7 @@ public class Scaffold extends Module {
                 break;
         }
         if (edge != 1) {
-            firstStroke = Utils.time();
+            switchvl++;
             edge = 1;
         }
         if (mc.thePlayer.onGround) {
@@ -786,7 +800,7 @@ public class Scaffold extends Module {
                 fastScaffoldKeepY = firstKeepYPlace = rotateForward = rotatingForward = floatStarted = floatJumped = floatWasEnabled = towerEdge =
                 was451 = was452 = enabledOffGround = finishProcedure = false;
                 rotationDelay = keepYTicks = scaffoldTicks = 0;
-                firstStroke = 0;
+                firstStroke = vlS = 0;
                 startYPos = -1;
                 lookVec = null;
                 lastPlacement = null;
