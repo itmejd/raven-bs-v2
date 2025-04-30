@@ -19,4 +19,7 @@ public interface IAccessorPlayerControllerMP {
 
     @Accessor
     void setBlockHitDelay(int delay);
+
+    @Invoker("syncCurrentPlayItem")
+    void syncCurrentPlayItem();
 }

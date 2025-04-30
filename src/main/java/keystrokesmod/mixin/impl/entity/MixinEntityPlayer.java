@@ -1,14 +1,18 @@
 package keystrokesmod.mixin.impl.entity;
 
+import keystrokesmod.event.StepHeightEvent;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.combat.Reduce;
 import keystrokesmod.module.impl.movement.KeepSprint;
+import keystrokesmod.utility.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.*;
 import net.minecraft.entity.boss.EntityDragonPart;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.item.EnumAction;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.play.server.S12PacketEntityVelocity;
 import net.minecraft.potion.Potion;
@@ -19,11 +23,14 @@ import net.minecraft.util.DamageSource;
 import net.minecraft.util.MathHelper;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.common.MinecraftForge;
+import org.spongepowered.asm.lib.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(EntityPlayer.class)
@@ -57,14 +64,14 @@ public abstract class MixinEntityPlayer extends EntityLivingBase {
     public abstract void addExhaustion(float p_addExhaustion_1_);
 
     @Overwrite
-    public void attackTargetEntityWithCurrentItem(Entity p_attackTargetEntityWithCurrentItem_1_) {
-        if (ForgeHooks.onPlayerAttackTarget(((EntityPlayer) (Object) this), p_attackTargetEntityWithCurrentItem_1_)) {
-            if (p_attackTargetEntityWithCurrentItem_1_.canAttackWithItem() && !p_attackTargetEntityWithCurrentItem_1_.hitByEntity(this)) {
+    public void attackTargetEntityWithCurrentItem(Entity targetEntity) {
+        if (ForgeHooks.onPlayerAttackTarget(((EntityPlayer) (Object) this), targetEntity)) {
+            if (targetEntity.canAttackWithItem() && !targetEntity.hitByEntity(this)) {
                 float f = (float) this.getEntityAttribute(SharedMonsterAttributes.attackDamage).getAttributeValue();
                 int i = 0;
                 float f1 = 0.0F;
-                if (p_attackTargetEntityWithCurrentItem_1_ instanceof EntityLivingBase) {
-                    f1 = EnchantmentHelper.getModifierForCreature(this.getHeldItem(), ((EntityLivingBase) p_attackTargetEntityWithCurrentItem_1_).getCreatureAttribute());
+                if (targetEntity instanceof EntityLivingBase) {
+                    f1 = EnchantmentHelper.getModifierForCreature(this.getHeldItem(), ((EntityLivingBase) targetEntity).getCreatureAttribute());
                 } else {
                     f1 = EnchantmentHelper.getModifierForCreature(this.getHeldItem(), EnumCreatureAttribute.UNDEFINED);
                 }
@@ -75,7 +82,7 @@ public abstract class MixinEntityPlayer extends EntityLivingBase {
                 }
 
                 if (f > 0.0F || f1 > 0.0F) {
-                    boolean flag = this.fallDistance > 0.0F && !this.onGround && !this.isOnLadder() && !this.isInWater() && !this.isPotionActive(Potion.blindness) && this.ridingEntity == null && p_attackTargetEntityWithCurrentItem_1_ instanceof EntityLivingBase;
+                    boolean flag = this.fallDistance > 0.0F && !this.onGround && !this.isOnLadder() && !this.isInWater() && !this.isPotionActive(Potion.blindness) && this.ridingEntity == null && targetEntity instanceof EntityLivingBase;
                     if (flag && f > 0.0F) {
                         f *= 1.5F;
                     }
@@ -83,23 +90,23 @@ public abstract class MixinEntityPlayer extends EntityLivingBase {
                     f += f1;
                     boolean flag1 = false;
                     int j = EnchantmentHelper.getFireAspectModifier(this);
-                    if (p_attackTargetEntityWithCurrentItem_1_ instanceof EntityLivingBase && j > 0 && !p_attackTargetEntityWithCurrentItem_1_.isBurning()) {
+                    if (targetEntity instanceof EntityLivingBase && j > 0 && !targetEntity.isBurning()) {
                         flag1 = true;
-                        p_attackTargetEntityWithCurrentItem_1_.setFire(1);
+                        targetEntity.setFire(1);
                     }
 
-                    double d0 = p_attackTargetEntityWithCurrentItem_1_.motionX;
-                    double d1 = p_attackTargetEntityWithCurrentItem_1_.motionY;
-                    double d2 = p_attackTargetEntityWithCurrentItem_1_.motionZ;
-                    boolean flag2 = p_attackTargetEntityWithCurrentItem_1_.attackEntityFrom(DamageSource.causePlayerDamage(((EntityPlayer) (Object) this)), f);
+                    double d0 = targetEntity.motionX;
+                    double d1 = targetEntity.motionY;
+                    double d2 = targetEntity.motionZ;
+                    boolean flag2 = targetEntity.attackEntityFrom(DamageSource.causePlayerDamage(((EntityPlayer) (Object) this)), f);
                     if (flag2) {
                         if (i > 0) {
-                            p_attackTargetEntityWithCurrentItem_1_.addVelocity((double) (-MathHelper.sin(this.rotationYaw * 3.1415927F / 180.0F) * (float) i * 0.5F), 0.1, (double) (MathHelper.cos(this.rotationYaw * 3.1415927F / 180.0F) * (float) i * 0.5F));
+                            targetEntity.addVelocity((double) (-MathHelper.sin(this.rotationYaw * 3.1415927F / 180.0F) * (float) i * 0.5F), 0.1, (double) (MathHelper.cos(this.rotationYaw * 3.1415927F / 180.0F) * (float) i * 0.5F));
                             if (ModuleManager.reduce != null && ModuleManager.reduce.isEnabled()) {
-                                Reduce.reduce(p_attackTargetEntityWithCurrentItem_1_);
+                                Reduce.reduce(targetEntity);
                             }
                             else if (ModuleManager.keepSprint != null && ModuleManager.keepSprint.isEnabled()) {
-                                KeepSprint.keepSprint(p_attackTargetEntityWithCurrentItem_1_);
+                                KeepSprint.keepSprint(targetEntity);
                             }
                             else {
                                 this.motionX *= 0.6D;
@@ -108,36 +115,36 @@ public abstract class MixinEntityPlayer extends EntityLivingBase {
                             }
                         }
 
-                        if (p_attackTargetEntityWithCurrentItem_1_ instanceof EntityPlayerMP && p_attackTargetEntityWithCurrentItem_1_.velocityChanged) {
-                            ((EntityPlayerMP) p_attackTargetEntityWithCurrentItem_1_).playerNetServerHandler.sendPacket(new S12PacketEntityVelocity(p_attackTargetEntityWithCurrentItem_1_));
-                            p_attackTargetEntityWithCurrentItem_1_.velocityChanged = false;
-                            p_attackTargetEntityWithCurrentItem_1_.motionX = d0;
-                            p_attackTargetEntityWithCurrentItem_1_.motionY = d1;
-                            p_attackTargetEntityWithCurrentItem_1_.motionZ = d2;
+                        if (targetEntity instanceof EntityPlayerMP && targetEntity.velocityChanged) {
+                            ((EntityPlayerMP) targetEntity).playerNetServerHandler.sendPacket(new S12PacketEntityVelocity(targetEntity));
+                            targetEntity.velocityChanged = false;
+                            targetEntity.motionX = d0;
+                            targetEntity.motionY = d1;
+                            targetEntity.motionZ = d2;
                         }
 
                         if (flag) {
-                            this.onCriticalHit(p_attackTargetEntityWithCurrentItem_1_);
+                            this.onCriticalHit(targetEntity);
                         }
 
                         if (f1 > 0.0F) {
-                            this.onEnchantmentCritical(p_attackTargetEntityWithCurrentItem_1_);
+                            this.onEnchantmentCritical(targetEntity);
                         }
 
                         if (f >= 18.0F) {
                             this.triggerAchievement(AchievementList.overkill);
                         }
 
-                        this.setLastAttacker(p_attackTargetEntityWithCurrentItem_1_);
-                        if (p_attackTargetEntityWithCurrentItem_1_ instanceof EntityLivingBase) {
-                            EnchantmentHelper.applyThornEnchantments((EntityLivingBase) p_attackTargetEntityWithCurrentItem_1_, this);
+                        this.setLastAttacker(targetEntity);
+                        if (targetEntity instanceof EntityLivingBase) {
+                            EnchantmentHelper.applyThornEnchantments((EntityLivingBase) targetEntity, this);
                         }
 
-                        EnchantmentHelper.applyArthropodEnchantments(this, p_attackTargetEntityWithCurrentItem_1_);
+                        EnchantmentHelper.applyArthropodEnchantments(this, targetEntity);
                         ItemStack itemstack = this.getCurrentEquippedItem();
-                        Entity entity = p_attackTargetEntityWithCurrentItem_1_;
-                        if (p_attackTargetEntityWithCurrentItem_1_ instanceof EntityDragonPart) {
-                            IEntityMultiPart ientitymultipart = ((EntityDragonPart) p_attackTargetEntityWithCurrentItem_1_).entityDragonObj;
+                        Entity entity = targetEntity;
+                        if (targetEntity instanceof EntityDragonPart) {
+                            IEntityMultiPart ientitymultipart = ((EntityDragonPart) targetEntity).entityDragonObj;
                             if (ientitymultipart instanceof EntityLivingBase) {
                                 entity = (EntityLivingBase) ientitymultipart;
                             }
@@ -150,16 +157,16 @@ public abstract class MixinEntityPlayer extends EntityLivingBase {
                             }
                         }
 
-                        if (p_attackTargetEntityWithCurrentItem_1_ instanceof EntityLivingBase) {
+                        if (targetEntity instanceof EntityLivingBase) {
                             this.addStat(StatList.damageDealtStat, Math.round(f * 10.0F));
                             if (j > 0) {
-                                p_attackTargetEntityWithCurrentItem_1_.setFire(j * 4);
+                                targetEntity.setFire(j * 4);
                             }
                         }
 
                         this.addExhaustion(0.3F);
                     } else if (flag1) {
-                        p_attackTargetEntityWithCurrentItem_1_.extinguish();
+                        targetEntity.extinguish();
                     }
                 }
             }

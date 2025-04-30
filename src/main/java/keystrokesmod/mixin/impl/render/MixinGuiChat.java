@@ -4,6 +4,8 @@ import keystrokesmod.Raven;
 import keystrokesmod.module.ModuleManager;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.GuiTextField;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -12,6 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
 
+@SideOnly(Side.CLIENT)
 @Mixin(GuiChat.class)
 public abstract class MixinGuiChat extends MixinGuiScreen
 {

@@ -54,7 +54,7 @@ public class Settings extends Module {
         this.registerSetting(movementFix = new ButtonSetting("Movement fix", false));
         this.registerSetting(randomYawFactor = new SliderSetting("Random yaw factor", 1.0, 0.0, 10.0, 1.0));
         this.registerSetting(new DescriptionSetting("Profiles"));
-        this.registerSetting(loadGuiPositions = new ButtonSetting("Load gui states", false));
+        this.registerSetting(loadGuiPositions = new ButtonSetting("Load gui state", false));
         this.registerSetting(sendMessage = new ButtonSetting("Send message on enable", true));
         this.registerSetting(new DescriptionSetting("Theme colors"));
         this.registerSetting(offset = new SliderSetting("Offset", 0.5, -3.0, 3.0, 0.1));

@@ -47,7 +47,8 @@ public class Tower extends Module {
 
     public float pitch;
 
-    public boolean finishedTower;
+    public boolean finishedTower, delay;
+    public int delayTicks;
 
     //vertical tower
     private boolean aligning, aligned, placed;
@@ -62,6 +63,8 @@ public class Tower extends Module {
     private int grounds, towerVL;
 
     public int upFaces;
+
+    private boolean jump;
 
     public Tower() {
         super("Tower", category.player);
@@ -104,6 +107,9 @@ public class Tower extends Module {
         if (!Utils.nullCheck()) {
             return;
         }
+        if (delay) {
+            return;
+        }
         if (canTower() && Utils.keysDown()) {
             if (disableWhileHurt.isToggled() && ModuleUtils.damage) {
                 return;
@@ -139,7 +145,31 @@ public class Tower extends Module {
                         }
                     }
                     break;
+                case 8:
+                    if (mc.thePlayer.posY % 1 == 0 && mc.thePlayer.onGround) {
+                        towering = true;
+                    }
+                    if (towering) {
+                        if (mc.thePlayer.onGround) {
+                            jump = true;
+                            ModuleManager.scaffold.rotateForward();
+                        }
+                    }
+                    break;
             }
+        }
+    }
+
+    @SubscribeEvent
+    public void onClientRotation(ClientRotationEvent e) {
+        if (jump) {
+            mc.thePlayer.setSprinting(true);
+            mc.thePlayer.jump();
+            if (ModuleManager.scaffold.rotation.getInput() == 2) {
+                Utils.setSpeed(getTowerSpeed(getSpeedLevel()));
+                speed = true;
+            }
+            jump = false;
         }
     }
 
@@ -153,8 +183,12 @@ public class Tower extends Module {
         if (towerVL > 0) {
             --towerVL;
         }
+        if (delay && ++delayTicks > 1) {
+            delay = false;
+            delayTicks = 0;
+        }
         if (towerMove.getInput() > 0) {
-            if (canTower() && Utils.keysDown()) {
+            if (canTower() && Utils.keysDown() && !delay) {
                 ++activeTicks;
                 speed = false;
                 wasTowering = hasTowered = true;
@@ -356,17 +390,7 @@ public class Tower extends Module {
                         }
                         break;
                     case 8:
-                        if (mc.thePlayer.posY % 1 == 0 && mc.thePlayer.onGround) {
-                            towering = true;
-                        }
-                        if (towering) {
-                            if (mc.thePlayer.onGround) {
-                                mc.thePlayer.jump();
-                                Utils.setSpeed(getTowerSpeed(getSpeedLevel()));
-                                speed = true;
-                                ModuleManager.scaffold.rotateForward();
-                            }
-                        }
+
                         break;
 
                 }
@@ -395,9 +419,11 @@ public class Tower extends Module {
                     slowTicks = 0;
                 }
                 if (speed || hasTowered && mc.thePlayer.onGround) {
-                    Utils.setSpeed(Utils.getHorizontalSpeed(mc.thePlayer) / 1.6);
+                    if (ModuleManager.scaffold.rotation.getInput() == 2) {
+                        Utils.setSpeed(Utils.getHorizontalSpeed(mc.thePlayer) / 1.6);
+                    }
                 }
-                hasTowered = towering = firstJump = startedTowerInAir = setLowMotion = speed = false;
+                hasTowered = towering = firstJump = startedTowerInAir = setLowMotion = speed = jump = false;
                 cMotionTicks = placeTicks = towerTicks = grounds = upFaces = activeTicks = 0;
                 reset();
             }
@@ -437,7 +463,7 @@ public class Tower extends Module {
                                     ModuleManager.scaffold.placedVP = false;
                                 }
                                 else {*/
-                                    pitch = 86.6F;
+                                pitch = 86.6F;
                                 //}
                             } else {
                                 yaw = RotationUtils.getRotations(firstX, firstY, firstZ)[0];
@@ -514,6 +540,9 @@ public class Tower extends Module {
         if (canTower() && !Utils.keysDown() && verticalTower.getInput() > 0) {
             mc.thePlayer.movementInput.jump = false;
         }
+        if (delay) {
+            mc.thePlayer.movementInput.jump = false;
+        }
     }
 
     @SubscribeEvent
@@ -548,7 +577,6 @@ public class Tower extends Module {
             if (aligned) {
                 placed = true;
             }
-            //Utils.print("" + ((C08PacketPlayerBlockPlacement) e.getPacket()).getPlacedBlockDirection());
         }
     }
 

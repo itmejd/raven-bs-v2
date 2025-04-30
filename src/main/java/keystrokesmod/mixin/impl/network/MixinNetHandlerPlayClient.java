@@ -33,7 +33,7 @@ public class MixinNetHandlerPlayClient {
         if (preEntityVelocityEvent.isCanceled()) {
             ci.cancel();
         }
-    }
+     }
 
     @Inject(method = "handleExplosion", at = @At("HEAD"), cancellable = true)
     public void handleExplosionInjection(S27PacketExplosion packet, CallbackInfo ci) {
@@ -43,4 +43,4 @@ public class MixinNetHandlerPlayClient {
             ci.cancel();
         }
     }
-}
+ }

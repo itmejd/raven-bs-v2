@@ -19,6 +19,8 @@ public class Help extends Command {
         chatWithPrefix("&7Chat commands - &dModules");
         chat(" &b.cname [name] &7Set name hider name.");
         chat(" &b.binds (key) &7List module binds.");
+        chat(" &b.spammer <message> &7Set spammer message");
+        chat(" &b.stop spammer &7Stops spammer");
         chatWithPrefix("&7Chat commands - &dProfiles");
         chat(" &b.profiles &7List loaded profiles.");
         chat(" &b.profiles save (name) &7Save current settings as a profile.");

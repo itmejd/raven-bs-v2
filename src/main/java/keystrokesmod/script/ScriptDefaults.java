@@ -4,17 +4,18 @@ import keystrokesmod.Raven;
 import keystrokesmod.clickgui.ClickGui;
 import keystrokesmod.clickgui.components.impl.CategoryComponent;
 import keystrokesmod.clickgui.components.impl.ModuleComponent;
+import keystrokesmod.helper.RotationHelper;
 import keystrokesmod.mixin.impl.accessor.*;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.combat.KillAura;
 import keystrokesmod.module.setting.Setting;
 import keystrokesmod.module.setting.impl.*;
-import keystrokesmod.script.classes.*;
-import keystrokesmod.script.classes.Vec3;
-import keystrokesmod.script.packets.clientbound.SPacket;
-import keystrokesmod.script.packets.serverbound.CPacket;
-import keystrokesmod.script.packets.serverbound.PacketHandler;
+import keystrokesmod.script.model.*;
+import keystrokesmod.script.model.Vec3;
+import keystrokesmod.script.packet.clientbound.SPacket;
+import keystrokesmod.script.packet.serverbound.CPacket;
+import keystrokesmod.script.packet.serverbound.PacketHandler;
 import keystrokesmod.utility.*;
 import keystrokesmod.utility.shader.BlurUtils;
 import keystrokesmod.utility.shader.RoundedUtils;
@@ -33,7 +34,9 @@ import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.init.Blocks;
 import net.minecraft.inventory.ContainerChest;
+import net.minecraft.inventory.ContainerWorkbench;
 import net.minecraft.inventory.IInventory;
+import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.network.Packet;
 import net.minecraft.realms.RealmsBridge;
 import net.minecraft.scoreboard.Team;
@@ -116,13 +119,13 @@ public class ScriptDefaults {
             Utils.sendRawMessage(string);
         }
 
+        public static void print(Message component) {
+            mc.thePlayer.addChatMessage(component.component);
+        }
+
         public static void print(Object object) {
             String s = String.valueOf(object);
             Utils.sendRawMessage(s);
-        }
-
-        public static void print(Message component) {
-            mc.thePlayer.addChatMessage(component.component);
         }
 
         public static boolean isDiagonal() {
@@ -138,7 +141,7 @@ public class ScriptDefaults {
         }
 
         public static void processPacket(SPacket packet) {
-            packet.packet.processPacket(mc.getNetHandler());
+            packet.packet.processPacket((((IAccessorNetworkManager) (mc.getNetHandler().getNetworkManager())).getPacketListener()));
         }
 
         public static void processPacketNoEvent(SPacket packet) {
@@ -190,6 +193,10 @@ public class ScriptDefaults {
             mc.thePlayer.renderArmPitch = pitch;
         }
 
+        public static float getEquippedProgress() {
+            return ((IAccessorItemRenderer) mc.getItemRenderer()).getEquippedProgress();
+        }
+
         public static void disconnect() {
             boolean isLocal = mc.isIntegratedServerRunning();
             boolean isRealms = mc.isConnectedToRealms();
@@ -211,6 +218,7 @@ public class ScriptDefaults {
         }
 
         public static void setRenderArmYaw(float yaw) {
+            mc.thePlayer.prevRenderArmYaw = yaw;
             mc.thePlayer.renderArmYaw = yaw;
         }
 
@@ -267,8 +275,8 @@ public class ScriptDefaults {
             return mc.thePlayer.getItemInUseDuration();
         }
 
-        public static void log(String message) {
-            System.out.println(message);
+        public static void log(final Object obj) {
+            Utils.log.info(obj);
         }
 
         public static void setSneaking(boolean sneak) {
@@ -442,36 +450,83 @@ public class ScriptDefaults {
             return state.yaw;
         }
 
-        public static Object[] raycastBlock(double distance) {
-            return raycastBlock(distance, mc.thePlayer.rotationYaw, mc.thePlayer.rotationPitch, true);
+        public static Object[] raycastBlock(final double distance) {
+            return raycastBlock(distance, mc.thePlayer.rotationYaw, mc.thePlayer.rotationPitch);
         }
 
-        public static Object[] raycastBlock(double distance, float yaw, float pitch) {
-            return raycastBlock(distance, mc.thePlayer.rotationYaw, mc.thePlayer.rotationPitch, true);
-        }
-
-        public static Object[] raycastBlock(double distance, float yaw, float pitch, boolean collisionCheck) {
-            MovingObjectPosition hit = RotationUtils.rayCast(distance, yaw, pitch, collisionCheck);
-            if (hit == null || hit.typeOfHit != MovingObjectPosition.MovingObjectType.BLOCK) {
+        public static Object[] raycastBlock(final double distance, final float yaw, final float pitch) {
+            final net.minecraft.util.Vec3 eyeVec = mc.thePlayer.getPositionEyes(1.0f);
+            final net.minecraft.util.Vec3 lookVec = Utils.getLookVec(yaw, pitch);
+            final net.minecraft.util.Vec3 sumVec = eyeVec.addVector(lookVec.xCoord * distance, lookVec.yCoord * distance, lookVec.zCoord * distance);
+            final MovingObjectPosition mop = mc.theWorld.rayTraceBlocks(eyeVec, sumVec, false, false, false);
+            if (mop == null || mop.typeOfHit != MovingObjectPosition.MovingObjectType.BLOCK) {
                 return null;
             }
-            return new Object[]{Vec3.convert(hit.getBlockPos()), new Vec3(hit.hitVec.xCoord, hit.hitVec.yCoord, hit.hitVec.zCoord), hit.sideHit.name()};
+            final Vec3 pos = new Vec3(mop.getBlockPos());
+            final Vec3 offset = new Vec3(mop.hitVec.xCoord - pos.x, mop.hitVec.yCoord - pos.y, mop.hitVec.zCoord - pos.z);
+            return new Object[] { pos, offset, mop.sideHit.name() };
         }
 
-        public static Object[] raycastEntity(double distance) {
+        public static Object[] raycastEntity(final double distance) {
             return raycastEntity(distance, mc.thePlayer.rotationYaw, mc.thePlayer.rotationPitch);
         }
 
-        public static Object[] raycastEntity(double distance, float yaw, float pitch) {
-            MovingObjectPosition hit = RotationUtils.rayCast(distance, yaw, pitch, true);
-            if (hit == null || hit.typeOfHit != MovingObjectPosition.MovingObjectType.ENTITY) {
-                return null;
+        public static Object[] raycastEntity(final double distance, final float yaw, final float pitch) {
+            net.minecraft.entity.Entity pointedEntity = null;
+            MovingObjectPosition mop = mc.thePlayer.rayTrace(distance, 1.0f);
+            final net.minecraft.util.Vec3 eyeVec = mc.thePlayer.getPositionEyes(1.0f);
+            final net.minecraft.util.Vec3 lookVec = Utils.getLookVec(yaw, pitch);
+            final net.minecraft.util.Vec3 vec32 = eyeVec.addVector(lookVec.xCoord * distance, lookVec.yCoord * distance, lookVec.zCoord * distance);
+            net.minecraft.util.Vec3 vec33 = null;
+            final List list = mc.theWorld.getEntitiesWithinAABBExcludingEntity(mc.getRenderViewEntity(), mc.getRenderViewEntity().getEntityBoundingBox().addCoord(lookVec.xCoord * distance, lookVec.yCoord * distance, lookVec.zCoord * distance).expand(1.0, 1.0, 1.0));
+            double d2 = distance;
+            for (int i = 0; i < list.size(); ++i) {
+                final net.minecraft.entity.Entity entity = (net.minecraft.entity.Entity) list.get(i);
+                if (entity instanceof EntityLivingBase && entity.canBeCollidedWith()) {
+                    if (((EntityLivingBase)entity).deathTime == 0) {
+                        final float cbs = entity.getCollisionBorderSize();
+                        final AxisAlignedBB axisalignedbb = entity.getEntityBoundingBox().expand((double)cbs, (double)cbs, (double)cbs);
+                        final MovingObjectPosition movingobjectposition = axisalignedbb.calculateIntercept(eyeVec, vec32);
+                        if (axisalignedbb.isVecInside(eyeVec)) {
+                            if (0.0 < d2 || d2 == 0.0) {
+                                pointedEntity = entity;
+                                vec33 = ((movingobjectposition == null) ? eyeVec : movingobjectposition.hitVec);
+                                d2 = 0.0;
+                            }
+                        }
+                        else if (movingobjectposition != null) {
+                            final double d3 = eyeVec.distanceTo(movingobjectposition.hitVec);
+                            if (d3 < d2 || d2 == 0.0) {
+                                if (entity == mc.getRenderViewEntity().ridingEntity && !entity.canRiderInteract()) {
+                                    if (d2 == 0.0) {
+                                        pointedEntity = entity;
+                                        vec33 = movingobjectposition.hitVec;
+                                    }
+                                }
+                                else {
+                                    pointedEntity = entity;
+                                    vec33 = movingobjectposition.hitVec;
+                                    d2 = d3;
+                                }
+                            }
+                        }
+                    }
+                }
             }
-            return new Object[]{Entity.convert(hit.entityHit), new Vec3(hit.hitVec.xCoord, hit.hitVec.yCoord, hit.hitVec.zCoord), mc.thePlayer.getDistanceSqToEntity(hit.entityHit)};
+            if (pointedEntity != null && (d2 < distance || mop == null)) {
+                mop = new MovingObjectPosition(pointedEntity, vec33);
+                final Vec3 offset = new Vec3(mop.hitVec.xCoord - pointedEntity.posX, mop.hitVec.yCoord - pointedEntity.posY, mop.hitVec.zCoord - pointedEntity.posZ);
+                return new Object[] { new Entity(mop.entityHit), offset, eyeVec.squareDistanceTo(mop.hitVec) };
+            }
+            return null;
         }
 
         public static boolean placeBlock(Vec3 targetPos, String side, Vec3 hitVec) {
             return mc.playerController.onPlayerRightClick(mc.thePlayer, mc.theWorld, mc.thePlayer.getHeldItem(), Vec3.getBlockPos(targetPos), Utils.getEnum(EnumFacing.class, side), Vec3.getVec3(hitVec));
+        }
+
+        public static void enableMovementFix() {
+            RotationHelper.get().forceMovementFix = true;
         }
 
         public static float[] getRotationsToBlock(Vec3 position) {
@@ -808,7 +863,7 @@ public class ScriptDefaults {
             if (setting == null) {
                 return;
             }
-            setting.setValue(value);
+            setting.setValueRawWithEvent(value);
         }
 
         public void setKey(String moduleName, String name, int code) {
@@ -973,7 +1028,7 @@ public class ScriptDefaults {
     public static class config {
         private static String CONFIG_DIR = mc.mcDataDir + File.separator + "keystrokes" + File.separator + "script_config.txt";
         private static String SEPARATOR = ":";
-        private static String SEPARATOR_FULL = config.SEPARATOR + " ";
+        private static String SEPARATOR_FULL = SEPARATOR + " ";
 
         private static void ensureConfigFileExists() throws IOException {
             final Path configPath = Paths.get(config.CONFIG_DIR);
@@ -987,7 +1042,7 @@ public class ScriptDefaults {
             if (key == null || key.isEmpty()) {
                 return false;
             }
-            key = key.replace(config.SEPARATOR, "");
+            key = key.replace(SEPARATOR, "");
             final String entry = key + config.SEPARATOR_FULL + value;
             try {
                 ensureConfigFileExists();
@@ -1366,7 +1421,6 @@ public class ScriptDefaults {
     }
 
     public static class inventory {
-
         public static int getSlot() {
             return mc.thePlayer.inventory.currentItem;
         }
@@ -1418,7 +1472,7 @@ public class ScriptDefaults {
             }
             else if (mc.currentScreen != null) {
                 try {
-                    return ((IInventory) Reflection.containerInventoryPlayer.get(mc.currentScreen.getClass()).get(mc.currentScreen)).getDisplayName().getUnformattedText();
+                    return ((IInventory) ReflectionUtils.containerInventoryPlayer.get(mc.currentScreen.getClass()).get(mc.currentScreen)).getDisplayName().getUnformattedText();
                 } catch (Exception e) {
                 }
             }
@@ -1458,6 +1512,28 @@ public class ScriptDefaults {
             return null;
         }
 
+        public static ItemStack getStackInCraftingSlot(int slot) {
+            if (mc.thePlayer.openContainer instanceof ContainerWorkbench) {
+                InventoryCrafting craftMatrix = ((ContainerWorkbench) mc.thePlayer.openContainer).craftMatrix;
+                if (craftMatrix.getStackInSlot(slot) == null) {
+                    return null;
+                }
+                return new ItemStack(craftMatrix.getStackInSlot(slot), (byte) 0);
+            }
+            return null;
+        }
+
+        public static ItemStack getCraftResult() {
+            if (mc.thePlayer.openContainer instanceof ContainerWorkbench) {
+                IInventory craftResult = ((ContainerWorkbench) mc.thePlayer.openContainer).craftResult;
+                if (craftResult.getStackInSlot(0) == null) {
+                    return null;
+                }
+                return new ItemStack(craftResult.getStackInSlot(0), (byte) 0);
+            }
+            return null;
+        }
+
         public static void open() {
             KeyBinding inventoryKey = mc.gameSettings.keyBindInventory;
             int originalKeyCode = inventoryKey.getKeyCode();
@@ -1484,12 +1560,12 @@ public class ScriptDefaults {
         }
 
         public static boolean isPressed(final String key) {
-            KeyBinding keyBind = Reflection.keybinds.get(key);
+            KeyBinding keyBind = ReflectionUtils.keybinds.get(key);
             return keyBind != null && keyBind.isKeyDown();
         }
 
         public static void setPressed(final String key, final boolean pressed) {
-            KeyBinding keyBind = Reflection.keybinds.get(key);
+            KeyBinding keyBind = ReflectionUtils.keybinds.get(key);
             if (keyBind != null) {
                 KeyBinding.setKeyBindState(keyBind.getKeyCode(), pressed);
                 if (pressed) {
@@ -1499,7 +1575,7 @@ public class ScriptDefaults {
         }
 
         public static int getKeyCode(final String key) {
-            final KeyBinding keyBind = Reflection.keybinds.get(key);
+            final KeyBinding keyBind = ReflectionUtils.keybinds.get(key);
             if (keyBind != null) {
                 return keyBind.getKeyCode();
             }

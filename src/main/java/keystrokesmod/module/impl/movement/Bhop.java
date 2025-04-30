@@ -6,6 +6,7 @@ import keystrokesmod.event.PreMotionEvent;
 import keystrokesmod.event.PreUpdateEvent;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
+import keystrokesmod.module.impl.combat.KillAura;
 import keystrokesmod.module.impl.combat.Velocity;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.GroupSetting;
@@ -80,18 +81,18 @@ public class Bhop extends Module {
         if (((mc.thePlayer.isInWater() || mc.thePlayer.isInLava()) && liquidDisable.isToggled()) || (mc.thePlayer.isSneaking() && sneakDisable.isToggled())) {
             return;
         }
-        if (ModuleManager.bedAura.isEnabled() && ModuleManager.bedAura.disableBHop.isToggled() && ModuleManager.bedAura.currentBlock != null && RotationUtils.inRange(ModuleManager.bedAura.currentBlock, ModuleManager.bedAura.range.getInput())) {
-            return;
-        }
         if (ModuleManager.scaffold.moduleEnabled || ModuleManager.scaffold.lowhop) {
             return;
         }
         if (LongJump.function) {
             return;
         }
+        if (ModuleManager.invmove.active()) {
+            return;
+        }
         if (mode.getInput() >= 1) {
             if (mc.thePlayer.onGround && (!jumpMoving.isToggled() || Utils.isMoving())) {
-                if (mc.thePlayer.moveForward <= -0.5 && !ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !ModuleManager.scaffold.isEnabled) {
+                if (mc.thePlayer.moveForward <= -0.5 && !ModuleManager.killAura.rotating && !Utils.noSlowingBackWithBow() && !ModuleManager.scaffold.isEnabled) {
                     setRotation = true;
                 }
                 if (mode.getInput() != 3) {
@@ -154,7 +155,7 @@ public class Bhop extends Module {
                 break;
             case 1:
                 break;
-                //lowhops
+            //lowhops
         }
         /*if (rotateYawOption.isToggled()) {
             if (!ModuleManager.killAura.isTargeting && !Utils.noSlowingBackWithBow() && !ModuleManager.scaffold.isEnabled && !mc.thePlayer.isCollidedHorizontally && mc.thePlayer.onGround) {

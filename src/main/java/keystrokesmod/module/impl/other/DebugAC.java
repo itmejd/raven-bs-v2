@@ -1,6 +1,6 @@
 package keystrokesmod.module.impl.other;
 
-import keystrokesmod.event.NoEventPacketEvent;
+import keystrokesmod.event.SendAllPacketsEvent;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.utility.BlockUtils;
@@ -126,7 +126,7 @@ public class DebugAC extends Module {
     }
 
     @SubscribeEvent
-    public void onAllPacketSent(NoEventPacketEvent e) {
+    public void onAllPacketSent(SendAllPacketsEvent e) {
         if (e.getPacket() instanceof C03PacketPlayer) {
             lastC03 = System.currentTimeMillis();
         }

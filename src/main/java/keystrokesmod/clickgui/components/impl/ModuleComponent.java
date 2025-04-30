@@ -26,7 +26,7 @@ public class ModuleComponent extends Component {
     private final int disabledColor = new Color(192, 192, 192).getRGB();
     public Module mod;
     public CategoryComponent categoryComponent;
-    public int yPos;
+    public float yPos;
     public ArrayList<Component> settings;
     public boolean isOpened;
     private boolean hovering;
@@ -35,13 +35,13 @@ public class ModuleComponent extends Component {
     private Timer smoothTimer;
     private int smoothingY = 16;
 
-    public ModuleComponent(Module mod, CategoryComponent p, int yPos) {
+    public ModuleComponent(Module mod, CategoryComponent p, float yPos) {
         this.mod = mod;
         this.categoryComponent = p;
         this.yPos = yPos;
         this.settings = new ArrayList();
         this.isOpened = false;
-        int y = yPos + 12;
+        float y = yPos + 12;
         if (mod != null && !mod.getSettings().isEmpty()) {
             for (Setting v : mod.getSettings()) {
                 if (!v.visible) {
@@ -82,9 +82,9 @@ public class ModuleComponent extends Component {
         this.settings.add(new BindComponent(this, y));
     }
 
-    public void updateHeight(int newY) {
+    public void updateHeight(float newY) {
         this.yPos = newY;
-        int y = this.yPos + 16;
+        float y = this.yPos + 16;
         Iterator var3 = this.settings.iterator();
 
         while (true) {
@@ -305,7 +305,7 @@ public class ModuleComponent extends Component {
     }
 
     public void updateSettingPositions(int xOffset) {
-        int y = this.yPos + 12;
+        float y = this.yPos + 12;
         for (Component c : this.settings) {
             if (!isVisible(c)) {
                 continue;

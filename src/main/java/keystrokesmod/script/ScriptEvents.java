@@ -3,11 +3,11 @@ package keystrokesmod.script;
 import keystrokesmod.Raven;
 import keystrokesmod.event.*;
 import keystrokesmod.module.Module;
-import keystrokesmod.script.classes.Entity;
-import keystrokesmod.script.classes.PlayerState;
-import keystrokesmod.script.packets.clientbound.SPacket;
-import keystrokesmod.script.packets.serverbound.CPacket;
-import keystrokesmod.script.packets.serverbound.PacketHandler;
+import keystrokesmod.script.model.Entity;
+import keystrokesmod.script.model.PlayerState;
+import keystrokesmod.script.packet.clientbound.SPacket;
+import keystrokesmod.script.packet.serverbound.CPacket;
+import keystrokesmod.script.packet.serverbound.PacketHandler;
 import keystrokesmod.utility.Utils;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.client.event.MouseEvent;
@@ -16,6 +16,7 @@ import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import net.minecraftforge.fml.common.network.FMLNetworkEvent;
 
 public class ScriptEvents {
     public Module module;
@@ -29,8 +30,7 @@ public class ScriptEvents {
         if (e.type == 2 || !Utils.nullCheck()) {
             return;
         }
-        final String r = Utils.stripColor(e.message.getUnformattedText());
-        if (r.isEmpty()) {
+        if (Utils.stripColor(e.message.getUnformattedText()).isEmpty()) {
             return;
         }
         if (Raven.scriptManager.invokeBoolean("onChat", module, e.message.getUnformattedText()) == 0) {
@@ -46,8 +46,8 @@ public class ScriptEvents {
         if (e.getPacket().getClass().getSimpleName().startsWith("S")) {
             return;
         }
-        CPacket a = PacketHandler.convertServerBound(e.getPacket());
-        if (a != null && Raven.scriptManager.invokeBoolean("onPacketSent", module, a) == 0) {
+        CPacket packet = PacketHandler.convertServerBound(e.getPacket());
+        if (packet != null && Raven.scriptManager.invokeBoolean("onPacketSent", module, packet) == 0) {
             e.setCanceled(true);
         }
     }
@@ -57,8 +57,44 @@ public class ScriptEvents {
         if (e.isCanceled() || e.getPacket() == null) {
             return;
         }
-        SPacket a = PacketHandler.convertClientBound(e.getPacket());
-        if (a != null && Raven.scriptManager.invokeBoolean("onPacketReceived", module, a) == 0) {
+        SPacket packet = PacketHandler.convertClientBound(e.getPacket());
+        if (packet != null && Raven.scriptManager.invokeBoolean("onPacketReceived", module, packet) == 0) {
+            e.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onAttack(AttackEvent e) {
+        if (e.isCanceled()) {
+            return;
+        }
+        Entity target = Entity.convert(e.target);
+        Entity attacker = Entity.convert(e.attacker);
+        if (Raven.scriptManager.invokeBoolean("onAttackEntity", module, target, attacker) == 0) {
+            e.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onClientRotations(ClientRotationEvent e) {
+        Float[] rotations = Raven.scriptManager.invokeFloatArray("getRotations", module);
+        if (rotations == null || rotations.length == 0 || rotations.length > 2) {
+            return;
+        }
+        if (rotations[0] != null) {
+            e.yaw = rotations[0];
+        }
+        if (rotations.length == 2 && rotations[1] != null) {
+            e.pitch = rotations[1];
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onKeyTyped(KeyPressEvent e) {
+        if (e.isCanceled()) {
+            return;
+        }
+        if (Raven.scriptManager.invokeBoolean("onKeyPress", module, e.typedChar, e.keyCode) == 0) {
             e.setCanceled(true);
         }
     }
@@ -100,6 +136,11 @@ public class ScriptEvents {
             return;
         }
         Raven.scriptManager.invoke("onGuiUpdate", module, e.guiScreen.getClass().getSimpleName(), e.opened);
+    }
+
+    @SubscribeEvent
+    public void onDisconnect(FMLNetworkEvent.ClientDisconnectionFromServerEvent e) {
+        Raven.scriptManager.invoke("onDisconnect", module);
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)

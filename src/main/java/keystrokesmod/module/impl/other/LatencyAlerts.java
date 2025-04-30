@@ -14,8 +14,10 @@ public class LatencyAlerts extends Module {
     private SliderSetting interval;
     private SliderSetting highLatency;
     private ButtonSetting ignoreLimbo;
+
     private long lastPacket;
     private long lastAlert;
+
     public LatencyAlerts() {
         super("Latency Alerts", category.other);
         this.registerSetting(new DescriptionSetting("Detects packet loss."));

@@ -18,15 +18,17 @@
     "client.MixinMinecraft",
     "render.MixinItemRenderer",
     "render.MixinRenderGlobal",
-    "client.MixinWorldInfo",
-    "client.MixinWorld",
+    "world.MixinWorldInfo",
+    "world.MixinWorld",
     "render.MixinGuiChat",
     "render.MixinGuiScreen",
     "network.MixinNetHandlerPlayClient",
     "render.MixinRenderManager",
     "render.MixinCustomSky",
-    "render.MixinRenderPlayer",
     "client.MixinPlayerControllerMP",
+    "world.MixinBlock",
+    "render.MixinRenderPlayer",
+    "client.MixinGameSettings",
 
     "accessor.IAccessorEntityPlayerSP",
     "accessor.IAccessorEntityArrow",
@@ -38,9 +40,10 @@
     "accessor.IAccessorEntityRenderer",
     "accessor.IAccessorItemFood",
     "accessor.IAccessorGuiScreenBook",
+    "accessor.IAccessorEntityPlayer",
     "accessor.IAccessorGuiScreen",
     "accessor.IAccessorS14PacketEntity",
-    "accessor.IAccessorEntityPlayer",
+    "accessor.IAccessorRenderManager",
     "accessor.IAccessorNetworkManager"
   ]
 }

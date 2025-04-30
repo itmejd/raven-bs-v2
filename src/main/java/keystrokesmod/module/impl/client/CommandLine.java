@@ -29,6 +29,6 @@ public class CommandLine extends Module {
             animation.start();
         }
 
-        Commands.od();
+        Commands.onDisable();
     }
 }

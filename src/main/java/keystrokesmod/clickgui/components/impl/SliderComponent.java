@@ -18,19 +18,19 @@ import java.math.RoundingMode;
 public class SliderComponent extends Component {
     public SliderSetting sliderSetting;
     private ModuleComponent moduleComponent;
-    public int o;
-    public int x;
-    private int y;
+    public float o;
+    public float x;
+    private float y;
     private boolean heldDown = false;
     private double width;
-    public int xOffset;
+    public float xOffset;
     public boolean renderLine;
 
     private double targetValue;
     private double displayedValue;
     private static final double SLIDER_SPEED = 0.6;
 
-    public SliderComponent(SliderSetting sliderSetting, ModuleComponent moduleComponent, int o) {
+    public SliderComponent(SliderSetting sliderSetting, ModuleComponent moduleComponent, float o) {
         this.sliderSetting = sliderSetting;
         this.moduleComponent = moduleComponent;
         this.o = o;
@@ -45,8 +45,8 @@ public class SliderComponent extends Component {
     @Override
     public void render() {
         RenderUtils.drawRoundedRectangle(this.moduleComponent.categoryComponent.getX() + 4 + (xOffset / 2), this.moduleComponent.categoryComponent.getY() + this.o + 11, this.moduleComponent.categoryComponent.getX() + 4 + this.moduleComponent.categoryComponent.getWidth() - 8, this.moduleComponent.categoryComponent.getY() + this.o + 15, 4, -12302777);
-        int left = this.moduleComponent.categoryComponent.getX() + 4 + (xOffset / 2);
-        int right = left + (int) this.width;
+        float left = this.moduleComponent.categoryComponent.getX() + 4 + (xOffset / 2);
+        float right = (float) (left + this.width);
 
         if (right - left > 84) {
             right = left + 84;
@@ -170,7 +170,7 @@ public class SliderComponent extends Component {
         this.heldDown = false;
     }
 
-    public void updateHeight(int n) {
+    public void updateHeight(float n) {
         this.o = n;
     }
 }

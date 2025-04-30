@@ -1,6 +1,7 @@
 package keystrokesmod.utility;
 
 import keystrokesmod.Raven;
+import keystrokesmod.helper.PingHelper;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.client.Settings;
@@ -8,6 +9,7 @@ import keystrokesmod.module.impl.combat.Velocity;
 import keystrokesmod.module.impl.minigames.DuelsStats;
 import keystrokesmod.module.impl.movement.Bhop;
 import keystrokesmod.module.impl.movement.Fly;
+import keystrokesmod.module.impl.movement.Speed;
 import keystrokesmod.module.impl.other.FakeChat;
 import keystrokesmod.module.impl.other.NameHider;
 import keystrokesmod.utility.profile.Profile;
@@ -174,10 +176,13 @@ public class Commands {
 
                 switch (args[1]) {
                     case "fly":
-                        Fly.horizontalSpeed.setValueRaw(value);
+                        Fly.horizontalSpeed.setValueRawWithEvent(value);
                         break;
                     case "bhop":
-                        Bhop.speedSetting.setValueRaw(value);
+                        Bhop.speedSetting.setValueRawWithEvent(value);
+                        break;
+                    case "speed":
+                        Speed.multiplier.setValueRawWithEvent(value);
                         break;
                     default:
                         print(invSyn, 1);
@@ -214,11 +219,11 @@ public class Commands {
                 switch (args[1]) {
                     case "horizontal":
                     case "h":
-                        Velocity.horizontal.setValueRaw(value);
+                        Velocity.horizontal.setValueRawWithEvent(value);
                         break;
                     case "vertical":
                     case "v":
-                        Velocity.vertical.setValueRaw(value);
+                        Velocity.vertical.setValueRawWithEvent(value);
                         break;
                     default:
                         print(invSyn, 1);
@@ -229,7 +234,7 @@ public class Commands {
                 print(args[2], 0);
             }
             else if (cm.startsWith("ping")) {
-                Ping.checkPing(false);
+                PingHelper.checkPing(false);
             }
             else if (cm.startsWith("sprint")) {
                 if (!hasArgs || args.length != 2) {
@@ -496,7 +501,7 @@ public class Commands {
         ccs = cs.get(val);
     }
 
-    public static void od() {
-        Ping.reset(false);
+    public static void onDisable() {
+        PingHelper.reset(false);
     }
 }

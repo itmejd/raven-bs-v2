@@ -7,12 +7,15 @@ import keystrokesmod.module.setting.impl.SliderSetting;
 import keystrokesmod.utility.Utils;
 import net.minecraft.util.IChatComponent;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public class AutoRequeue extends Module {
     private SliderSetting delay;
+
     private String receivedMessage = "";
     private long receiveTime = 0;
+
     public AutoRequeue() {
         super("AutoRequeue", category.minigames);
         this.registerSetting(new DescriptionSetting("Automatically requeues games."));
@@ -51,6 +54,13 @@ public class AutoRequeue extends Module {
                     }
                 }
             }
+        }
+    }
+
+    @SubscribeEvent
+    public void onWorldJoin(EntityJoinWorldEvent e) {
+        if (e.entity == mc.thePlayer) {
+            receivedMessage = ""; // will not requeue if you left the world where the message was sent
         }
     }
 }

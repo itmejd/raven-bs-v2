@@ -23,6 +23,16 @@ public class MixinMinecraft {
         MinecraftForge.EVENT_BUS.post(new PreInputEvent());
     }
 
+    @Inject(method = "runGameLoop", at = @At("HEAD"))
+    public void onRunGameLoop(CallbackInfo ci) {
+        MinecraftForge.EVENT_BUS.post(new RunGameLoopEvent());
+    }
+
+    @Inject(method = "runTick", at = @At("HEAD"))
+    public void onRunTickStart(CallbackInfo ci) {
+        MinecraftForge.EVENT_BUS.post(new GameTickEvent());
+    }
+
     @Inject(method = "displayGuiScreen(Lnet/minecraft/client/gui/GuiScreen;)V", at = @At("HEAD"))
     public void onDisplayGuiScreen(GuiScreen guiScreen, CallbackInfo ci) {
         Minecraft mc = (Minecraft) (Object) this;
@@ -55,10 +65,5 @@ public class MixinMinecraft {
             return;
         }
         inventoryPlayer.currentItem = slot;
-    }
-
-    @Inject(method = "runGameLoop", at= @At("HEAD"))
-    public void onRunGameLoop(CallbackInfo ci) {
-        MinecraftForge.EVENT_BUS.post(new RunGameLoopEvent());
     }
 }

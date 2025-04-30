@@ -1,5 +1,6 @@
 package keystrokesmod.module.impl.minigames;
 
+import keystrokesmod.mixin.impl.accessor.IAccessorMinecraft;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.impl.world.AntiBot;
 import keystrokesmod.module.setting.impl.ButtonSetting;
@@ -9,10 +10,10 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Blocks;
+import net.minecraft.init.Items;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemAxe;
 import net.minecraft.item.ItemBow;
-import net.minecraft.item.ItemSword;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.MathHelper;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
@@ -33,6 +34,7 @@ public class MurderMystery extends Module {
     private final List<EntityPlayer> murderers = new ArrayList();
     private final List<EntityPlayer> hasBow = new ArrayList();
     private boolean override;
+    private List<Item> murderItems = Arrays.asList(Items.iron_sword, Items.stone_sword, Items.iron_shovel, Items.stick, Items.wooden_axe, Items.wooden_sword, Items.stone_shovel, Items.blaze_rod, Items.diamond_shovel, Items.quartz, Items.pumpkin_pie, Items.golden_pickaxe, Items.apple, Items.name_tag, Items.carrot_on_a_stick, Items.bone, Items.carrot, Items.golden_carrot, Items.cookie, Items.diamond_axe, Items.prismarine_shard, Items.cooked_beef, Items.netherbrick, Items.cooked_chicken, Items.golden_sword, Items.diamond_sword, Items.diamond_hoe, Items.shears, Items.fish, Items.dye, Items.boat, Items.speckled_melon, Items.book, Item.getItemFromBlock(Blocks.double_plant), Item.getItemFromBlock(Blocks.sponge), Item.getItemFromBlock(Blocks.deadbush));
 
     public MurderMystery() {
         super("Murder Mystery", category.minigames);
@@ -61,9 +63,9 @@ public class MurderMystery extends Module {
                         if (AntiBot.isBot(en) && !highlightDead.isToggled()) {
                             continue;
                         }
-                        if (en.getHeldItem() != null && en.getHeldItem().hasDisplayName()) {
+                        if (en.getHeldItem() != null) {
                             Item heldItem = en.getHeldItem().getItem();
-                            if (heldItem instanceof ItemSword || heldItem instanceof ItemAxe || en.getHeldItem().getDisplayName().contains("aKnife")) {
+                            if (murderItems.contains(heldItem)) {
                                 if (!murderers.contains(en)) {
                                     murderers.add(en);
                                     if (alert.isToggled()) {
@@ -96,7 +98,7 @@ public class MurderMystery extends Module {
                 if (!goldEsp.isToggled()) {
                     return;
                 }
-                float renderPartialTicks = Utils.getTimer().renderPartialTicks;
+                float renderPartialTicks = ((IAccessorMinecraft) mc).getTimer().renderPartialTicks;
                 int n4 = -331703;
                 for (Entity entity : mc.theWorld.loadedEntityList) {
                     if (entity instanceof EntityItem) {
@@ -160,7 +162,7 @@ public class MurderMystery extends Module {
                 return false;
             }
 
-            Iterator var2 = Utils.gsl().iterator();
+            Iterator var2 = Utils.getScoreBoardOld().iterator();
 
             while (var2.hasNext()) {
                 String l = (String) var2.next();

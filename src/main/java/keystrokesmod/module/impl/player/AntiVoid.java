@@ -7,6 +7,7 @@ import keystrokesmod.event.ReceivePacketEvent;
 import keystrokesmod.event.SendPacketEvent;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
+import keystrokesmod.module.impl.combat.KillAura;
 import keystrokesmod.module.impl.movement.LongJump;
 import keystrokesmod.module.impl.render.HUD;
 import keystrokesmod.module.setting.impl.ButtonSetting;
@@ -94,6 +95,7 @@ public class AntiVoid extends Module {
             }
 
             blinkedPackets.add(packet);
+            KillAura.blinkOn = true;
             e.setCanceled(true);
         }
     }
@@ -138,13 +140,7 @@ public class AntiVoid extends Module {
                 return;
             }
         }
-        color = Theme.getGradient((int) HUD.theme.getInput(), 0);
-        int widthOffset = (blinkTicks < 10) ? 4 : (blinkTicks >= 10 && blinkTicks < 100) ? 7 : (blinkTicks >= 100 && blinkTicks < 1000) ? 10 : (blinkTicks >= 1000) ? 13 : 16;
-        String text = ("" + blinkTicks);
-        int width = mc.fontRendererObj.getStringWidth(text) + Utils.getBoldWidth(text) / 2;
-        final ScaledResolution scaledResolution = new ScaledResolution(mc);
-        int[] display = {scaledResolution.getScaledWidth(), scaledResolution.getScaledHeight(), scaledResolution.getScaleFactor()};
-        mc.fontRendererObj.drawString(text, display[0] / 2 - width + widthOffset, display[1] / 2 + 8, color, true);
+        Utils.handleTimer(color, blinkTicks);
     }
 
     public void posPacket() {
@@ -163,6 +159,9 @@ public class AntiVoid extends Module {
         blinkedPackets.clear();
         blinkTicks = 0;
         started = false;
+        if (!ModuleManager.blink.isEnabled()) {
+            KillAura.blinkOn = KillAura.blinkChecked = false;
+        }
     }
 
     public boolean dist() {

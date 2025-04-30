@@ -1,7 +1,7 @@
 package keystrokesmod.module.impl.other;
 
-import keystrokesmod.event.NoEventPacketEvent;
 import keystrokesmod.event.ReceivePacketEvent;
+import keystrokesmod.event.SendAllPacketsEvent;
 import keystrokesmod.event.SendPacketEvent;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.setting.impl.ButtonSetting;
@@ -56,7 +56,7 @@ public class ViewPackets extends Module {
         final ChatComponentText chatComponentText = new ChatComponentText(Utils.formatColor("&7[&dR&7]&r &7" + (b ? "Received" : "Sent") + " packet (t:&b" + tick + "&7): "));
         final ChatStyle chatStyle = new ChatStyle();
         chatStyle.setChatHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ChatComponentText(Utils.formatColor(s))));
-        ((IChatComponent)chatComponentText).appendSibling(new ChatComponentText(Utils.formatColor(string)).setChatStyle(chatStyle));
+        chatComponentText.appendSibling(new ChatComponentText(Utils.formatColor(string)).setChatStyle(chatStyle));
         mc.thePlayer.addChatMessage(chatComponentText);
     }
 
@@ -84,7 +84,7 @@ public class ViewPackets extends Module {
     }
 
     @SubscribeEvent
-    public void onSendPacketNoEvent(NoEventPacketEvent e) {
+    public void onSendAllPacketsEvent(SendAllPacketsEvent e) {
         if (!sent.isToggled()) {
             return;
         }

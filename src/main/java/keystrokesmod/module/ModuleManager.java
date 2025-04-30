@@ -46,12 +46,10 @@ public class ModuleManager {
     public static Module timer;
     public static Fly fly;
     public static Module wTap;
-    public static Potions potions;
     public static TargetHUD targetHUD;
     public static NoFall noFall;
     public static Disabler disabler;
     public static NoRotate noRotate;
-    public static AntiObby antiObby;
     public static PlayerESP playerESP;
     public static Module reduce;
     public static Safewalk safeWalk;
@@ -60,7 +58,7 @@ public class ModuleManager {
     public static InvManager invManager;
     public static Tower tower;
     public static NoCameraClip noCameraClip;
-    public static Module bedwars;
+    public static BedWars bedwars;
     public static Bhop bhop;
     public static NoHurtCam noHurtCam;
     public static Scaffold scaffold;
@@ -74,16 +72,15 @@ public class ModuleManager {
     public static Blink blink;
     public static Velocity velocity;
     public static TargetStrafe targetStrafe;
-    public static Criticals criticals;
-    public static Fences fences;
     public static FastFall fastFall;
     public static AntiVoid antiVoid;
+    public static Spammer spammer;
+    public static AntiDebuff antiDebuff;
 
     public void register() {
         this.addModule(autoClicker = new AutoClicker());
         this.addModule(LongJump = new LongJump());
         this.addModule(new AimAssist());
-        this.addModule(new BinskiClicker());
         this.addModule(weather = new Weather());
         this.addModule(chatCommands = new ChatCommands());
         this.addModule(new ClickAssist());
@@ -113,7 +110,6 @@ public class ModuleManager {
         this.addModule(invmove = new InvMove());
         this.addModule(new TPAura());
         this.addModule(new Trajectories());
-        this.addModule(potions = new Potions());
         this.addModule(autoSwap = new AutoSwap());
         this.addModule(keepSprint = new KeepSprint());
         this.addModule(bedAura = new BedAura());
@@ -159,7 +155,6 @@ public class ModuleManager {
         this.addModule(new MobESP());
         this.addModule(new Fun.Spin());
         this.addModule(noRotate = new NoRotate());
-        this.addModule(antiObby = new AntiObby());
         this.addModule(new FakeChat());
         this.addModule(nameHider = new NameHider());
         this.addModule(new FakeLag());
@@ -177,10 +172,10 @@ public class ModuleManager {
         this.addModule(new Shaders());
         this.addModule(ctwFly = new CTWFly());
         this.addModule(targetStrafe = new TargetStrafe());
-        this.addModule(criticals = new Criticals());
-        this.addModule(fences = new Fences());
         this.addModule(fastFall = new FastFall());
         this.addModule(antiVoid = new AntiVoid());
+        this.addModule(spammer = new Spammer());
+        this.addModule(antiDebuff = new AntiDebuff());
         antiBot.enable();
         Collections.sort(this.modules, Comparator.comparing(Module::getName));
     }

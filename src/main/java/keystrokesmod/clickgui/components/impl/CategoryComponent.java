@@ -31,13 +31,13 @@ public class CategoryComponent {
     public List<ModuleComponent> modules = new CopyOnWriteArrayList<>();
     public Module.category category;
     public boolean opened;
-    public int width;
-    public int y;
-    public int x;
-    public int titleHeight;
+    public float width;
+    public float y;
+    public float x;
+    public float titleHeight;
     public boolean dragging;
-    public int xx;
-    public int yy;
+    public float xx;
+    public float yy;
     public boolean hovering = false;
     public boolean hoveringOverCategory = false;
     public Timer smoothTimer;
@@ -51,11 +51,11 @@ public class CategoryComponent {
     private final int regularOutline2 = new Color(97, 67, 133).getRGB();
     private final int categoryNameColor = new Color(220, 220, 220).getRGB();
     private float lastHeight;
-    public int moduleY;
-    private int lastModuleY;
-    private int screenHeight;
+    public float moduleY;
+    private float lastModuleY;
+    private float screenHeight;
     private boolean scrolled;
-    private int targetModuleY;
+    private float targetModuleY;
     private float closedHeight;
 
     public CategoryComponent(Module.category category) {
@@ -69,7 +69,7 @@ public class CategoryComponent {
         this.xx = 0;
         this.opened = false;
         this.dragging = false;
-        int moduleRenderY = this.titleHeight + 3;
+        float moduleRenderY = this.titleHeight + 3;
         this.scale = new ScaledResolution(Minecraft.getMinecraft());
         this.targetModuleY = this.moduleY;
 
@@ -87,7 +87,7 @@ public class CategoryComponent {
     public void reloadModules(boolean isProfile) {
         this.modules.clear();
         this.titleHeight = 13;
-        int moduleRenderY = this.titleHeight + 3;
+        float moduleRenderY = this.titleHeight + 3;
 
         if ((this.category == Module.category.profiles && isProfile) || (this.category == Module.category.scripts && !isProfile)) {
             ModuleComponent manager = new ModuleComponent(isProfile ? new Manager() : new keystrokesmod.script.Manager(), this, moduleRenderY);
@@ -116,24 +116,24 @@ public class CategoryComponent {
         }
     }
 
-    public void setX(int n, boolean limit) {
+    public void setX(float newX, boolean limit) {
         if (limit) {
             ScaledResolution sr = new ScaledResolution(Minecraft.getMinecraft());
-            int screenW = sr.getScaledWidth();
-            n = Math.max(n, 2);
-            n = Math.min(n, screenW - this.width - 4);
+            float screenW = sr.getScaledWidth();
+            newX = Math.max(newX, 2);
+            newX = Math.min(newX, screenW - this.width - 4);
         }
-        this.x = n;
+        this.x = newX;
     }
 
-    public void setY(int y, boolean limit) {
+    public void setY(float y, boolean limit) {
         if (limit) {
             ScaledResolution sr = new ScaledResolution(Minecraft.getMinecraft());
-            int screenH = sr.getScaledHeight();
+            float screenH = sr.getScaledHeight();
             float catHeight = this.titleHeight;
 
             y = Math.max(y, 1);
-            int maxY = (int) (screenH - catHeight - 5);
+            float maxY = screenH - catHeight - 5;
             y = Math.min(y, maxY);
         }
         this.moduleY = this.y = y;
@@ -247,11 +247,11 @@ public class CategoryComponent {
         RenderUtils.scissor(0, this.y - 2, this.x + this.width + 4, extra - this.y + 4);
         RenderUtils.drawRoundedGradientOutlinedRectangle(this.x - 2, this.y, this.x + this.width + 2, extra, 10, translucentBackground,
                 ((opened || hovering) && Gui.rainBowOutlines.isToggled()) ? RenderUtils.setAlpha(Utils.getChroma(2, 0), 0.5) : regularOutline, ((opened || hovering) && Gui.rainBowOutlines.isToggled()) ? RenderUtils.setAlpha(Utils.getChroma(2, 700), 0.5) : regularOutline2);
-        renderItemForCategory(this.category, this.x + 1, this.y + 4, opened || hovering);
+        renderItemForCategory(this.category, (int) (this.x + 1), (int) (this.y + 4), opened || hovering);
         renderer.drawString(this.category.name(), namePos, (float) (this.y + 4), categoryNameColor, false);
         RenderUtils.scissor(0, this.y + this.titleHeight + 3, this.x + this.width + 4, extra - this.y - 4 - this.titleHeight);
 
-        int prevY = this.y;
+        float prevY = this.y;
         this.y = this.moduleY;
 
         if (this.opened || smoothTimer != null) {
@@ -265,7 +265,7 @@ public class CategoryComponent {
     }
 
     public void updateHeight() {
-        int y = this.titleHeight + 3;
+        float y = this.titleHeight + 3;
 
         for (Component component : this.modules) {
             component.updateHeight(y);
@@ -273,26 +273,26 @@ public class CategoryComponent {
         }
     }
 
-    public int getX() {
+    public float getX() {
         return this.x;
     }
 
-    public int getY() {
+    public float getY() {
         return this.y;
     }
 
-    public int getModuleY() {
+    public float getModuleY() {
         return this.moduleY;
     }
 
-    public int getWidth() {
+    public float getWidth() {
         return this.width;
     }
 
     public void mousePosition(int mouseX, int mouseY) {
         if (this.dragging) {
-            int newX = mouseX - this.xx;
-            int newY = mouseY - this.yy;
+            float newX = mouseX - this.xx;
+            float newY = mouseY - this.yy;
 
             if (Gui.limitToScreen.isToggled()) {
                 ScaledResolution sr = new ScaledResolution(Minecraft.getMinecraft());

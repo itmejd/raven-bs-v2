@@ -1,5 +1,6 @@
 package keystrokesmod.utility;
 
+import keystrokesmod.mixin.impl.accessor.IAccessorMinecraft;
 import keystrokesmod.module.impl.player.Freecam;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -31,7 +32,6 @@ import static org.lwjgl.opengl.GL11.*;
 
 public class RenderUtils {
     private static Minecraft mc = Minecraft.getMinecraft();
-    public static boolean ring_c = false;
     private static Frustum frustum = new Frustum();
     private static final FloatBuffer MODELVIEW = BufferUtils.createFloatBuffer(16);
     private static final FloatBuffer PROJECTION = BufferUtils.createFloatBuffer(16);
@@ -46,47 +46,26 @@ public class RenderUtils {
         renderBox(blockPos.getX() + 0.0625F, blockPos.getY(), blockPos.getZ() + 0.0625F, 0.875f, 0.875f, 0.875f, color, outline, shade);
     }
 
-    public static void drawPlayerBoundingBox(Vec3 pos, int color) {
-        GlStateManager.pushMatrix();
-        double x = pos.xCoord - mc.getRenderManager().viewerPosX;
-        double y = pos.yCoord - mc.getRenderManager().viewerPosY;
-        double z = pos.zCoord - mc.getRenderManager().viewerPosZ;
-        AxisAlignedBB bbox = mc.thePlayer.getEntityBoundingBox().expand(0.1D, 0.1, 0.1);
-        AxisAlignedBB axis = new AxisAlignedBB(bbox.minX - mc.thePlayer.posX + x, bbox.minY - mc.thePlayer.posY + y, bbox.minZ - mc.thePlayer.posZ + z, bbox.maxX - mc.thePlayer.posX + x, bbox.maxY - mc.thePlayer.posY + y, bbox.maxZ - mc.thePlayer.posZ + z);
-        float a = (float) (color >> 24 & 255) / 255.0F;
-        float r = (float) (color >> 16 & 255) / 255.0F;
-        float g = (float) (color >> 8 & 255) / 255.0F;
-        float b = (float) (color & 255) / 255.0F;
-        GL11.glBlendFunc(770, 771);
-        GL11.glEnable(3042);
-        GL11.glDisable(3553);
-        GL11.glDisable(2929);
-        GL11.glDepthMask(false);
-        GL11.glLineWidth(2.0F);
-        GL11.glColor4f(r, g, b, a);
-        drawBoundingBox(axis, r, g, b, a);
-        GL11.glEnable(3553);
-        GL11.glEnable(2929);
-        GL11.glDepthMask(true);
-        GL11.glDisable(3042);
-        GlStateManager.popMatrix();
-    }
-
     public static void renderBlock(BlockPos blockPos, int color, double y2, boolean outline, boolean shade) {
         renderBox(blockPos.getX(), blockPos.getY(), blockPos.getZ(), 1, y2, 1, color, outline, shade);
     }
 
     public static void scissor(double x, double y, double width, double height) {
         ScaledResolution sr = new ScaledResolution(mc);
-        double scale = sr.getScaleFactor();
+        int scale = sr.getScaleFactor();
 
         int scaledX = (int) (x * scale);
-        int scaledY = (int) ((sr.getScaledHeight() - y) * scale);
+        int scaledY = (int) ((sr.getScaledHeight() - (y + height)) * scale);
         int scaledWidth = (int) (width * scale);
         int scaledHeight = (int) (height * scale);
 
-        GL11.glScissor(scaledX, scaledY - scaledHeight, scaledWidth, scaledHeight);
+        if (scaledWidth < 0 || scaledHeight < 0) {
+            return;
+        }
+
+        GL11.glScissor(scaledX, scaledY, scaledWidth, scaledHeight);
     }
+
 
     public static boolean isInViewFrustum(final Entity entity) {
         return isInViewFrustum(entity.getEntityBoundingBox()) || entity.ignoreFrustumCheck;
@@ -117,6 +96,32 @@ public class RenderUtils {
         tessellator.draw();
         GlStateManager.enableTexture2D();
         GlStateManager.disableBlend();
+        GlStateManager.popMatrix();
+    }
+
+    public static void drawPlayerBoundingBox(Vec3 pos, int color) {
+        GlStateManager.pushMatrix();
+        double x = pos.xCoord - mc.getRenderManager().viewerPosX;
+        double y = pos.yCoord - mc.getRenderManager().viewerPosY;
+        double z = pos.zCoord - mc.getRenderManager().viewerPosZ;
+        AxisAlignedBB bbox = mc.thePlayer.getEntityBoundingBox().expand(0.1D, 0.1, 0.1);
+        AxisAlignedBB axis = new AxisAlignedBB(bbox.minX - mc.thePlayer.posX + x, bbox.minY - mc.thePlayer.posY + y, bbox.minZ - mc.thePlayer.posZ + z, bbox.maxX - mc.thePlayer.posX + x, bbox.maxY - mc.thePlayer.posY + y, bbox.maxZ - mc.thePlayer.posZ + z);
+        float a = (float) (color >> 24 & 255) / 255.0F;
+        float r = (float) (color >> 16 & 255) / 255.0F;
+        float g = (float) (color >> 8 & 255) / 255.0F;
+        float b = (float) (color & 255) / 255.0F;
+        GL11.glBlendFunc(770, 771);
+        GL11.glEnable(3042);
+        GL11.glDisable(3553);
+        GL11.glDisable(2929);
+        GL11.glDepthMask(false);
+        GL11.glLineWidth(2.0F);
+        GL11.glColor4f(r, g, b, a);
+        drawBoundingBox(axis, r, g, b, a);
+        GL11.glEnable(3553);
+        GL11.glEnable(2929);
+        GL11.glDepthMask(true);
+        GL11.glDisable(3042);
         GlStateManager.popMatrix();
     }
 
@@ -216,9 +221,10 @@ public class RenderUtils {
 
     public static void renderEntity(Entity e, int type, double expand, double shift, int color, boolean damage) {
         if (e instanceof EntityLivingBase) {
-            double x = e.lastTickPosX + (e.posX - e.lastTickPosX) * (double) Utils.getTimer().renderPartialTicks - mc.getRenderManager().viewerPosX;
-            double y = e.lastTickPosY + (e.posY - e.lastTickPosY) * (double) Utils.getTimer().renderPartialTicks - mc.getRenderManager().viewerPosY;
-            double z = e.lastTickPosZ + (e.posZ - e.lastTickPosZ) * (double) Utils.getTimer().renderPartialTicks - mc.getRenderManager().viewerPosZ;
+            float partialTicks = ((IAccessorMinecraft) mc).getTimer().renderPartialTicks;
+            double x = e.lastTickPosX + (e.posX - e.lastTickPosX) * (double) partialTicks - mc.getRenderManager().viewerPosX;
+            double y = e.lastTickPosY + (e.posY - e.lastTickPosY) * (double) partialTicks - mc.getRenderManager().viewerPosY;
+            double z = e.lastTickPosZ + (e.posZ - e.lastTickPosZ) * (double) partialTicks - mc.getRenderManager().viewerPosZ;
             float d = (float) expand / 40.0F;
             if (e instanceof EntityPlayer && damage && ((EntityPlayer) e).hurtTime != 0) {
                 color = Color.RED.getRGB();
@@ -240,7 +246,8 @@ public class RenderUtils {
                     net.minecraft.client.gui.Gui.drawRect(21, 0, 25, 74, color);
                     net.minecraft.client.gui.Gui.drawRect(-21, 0, 24, 4, color);
                     net.minecraft.client.gui.Gui.drawRect(-21, 71, 25, 74, color);
-                } else {
+                }
+                else {
                     int st = Utils.getChroma(2L, 0L);
                     int en = Utils.getChroma(2L, 1000L);
                     dGR(-21, 0, -25, 74, st, en);
@@ -250,25 +257,28 @@ public class RenderUtils {
                 }
 
                 GlStateManager.enableDepth();
-            } else {
+            }
+            else {
                 int i;
-                if (type == 4) { //Healthnigger
+                if (type == 4) {
                     EntityLivingBase en = (EntityLivingBase) e;
-                    double r = en.getHealth() / en.getMaxHealth();
-                    int b = (int) (74.0D * r);
-                    int hc = r < 0.3D ? Color.red.getRGB() : (r < 0.5D ? Color.orange.getRGB() : (r < 0.7D ? Color.yellow.getRGB() : Color.green.getRGB()));
+                    double health = en.getHealth() / en.getMaxHealth();
+                    int barHeight = (int) (74.0D * health);
+                    int healthColor = health < 0.3D ? Color.red.getRGB() : (health < 0.5D ? Color.orange.getRGB() : (health < 0.7D ? Color.yellow.getRGB() : Color.green.getRGB()));
                     GL11.glTranslated(x, y - 0.2D, z);
                     GL11.glRotated(-mc.getRenderManager().playerViewY, 0.0D, 1.0D, 0.0D);
                     GlStateManager.disableDepth();
                     GL11.glScalef(0.03F + d, 0.03F + d, 0.03F + d);
                     i = (int) (21 + shift * 2);
                     net.minecraft.client.gui.Gui.drawRect(i, -1, i + 4, 75, Color.black.getRGB());
-                    net.minecraft.client.gui.Gui.drawRect(i + 1, b, i + 3, 74, Color.darkGray.getRGB());
-                    net.minecraft.client.gui.Gui.drawRect(i + 1, 0, i + 3, b, hc);
+                    net.minecraft.client.gui.Gui.drawRect(i + 1, barHeight, i + 3, 74, Color.darkGray.getRGB());
+                    net.minecraft.client.gui.Gui.drawRect(i + 1, 0, i + 3, barHeight, healthColor);
                     GlStateManager.enableDepth();
-                } else if (type == 6) {
-                    d3p(x, y, z, 0.699999988079071D, 45, 1.5F, color, color == 0);
-                } else {
+                }
+                else if (type == 6) {
+                    drawCircle(x, y, z, 0.699999988079071D, 45, 1.5F, color, color == 0);
+                }
+                else {
                     if (color == 0) {
                         color = Utils.getChroma(2L, 0L);
                     }
@@ -561,7 +571,7 @@ public class RenderUtils {
 
     }
 
-    public static void d3p(double x, double y, double z, double radius, int sides, float lineWidth, int color, boolean chroma) {
+    public static void drawCircle(double x, double y, double z, double radius, int sides, float lineWidth, int color, boolean chroma) {
         float a = (float) (color >> 24 & 255) / 255.0F;
         float r = (float) (color >> 16 & 255) / 255.0F;
         float g = (float) (color >> 8 & 255) / 255.0F;
@@ -669,11 +679,11 @@ public class RenderUtils {
         GL11.glColor4f((float) (n >> 16 & 0xFF) / 255.0f, (float) (n >> 8 & 0xFF) / 255.0f, (float) (n & 0xFF) / 255.0f, (float) (n >> 24 & 0xFF) / 255.0f);
     }
 
-    public static void drawRoundedGradientOutlinedRectangle(float n, float n2, float n3, float n4, final float n5, final int n6, final int n7, final int n8) { // credit to the creator of raven b4
-        n *= 2.0f;
-        n2 *= 2.0f;
-        n3 *= 2.0f;
-        n4 *= 2.0f;
+    public static void drawRoundedGradientOutlinedRectangle(float x, float y, float x2, float y2, final float radius, final int n6, final int n7, final int n8) { // credit to the creator of raven b4
+        x *= 2.0f;
+        y *= 2.0f;
+        x2 *= 2.0f;
+        y2 *= 2.0f;
         GL11.glPushAttrib(1);
         GL11.glScaled(0.5, 0.5, 0.5);
         glEnable(3042);
@@ -683,19 +693,19 @@ public class RenderUtils {
         glColor(n6);
         for (int i = 0; i <= 90; i += 3) {
             final double n9 = (double) (i * 0.017453292f);
-            GL11.glVertex2d((double) (n + n5) + Math.sin(n9) * n5 * -1.0, (double) (n2 + n5) + Math.cos(n9) * n5 * -1.0);
+            GL11.glVertex2d((double) (x + radius) + Math.sin(n9) * radius * -1.0, (double) (y + radius) + Math.cos(n9) * radius * -1.0);
         }
         for (int j = 90; j <= 180; j += 3) {
             final double n10 = (double) (j * 0.017453292f);
-            GL11.glVertex2d((double) (n + n5) + Math.sin(n10) * n5 * -1.0, (double) (n4 - n5) + Math.cos(n10) * n5 * -1.0);
+            GL11.glVertex2d((double) (x + radius) + Math.sin(n10) * radius * -1.0, (double) (y2 - radius) + Math.cos(n10) * radius * -1.0);
         }
         for (int k = 0; k <= 90; k += 3) {
             final double n11 = (double) (k * 0.017453292f);
-            GL11.glVertex2d((double) (n3 - n5) + Math.sin(n11) * n5, (double) (n4 - n5) + Math.cos(n11) * n5);
+            GL11.glVertex2d((double) (x2 - radius) + Math.sin(n11) * radius, (double) (y2 - radius) + Math.cos(n11) * radius);
         }
         for (int l = 90; l <= 180; l += 3) {
             final double n12 = (double) (l * 0.017453292f);
-            GL11.glVertex2d((double) (n3 - n5) + Math.sin(n12) * n5, (double) (n2 + n5) + Math.cos(n12) * n5);
+            GL11.glVertex2d((double) (x2 - radius) + Math.sin(n12) * radius, (double) (y + radius) + Math.cos(n12) * radius);
         }
         GL11.glEnd();
         GL11.glPushMatrix();
@@ -707,22 +717,22 @@ public class RenderUtils {
         }
         for (int n13 = 0; n13 <= 90; n13 += 3) {
             final double n14 = (double) (n13 * 0.017453292f);
-            GL11.glVertex2d((double) (n + n5) + Math.sin(n14) * n5 * -1.0, (double) (n2 + n5) + Math.cos(n14) * n5 * -1.0);
+            GL11.glVertex2d((double) (x + radius) + Math.sin(n14) * radius * -1.0, (double) (y + radius) + Math.cos(n14) * radius * -1.0);
         }
         for (int n15 = 90; n15 <= 180; n15 += 3) {
             final double n16 = (double) (n15 * 0.017453292f);
-            GL11.glVertex2d((double) (n + n5) + Math.sin(n16) * n5 * -1.0, (double) (n4 - n5) + Math.cos(n16) * n5 * -1.0);
+            GL11.glVertex2d((double) (x + radius) + Math.sin(n16) * radius * -1.0, (double) (y2 - radius) + Math.cos(n16) * radius * -1.0);
         }
         if (n8 != 0) {
             glColor(n8);
         }
         for (int n17 = 0; n17 <= 90; n17 += 3) {
             final double n18 = (double) (n17 * 0.017453292f);
-            GL11.glVertex2d((double) (n3 - n5) + Math.sin(n18) * n5, (double) (n4 - n5) + Math.cos(n18) * n5);
+            GL11.glVertex2d((double) (x2 - radius) + Math.sin(n18) * radius, (double) (y2 - radius) + Math.cos(n18) * radius);
         }
         for (int n19 = 90; n19 <= 180; n19 += 3) {
             final double n20 = (double) (n19 * 0.017453292f);
-            GL11.glVertex2d((double) (n3 - n5) + Math.sin(n20) * n5, (double) (n2 + n5) + Math.cos(n20) * n5);
+            GL11.glVertex2d((double) (x2 - radius) + Math.sin(n20) * radius, (double) (y + radius) + Math.cos(n20) * radius);
         }
         GL11.glEnd();
         glPopMatrix();
@@ -750,6 +760,7 @@ public class RenderUtils {
         GlStateManager.enableBlend();
         GlStateManager.disableTexture2D();
         GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
+        GL11.glEnable(GL11.GL_LINE_SMOOTH);
         GL11.glColor4f(r, g, b, a);
         final double rad180 = Math.toRadians(180.0);
         worldrenderer.begin(6, DefaultVertexFormats.POSITION);
@@ -883,6 +894,7 @@ public class RenderUtils {
     }
 
     public static void drawRectangleGL(float x, float y, float x2, float y2, final int color) {
+        GL11.glPushMatrix();
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GL11.glDisable(GL11.GL_TEXTURE_2D);
@@ -898,7 +910,8 @@ public class RenderUtils {
         GL11.glEnable(GL11.GL_TEXTURE_2D);
         GL11.glDisable(GL11.GL_BLEND);
 
-        GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
+        GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+        GL11.glPopMatrix();
     }
 
     public static void drawRoundedGradientRect(float x, float y, float x2, float y2, float radius, final int n6, final int n7, final int n8, final int n9) {

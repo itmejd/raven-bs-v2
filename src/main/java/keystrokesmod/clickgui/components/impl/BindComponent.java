@@ -14,20 +14,20 @@ import org.lwjgl.opengl.GL11;
 public class BindComponent extends Component {
     public boolean isBinding;
     public ModuleComponent moduleComponent;
-    public int o;
-    public int x;
-    private int y;
+    public float o;
+    public float x;
+    private float y;
     public KeySetting keySetting;
-    public int xOffset;
+    public float xOffset;
 
-    public BindComponent(ModuleComponent moduleComponent, int o) {
+    public BindComponent(ModuleComponent moduleComponent, float o) {
         this.moduleComponent = moduleComponent;
         this.x = moduleComponent.categoryComponent.getX() + moduleComponent.categoryComponent.getWidth();
         this.y = moduleComponent.categoryComponent.getY() + moduleComponent.yPos;
         this.o = o;
     }
 
-    public BindComponent(ModuleComponent moduleComponent, KeySetting keySetting, int o) {
+    public BindComponent(ModuleComponent moduleComponent, KeySetting keySetting, float o) {
         this.moduleComponent = moduleComponent;
         this.x = moduleComponent.categoryComponent.getX() + moduleComponent.categoryComponent.getWidth();
         this.y = moduleComponent.categoryComponent.getY() + moduleComponent.yPos;
@@ -35,7 +35,7 @@ public class BindComponent extends Component {
         this.o = o;
     }
 
-    public void updateHeight(int n) {
+    public void updateHeight(float n) {
         this.o = n;
     }
 

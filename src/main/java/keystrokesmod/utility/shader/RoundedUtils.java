@@ -4,6 +4,7 @@ import keystrokesmod.utility.RenderUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
+import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
 
 import java.awt.*;
@@ -158,6 +159,8 @@ public class RoundedUtils {
     }
 
     public static void drawRoundedRectRise(final float x, final float y, final float width, final float height, final float radius, final int color, boolean leftTop, boolean rightTop, boolean rightBottom, boolean leftBottom) {
+        GL11.glPushMatrix();
+        GlStateManager.pushAttrib();
         final int programId = roundedRectRiseShader.programID;
         GL20.glUseProgram(programId);
         roundedRectRiseShader.setUniformf("u_size", width, height);
@@ -165,9 +168,12 @@ public class RoundedUtils {
         roundedRectRiseShader.setUniformf("u_color", getRed(color), getGreen(color), getBlue(color), getAlpha(color));
         roundedRectRiseShader.setUniformf("u_edges", leftTop ? 1.0F : 0.0F, rightTop ? 1.0F : 0.0F, rightBottom ? 1.0F : 0.0F, leftBottom ? 1.0F : 0.0F);
         GlStateManager.enableBlend();
+        GlStateManager.blendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         ShaderUtils.drawQuads(x, y, width, height);
         GlStateManager.disableBlend();
         GL20.glUseProgram(0);
+        GlStateManager.popAttrib();
+        GL11.glPopMatrix();
     }
 
     public static void drawRoundedRectRise(final double x, final double y, final double width, final double height, final double radius, final int color) {

@@ -39,6 +39,7 @@ public class Velocity extends Module {
     private boolean stopFBvelo;
     public boolean disableVelo;
     private long delay;
+    private boolean buttonDown, pDown, rDown;
 
     private String[] velocityModesString = new String[] { "Normal", "Packet", "Reverse" };
 
@@ -100,19 +101,22 @@ public class Velocity extends Module {
     @SubscribeEvent
     public void onPreUpdate(PreUpdateEvent e) {
         if (Utils.tabbedIn()) {
-            if (switchToReverse.isPressed() && velocityModes.getInput() == 1 && delay == 0) {
+            if (switchToReverse.isPressed() && velocityModes.getInput() == 1 && !buttonDown) {
                 velocityModes.setValue(2);
-                delay = Utils.time();
+                buttonDown = true;
                 Utils.print(Utils.formatColor("&7[&dR&7]&7 Switched to &bReverse&7 Velocity mode"));
             }
-            if (switchToPacket.isPressed() && velocityModes.getInput() == 2 && delay == 0) {
+            if (switchToPacket.isPressed() && velocityModes.getInput() == 2 && !buttonDown) {
                 velocityModes.setValue(1);
-                delay = Utils.time();
+                buttonDown = true;
                 Utils.print(Utils.formatColor("&7[&dR&7]&7 Switched to &bPacket&7 Velocity mode"));
             }
         }
-        if (delay > 0 && (Utils.time() - delay) > 100) {
-            delay = 0;
+        if (switchToReverse.isPressed() || switchToPacket.isPressed()) {
+            buttonDown = true;
+        }
+        else {
+            buttonDown = false;
         }
     }
 
@@ -239,7 +243,7 @@ public class Velocity extends Module {
     }
 
     private boolean dontEditMotion() {
-        if (velocityModes.getInput() == 1 && zzWhileNotTargeting.isToggled() && !ModuleManager.killAura.isTargeting || ModuleManager.noFall.start || ModuleManager.blink.isEnabled() && ModuleManager.blink.cancelKnockback.isToggled() || ModuleManager.bedAura.cancelKnockback() || ModuleManager.tower.cancelKnockback()) {
+        if (velocityModes.getInput() == 1 && zzWhileNotTargeting.isToggled() && KillAura.attackingEntity != null || ModuleManager.noFall.start || ModuleManager.blink.isEnabled() && ModuleManager.blink.cancelKnockback.isToggled() || ModuleManager.bedAura.cancelKnockback() || ModuleManager.tower.cancelKnockback()) {
             return true;
         }
         return false;

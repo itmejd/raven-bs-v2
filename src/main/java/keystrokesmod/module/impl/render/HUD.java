@@ -297,7 +297,7 @@ public class HUD extends Module {
                             if (removeCloset.isToggled() && module.closetModule) {
                                 continue;
                             }
-                            String moduleName = module.getName();
+                            String moduleName = module.getNameInHud();
                             if (showInfo.isToggled() && !module.getInfo().isEmpty()) {
                                 moduleName += " §7" + module.getInfo();
                             }

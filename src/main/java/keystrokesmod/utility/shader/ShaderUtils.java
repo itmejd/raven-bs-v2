@@ -458,6 +458,9 @@ public class ShaderUtils {
 
     public void setUniformf(String name, float... args) {
         int loc = glGetUniformLocation(programID, name);
+        if (loc == -1) {
+            return;
+        }
         switch (args.length) {
             case 1:
                 glUniform1f(loc, args[0]);
@@ -476,6 +479,9 @@ public class ShaderUtils {
 
     public void setUniformi(String name, int... args) {
         int loc = glGetUniformLocation(programID, name);
+        if (loc == -1) {
+            return;
+        }
         if (args.length > 1) glUniform2i(loc, args[0], args[1]);
         else glUniform1i(loc, args[0]);
     }

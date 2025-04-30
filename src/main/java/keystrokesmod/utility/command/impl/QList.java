@@ -1,10 +1,6 @@
 package keystrokesmod.utility.command.impl;
 
-import keystrokesmod.utility.Utils;
 import keystrokesmod.utility.command.Command;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class QList extends Command {
     public QList() {

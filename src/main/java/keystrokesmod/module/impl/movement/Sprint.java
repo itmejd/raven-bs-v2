@@ -6,6 +6,7 @@ import keystrokesmod.event.PreUpdateEvent;
 import keystrokesmod.mixin.impl.accessor.IAccessorEntityPlayerSP;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
+import keystrokesmod.module.impl.combat.KillAura;
 import keystrokesmod.module.impl.player.Safewalk;
 import keystrokesmod.module.impl.render.HUD;
 import keystrokesmod.module.setting.impl.ButtonSetting;
@@ -168,7 +169,7 @@ public class Sprint extends Module {
         if (Utils.jumpDown()) {
             return false;
         }
-        if (ModuleManager.killAura.isTargeting) {
+        if (KillAura.attackingEntity != null) {
             return false;
         }
         if (Safewalk.canSafeWalk()) {
@@ -201,7 +202,7 @@ public class Sprint extends Module {
         if ((limit <= -limitVal || limit >= limitVal)) {
             return true;
         }
-        if (omniSprint() && ModuleManager.killAura.isTargeting && mc.thePlayer.moveForward <= 0.5) {
+        if (omniSprint() && ModuleManager.killAura.rotating && mc.thePlayer.moveForward <= 0.5) {
             return true;
         }
         return false;
@@ -286,7 +287,7 @@ public class Sprint extends Module {
     }
 
     private boolean exceptions() {
-        return ModuleManager.scaffold.isEnabled || mc.thePlayer.hurtTime > 0 || !mc.thePlayer.onGround;
+        return ModuleManager.scaffold.isEnabled || mc.thePlayer.hurtTime > 0;
     }
 
     static class EditScreen extends GuiScreen {

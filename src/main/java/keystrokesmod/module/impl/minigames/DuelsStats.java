@@ -143,7 +143,7 @@ public class DuelsStats extends Module {
         if (Utils.isHypixel()) {
             int l = 0;
 
-            for (String s : Utils.gsl()) {
+            for (String s : Utils.getScoreBoardOld()) {
                 if (s.contains("Map:")) {
                     ++l;
                 } else if (s.contains("Players:") && s.contains("/2")) {

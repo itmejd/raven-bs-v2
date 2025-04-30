@@ -27,7 +27,7 @@ public class Chams extends Module {
     @SubscribeEvent
     public void onPreRender(Pre e) {
         Entity entity = e.entity;
-        if (entity == mc.thePlayer && !renderSelf.isToggled()) {
+        if (entity == mc.thePlayer && (!renderSelf.isToggled() || mc.currentScreen != null)) {
             return;
         }
         if (hidePlayers.isToggled() && !(entity == mc.thePlayer && renderSelf.isToggled())) {
@@ -41,13 +41,13 @@ public class Chams extends Module {
             bots.add(entity);
         }
         GL11.glEnable(GL11.GL_POLYGON_OFFSET_FILL);
-        GL11.glPolygonOffset(1.0f, -2500000.0f);
+        GL11.glPolygonOffset(1.0f, -4_000_000.0f);
     }
 
     @SubscribeEvent
     public void onPostRender(Post e) {
         Entity entity = e.entity;
-        if (entity == mc.thePlayer && !renderSelf.isToggled()) {
+        if (entity == mc.thePlayer && (!renderSelf.isToggled() || mc.currentScreen != null)) {
             return;
         }
         if (hidePlayers.isToggled() && !(entity == mc.thePlayer && renderSelf.isToggled())) {
@@ -60,7 +60,7 @@ public class Chams extends Module {
             bots.remove(entity);
         }
         GL11.glDisable(GL11.GL_POLYGON_OFFSET_FILL);
-        GL11.glPolygonOffset(1.0f, 2500000.0f);
+        GL11.glPolygonOffset(1.0f, 4_000_000.0f);
     }
 
     @Override

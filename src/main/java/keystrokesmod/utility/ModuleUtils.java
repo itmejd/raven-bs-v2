@@ -37,15 +37,14 @@ public class ModuleUtils {
 
     public static boolean isBreaking;
     public static boolean threwFireball, threwFireballLow;
-    private int isBreakingTick;
     public static long MAX_EXPLOSION_DIST_SQ = 10;
     private long FIREBALL_TIMEOUT = 500L, fireballTime = 0;
     public static int inAirTicks, groundTicks, stillTicks;
     public static int fadeEdge;
-    public static double offsetValue = 4e-14;
+    public static double offsetValue = 0.00100012;
     public static boolean isAttacking;
     private int attackingTicks;
-    private int unTargetTicks;
+    public static int unTargetTicks;
     public static int profileTicks = -1, swapTick;
     public static int lastY, thisY;
     public static boolean lastTickOnGround, lastTickPos1, lastYDif;
@@ -97,6 +96,17 @@ public class ModuleUtils {
             isAttacking = true;
             attackingTicks = 5;
         }
+
+
+        if (e.getPacket() instanceof C07PacketPlayerDigging) {
+            C07PacketPlayerDigging c07 = (C07PacketPlayerDigging) packet;
+            if (Objects.equals(String.valueOf(c07.getStatus()), "START_DESTROY_BLOCK")) {
+                isBreaking = true;
+            }
+            if (Objects.equals(String.valueOf(c07.getStatus()), "ABORT_DESTROY_BLOCK")) {
+                isBreaking = false;
+            }
+        }
     }
 
     @SubscribeEvent
@@ -104,18 +114,10 @@ public class ModuleUtils {
         if (!Utils.nullCheck()) {
             return;
         }
+        Packet packet = e.getPacket();
 
         if (e.getPacket() instanceof C09PacketHeldItemChange) {
             swapTick = 2;
-        }
-
-
-
-
-
-
-        if (e.getPacket() instanceof C07PacketPlayerDigging) {
-            isBreaking = true;
         }
 
         if (e.getPacket() instanceof C08PacketPlayerBlockPlacement && Utils.holdingFireball()) {
@@ -198,6 +200,8 @@ public class ModuleUtils {
     @SubscribeEvent
     public void onPreUpdate(PreUpdateEvent e) {
 
+        //-0.0784000015258789 = ground value
+
         double ed = Math.toDegrees(Math.atan2(mc.thePlayer.motionZ, mc.thePlayer.motionX));
         //Utils.print("" + ed);
 
@@ -205,12 +209,14 @@ public class ModuleUtils {
             --swapTick;
         }
 
-        if (canSlow || ModuleManager.scaffold.moduleEnabled && !ModuleManager.tower.canTower()) {
+        if (ModuleManager.killAura.stoppedTargeting && ++unTargetTicks >= 2) {
+            ModuleManager.killAura.stoppedTargeting = false;
+        }
+
+        if (canSlow || ModuleManager.scaffold.isEnabled) {
             double motionVal = 0.9507832 - ((double) inAirTicks / 10000) - Utils.randomizeDouble(0.00001, 0.00006);
             if (!hasSlowed) motionVal = motionVal - 0.15;
             if (mc.thePlayer.hurtTime == 0 && !setSlow && !mc.thePlayer.onGround) {
-                //mc.thePlayer.motionX *= motionVal;
-                //mc.thePlayer.motionZ *= motionVal;
                 setSlow = hasSlowed = true;
                 //Utils.print("Slow " + motionVal);
             }
@@ -267,23 +273,15 @@ public class ModuleUtils {
             ModuleManager.velocity.disableVelo = false;
         }
 
-        if (isBreaking && ++isBreakingTick >= 1) {
-            isBreaking = false;
-            isBreakingTick = 0;
-        }
-
-        if (ModuleManager.killAura.justUnTargeted) {
-            if (++unTargetTicks >= 2) {
-                unTargetTicks = 0;
-                ModuleManager.killAura.justUnTargeted = false;
-            }
-        }
-
         if (CommandManager.status.cooldown != 0) {
             if (mc.thePlayer.ticksExisted % 20 == 0) {
                 CommandManager.status.cooldown--;
             }
         }
+    }
+
+    private boolean tower() {
+        return ModuleManager.tower.canTower() && ModuleManager.tower.towerMove.getInput() != 8;
     }
 
     @SubscribeEvent
@@ -370,7 +368,12 @@ public class ModuleUtils {
                                 resetLowhop();
                                 break;
                             }
-                            boolean g1 = Utils.distanceToGround(mc.thePlayer) <= 1.3;
+                            boolean g1 = Utils.distanceToGround(mc.thePlayer) <= 1.2;
+                            //disable
+                            if (inAirTicks >= 9 || inAirTicks >= 5 && !g1) {
+                                resetLowhop();
+                                break;
+                            }
                             if (inAirTicks == 1) {
                                 mc.thePlayer.motionY = 0.38999998569488;
                                 ModuleManager.bhop.lowhop = true;
@@ -384,10 +387,10 @@ public class ModuleUtils {
                             if (inAirTicks == 4) {
                                 mc.thePlayer.motionY = -0.19174457909538;
                             }
-                            if (inAirTicks == 5) {
+                            if (inAirTicks == 5 && g1) {
                                 mc.thePlayer.motionY = -0.26630949469659;
                             }
-                            if (inAirTicks == 6) {
+                            if (inAirTicks == 6 && g1) {
                                 mc.thePlayer.motionY = -0.26438340940798;
                             }
                             if (inAirTicks == 7 && g1) {
@@ -396,10 +399,6 @@ public class ModuleUtils {
                             //strafe
                             if (inAirTicks >= 6 && Utils.isMoving()) {
                                 Utils.setSpeed(Utils.getHorizontalSpeed(mc.thePlayer));
-                            }
-                            //disable
-                            if (inAirTicks >= 8 || inAirTicks >= 4 && !g1) {
-                                resetLowhop();
                             }
                             break;
                         case 4: // 7 tick
@@ -432,7 +431,7 @@ public class ModuleUtils {
         }
 
         if (ModuleManager.bhop.setRotation) {
-            if (!ModuleManager.killAura.isTargeting && !ModuleManager.scaffold.isEnabled) {
+            if (!ModuleManager.killAura.rotating && !ModuleManager.scaffold.isEnabled) {
                 yaw = ModuleManager.scaffold.getMotionYaw() - 130.625F * Math.signum(
                         MathHelper.wrapAngleTo180_float(ModuleManager.scaffold.getMotionYaw() - yaw)
                 );

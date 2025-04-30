@@ -6,7 +6,7 @@ import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.DescriptionSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
-import keystrokesmod.utility.Reflection;
+import keystrokesmod.utility.ReflectionUtils;
 import keystrokesmod.utility.Utils;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockLiquid;
@@ -147,6 +147,9 @@ public class AutoClicker extends Module {
                     this.isHoldingBlockBreak = false;
                 }
             }
+            else {
+                this.isHoldingBlockBreak = false;
+            }
         }
 
         if (jitter.getInput() > 0.0D) {
@@ -171,24 +174,22 @@ public class AutoClicker extends Module {
             if (currentTime > this.nextPressTime && (!ModuleManager.killAura.isEnabled() || KillAura.target == null)) {
                 KeyBinding.setKeyBindState(key, true);
                 KeyBinding.onTick(key);
-                Reflection.setButton(mouse, true);
+                ReflectionUtils.setButton(mouse, true);
                 if (mouse == 0 && blockHitC > 0.0 && Mouse.isButtonDown(1) && Math.random() >= (100.0 - blockHitC) / 100.0) {
                     final int useItemKey = mc.gameSettings.keyBindUseItem.getKeyCode();
                     KeyBinding.setKeyBindState(useItemKey, true);
                     KeyBinding.onTick(useItemKey);
-                    Reflection.setButton(1, true);
+                    ReflectionUtils.setButton(1, true);
                     isBlockHitActive = true;
                 }
-                // Recalculate the next press and release times.
                 this.updateClickDelay();
             }
-            // If the release time has passed (or a block hit is active), release the key.
             else if (currentTime > this.nextReleaseTime || isBlockHitActive) {
                 KeyBinding.setKeyBindState(key, false);
-                Reflection.setButton(mouse, false);
+                ReflectionUtils.setButton(mouse, false);
                 if (mouse == 0 && blockHitC > 0.0) {
                     KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
-                    Reflection.setButton(1, false);
+                    ReflectionUtils.setButton(1, false);
                     isBlockHitActive = false;
                 }
             }
@@ -203,7 +204,6 @@ public class AutoClicker extends Module {
         long delay = Math.round(1000.0D / cps);
 
         long currentTime = System.currentTimeMillis();
-        // Updates the delay multiplier periodically.
         if (currentTime > this.nextMultiplierUpdateTime) {
             if (!multiplierActive && this.rand.nextInt(100) >= 85) {
                 multiplierActive = true;
@@ -213,18 +213,15 @@ public class AutoClicker extends Module {
             }
             this.nextMultiplierUpdateTime = currentTime + 500L + this.rand.nextInt(1500);
         }
-        // Adds extra delay at randomized intervals
         if (currentTime > this.nextExtraDelayUpdateTime) {
             if (this.rand.nextInt(100) >= 80) {
                 delay += 50L + this.rand.nextInt(100);
             }
             this.nextExtraDelayUpdateTime = currentTime + 500L + this.rand.nextInt(1500);
         }
-        // If the multiplier is active, adjust the delay
         if (multiplierActive) {
             delay = (long) (delay * delayMultiplier);
         }
-        // Schedule the next press and release events
         this.nextPressTime = currentTime + delay;
         this.nextReleaseTime = currentTime + delay / 2L - this.rand.nextInt(10);
     }

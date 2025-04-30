@@ -1,7 +1,6 @@
 package keystrokesmod.module.impl.player;
 
-import keystrokesmod.event.PostPlayerInputEvent;
-import keystrokesmod.event.PrePlayerInputEvent;
+import keystrokesmod.event.PreUpdateEvent;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.setting.impl.ButtonSetting;
@@ -10,7 +9,6 @@ import keystrokesmod.utility.Utils;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.Vec3;
 import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.lwjgl.input.Keyboard;
@@ -22,8 +20,7 @@ public class Safewalk extends Module {
     public static ButtonSetting blocksOnly, pitchCheck, disableOnForward;
 
     private int unsneakDelayTicks = 0;
-    private boolean isSneaking;
-    private boolean canSneak;
+    public boolean isSneaking;
 
     public Safewalk() {
         super("Safewalk", Module.category.player, 0);
@@ -53,34 +50,33 @@ public class Safewalk extends Module {
     }
 
     @SubscribeEvent
-    public void onPostPlayerInput(PostPlayerInputEvent e) {
+    public void onPreUpdate(PreUpdateEvent e) {
         if (!sneak.isToggled() || !Utils.nullCheck()) {
-            return;
-        }
-        if (!settingsMet()) {
-            this.setSneakState(false);
             return;
         }
         boolean edge = mc.thePlayer.onGround && Utils.isEdgeOfBlock();
         if (edge) {
+            if (!settingsMet()) {
+                this.setSneakState(false);
+                return;
+            }
             if (!this.isSneaking) {
-                canSneak = true;
+                this.setSneakState(true);
+                unsneakDelayTicks = (int) sneakDelay.getInput();
             }
         }
         else {
             if (this.isSneaking) {
-                if (unsneakDelayTicks > 0) {
-                    unsneakDelayTicks--;
-                }
-                else {
+                if (!settingsMet()) {
                     this.setSneakState(false);
                     return;
                 }
+                if (unsneakDelayTicks > 0) {
+                    unsneakDelayTicks--;
+                    return;
+                }
+                this.setSneakState(false);
             }
-        }
-        if (canSneak) {
-            this.setSneakState(true);
-            unsneakDelayTicks = (int) sneakDelay.getInput();
         }
         if (this.isSneaking && (mc.thePlayer.capabilities.isFlying || !settingsMet())) {
             this.setSneakState(false);
@@ -98,13 +94,19 @@ public class Safewalk extends Module {
         if (!sneakState) {
             unsneakDelayTicks = 0;
         }
-        if (Utils.isBindDown(mc.gameSettings.keyBindSneak)) {
+        if (this.isSneaking == sneakState) {
             return;
         }
-        canSneak = sneakState;
-        mc.thePlayer.movementInput.sneak = sneakState;
-        this.isSneaking = sneakState;
 
+        if (!sneakState && Utils.isBindDown(mc.gameSettings.keyBindSneak)) {
+            return;
+        }
+
+        KeyBinding.setKeyBindState(mc.gameSettings.keyBindSneak.getKeyCode(), sneakState);
+        if (sneakState) {
+            KeyBinding.onTick(mc.gameSettings.keyBindSneak.getKeyCode());
+        }
+        this.isSneaking = sneakState;
     }
 
     public static boolean canSafeWalk() {
@@ -138,10 +140,6 @@ public class Safewalk extends Module {
         }
         if (pitchCheck.isToggled() && mc.thePlayer.rotationPitch < 70.0f) {
             return false;
-        }
-        if (!mc.thePlayer.onGround) {
-            return false;
-
         }
         return true;
     }

@@ -1,6 +1,7 @@
 package keystrokesmod.module;
 
 import keystrokesmod.Raven;
+import keystrokesmod.module.impl.combat.AntiKnockback;
 import keystrokesmod.module.setting.Setting;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
@@ -9,7 +10,6 @@ import keystrokesmod.utility.Utils;
 import keystrokesmod.utility.profile.ProfileModule;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.FMLCommonHandler;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
@@ -188,6 +188,9 @@ public class Module {
     }
 
     public String getNameInHud() {
+        if (this instanceof AntiKnockback) {
+            return "Velocity";
+        }
         return this.moduleName;
     }
 

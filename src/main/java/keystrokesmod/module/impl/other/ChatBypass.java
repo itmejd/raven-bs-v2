@@ -4,9 +4,7 @@ import keystrokesmod.event.SendPacketEvent;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.utility.PacketUtils;
-import keystrokesmod.utility.Reflection;
 import keystrokesmod.utility.Utils;
-import net.minecraft.network.Packet;
 import net.minecraft.network.play.client.C01PacketChatMessage;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
@@ -15,7 +13,7 @@ import java.util.List;
 
 public class ChatBypass extends Module {
     private ButtonSetting filterKnownWords;
-    List<String> filteredWords = Arrays.asList(
+    private List<String> filteredWords = Arrays.asList(
             // blocked words
             "kill", "retard", "anal", "beaner", "bestiality", "blowjob", "cameltoe", "chink", "clit", "cock", "coon", "cunnilingus", "cunt", "dick", "dildo", "dilf", "dyke", "ejaculate", "ejaculati" /*ing & ion*/,
             "fag", "foreskin", "gilf", "hentai", "jerkoff", "jizz", "kike", "kill yourself", "kill urself", "kys", "loli", "masturbate", "masturbati" /*ing & ion*/, "milf", "nazi", "nigga", "nigger",
@@ -25,9 +23,11 @@ public class ChatBypass extends Module {
             "arse", "ass", "bastard", "bitch", "boob", "douche", "fuck", "hitler", "shit", "twat", "wank"
     );
 
-    List<String> allowedCommands = Arrays.asList(
+    private List<String> allowedCommands = Arrays.asList(
             "ac", "achat", "pc", "pchat", "gc", "gchat", "shout", "msg", "message", "r", "reply", "t", "tell", "w", "whisper"
     );
+
+    private String replace_a = "\u00E1", replace_e = "\u00E9", replace_i = "\u00A1", replace_o = "\u00F3", replace_u = "\u00FA", replace_y = "\u00FF", replace_A = "\u00C1", replace_E = "\u00C9", replace_I = replace_i, replace_O = "\u00D3", replace_U = "\u00DA", replace_Y = replace_y;
 
     public ChatBypass() {
         super("Chat Bypass", category.other);
@@ -40,7 +40,6 @@ public class ChatBypass extends Module {
             return;
         }
         if (!(e.getPacket() instanceof C01PacketChatMessage)) return;
-        Packet packet = e.getPacket();
         C01PacketChatMessage c01 = (C01PacketChatMessage) e.getPacket();
         String msg = c01.getMessage();
         String[] split = splitCommand(msg);
@@ -67,11 +66,12 @@ public class ChatBypass extends Module {
                 newMsg.append(word).append(" ");
             }
             msg = newMsg.toString().trim();
-        } else {
+        }
+        else {
             msg = doReplace(msg);
         }
 
-        if (split[0] != null && split[1] != null) { // if command existed, re-add
+        if (split[0] != null) { // if command existed, re-add
             msg = split[0] + " " + msg;
         }
 
@@ -113,7 +113,4 @@ public class ChatBypass extends Module {
         }
         return false;
     }
-
-    String replace_a = "\u00E1", replace_e = "\u00E9", replace_i = "\u00A1", replace_o = "\u00F3", replace_u = "\u00FA", replace_y = "\u00FF",
-            replace_A = "\u00C1", replace_E = "\u00C9", replace_I = replace_i, replace_O = "\u00D3", replace_U = "\u00DA", replace_Y = replace_y;
 }

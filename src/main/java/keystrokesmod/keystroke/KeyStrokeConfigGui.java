@@ -2,7 +2,7 @@ package keystrokesmod.keystroke;
 
 import java.io.IOException;
 
-import keystrokesmod.utility.CPSCalculator;
+import keystrokesmod.helper.MouseHelper;
 import keystrokesmod.Raven;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
@@ -53,7 +53,7 @@ public class KeyStrokeConfigGui extends GuiScreen {
         }
 
         if (button == 0) {
-            CPSCalculator.aL();
+            MouseHelper.aL();
             int startX = KeyStroke.x;
             int startY = KeyStroke.y;
             int endX = startX + 74;
@@ -64,7 +64,7 @@ public class KeyStrokeConfigGui extends GuiScreen {
                 this.ly = mouseY;
             }
         } else if (button == 1) {
-            CPSCalculator.aR();
+            MouseHelper.aR();
         }
 
     }

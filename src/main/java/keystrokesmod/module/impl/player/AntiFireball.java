@@ -1,6 +1,6 @@
 package keystrokesmod.module.impl.player;
 
-import keystrokesmod.event.PreMotionEvent;
+import keystrokesmod.event.ClientRotationEvent;
 import keystrokesmod.event.PreUpdateEvent;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
@@ -27,8 +27,11 @@ public class AntiFireball extends Module {
     private ButtonSetting blocksRotate;
     private ButtonSetting projectileRotate;
     public ButtonSetting silentSwing;
+
     public EntityFireball fireball;
+
     private HashSet<Entity> fireballs = new HashSet<>();
+
     public boolean attack;
 
     public AntiFireball() {
@@ -43,7 +46,7 @@ public class AntiFireball extends Module {
     }
 
     @SubscribeEvent(priority = EventPriority.LOW)
-    public void onPreMotion(PreMotionEvent e) {
+    public void onClientRotation(ClientRotationEvent e) {
         if (!condition() || stopAttack()) {
             return;
         }
@@ -58,7 +61,7 @@ public class AntiFireball extends Module {
             if (ModuleManager.scaffold != null && ModuleManager.scaffold.stopRotation()) {
                 return;
             }
-            float[] rotations = RotationUtils.getRotations(fireball, e.getYaw(), e.getPitch());
+            float[] rotations = RotationUtils.getRotations(fireball, RotationUtils.prevRenderYaw, RotationUtils.prevRenderPitch);
             e.setYaw(rotations[0]);
             e.setPitch(rotations[1]);
         }
@@ -70,7 +73,7 @@ public class AntiFireball extends Module {
             return;
         }
         if (fireball != null) {
-            if (ModuleManager.killAura != null && ModuleManager.killAura.isEnabled() && ModuleManager.killAura.blockingServer && (ModuleManager.killAura.autoBlockMode.getInput() == 4 || ModuleManager.killAura.autoBlockMode.getInput() == 5)) {
+            if (ModuleManager.killAura != null && ModuleManager.killAura.isEnabled() && ModuleManager.killAura.blockingServer && ModuleManager.killAura.blinkAutoBlock()) {
                 if (KillAura.target != null) {
                     attack = false;
                     return;
@@ -144,7 +147,7 @@ public class AntiFireball extends Module {
         if (mc.thePlayer.capabilities.isFlying && disableWhileFlying.isToggled()) {
             return false;
         }
-        if (ModuleManager.scaffold != null && ModuleManager.scaffold.isEnabled && disableWhileScaffold.isToggled()) {
+        if (ModuleManager.scaffold != null && ModuleManager.scaffold.isEnabled() && disableWhileScaffold.isToggled()) {
             return false;
         }
         return true;

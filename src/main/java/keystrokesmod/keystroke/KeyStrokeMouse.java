@@ -1,6 +1,6 @@
 package keystrokesmod.keystroke;
 
-import keystrokesmod.utility.CPSCalculator;
+import keystrokesmod.helper.MouseHelper;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
@@ -59,8 +59,8 @@ public class KeyStrokeMouse {
         }
 
         this.b.fontRendererObj.drawString(s, o + this.d + 8, p + this.e + 4, -16777216 + ((int) ((double) t * this.j) << 16) + ((int) ((double) u * this.j) << 8) + (int) ((double) v * this.j));
-        String w = CPSCalculator.f() + " CPS";
-        String x = CPSCalculator.i() + " CPS";
+        String w = MouseHelper.f() + " CPS";
+        String x = MouseHelper.i() + " CPS";
         int y = this.b.fontRendererObj.getStringWidth(w);
         int z = this.b.fontRendererObj.getStringWidth(x);
         boolean a2 = this.c == 0;

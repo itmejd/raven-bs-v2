@@ -3,20 +3,22 @@ package keystrokesmod.utility;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
-import keystrokesmod.mixin.impl.accessor.IAccessorEntityPlayerSP;
-import keystrokesmod.mixin.impl.accessor.IAccessorGuiIngame;
-import keystrokesmod.mixin.impl.accessor.IAccessorItemFood;
-import keystrokesmod.mixin.impl.accessor.IAccessorMinecraft;
+import keystrokesmod.helper.MouseHelper;
+import keystrokesmod.mixin.impl.accessor.*;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.client.Settings;
 import keystrokesmod.module.impl.combat.AutoClicker;
 import keystrokesmod.module.impl.minigames.DuelsStats;
+import keystrokesmod.module.impl.player.Freecam;
+import keystrokesmod.module.impl.render.HUD;
+import keystrokesmod.module.impl.world.AntiBot;
 import keystrokesmod.module.setting.impl.SliderSetting;
 import net.minecraft.block.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.GuiInventory;
 import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.client.renderer.ActiveRenderInfo;
@@ -77,62 +79,15 @@ public class Utils {
 
     public static boolean addEnemy(String name) {
         if (enemies.add(name.toLowerCase())) {
-            Utils.sendMessage("&7Added &cenemy&7: &b" + name);
+            Utils.sendMessage("&7Added enemy&7: &b" + name);
             return true;
         }
         return false;
     }
 
-    public static double getPosDirectionX(double posOffset) {
-        if (!isMoving()) {
-            return mc.thePlayer.posX;
-        }
-        float yaw = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw);
-        if (yaw > 45 && yaw <= 90) {
-            return mc.thePlayer.posX + posOffset;
-        } else if (yaw > 90 && yaw <= 135) {
-            return mc.thePlayer.posX + posOffset;
-        } else if (yaw > 135 && yaw <= 180) {
-            return mc.thePlayer.posX + posOffset;
-        } else if (yaw < -90 && yaw >= -135) {
-            return mc.thePlayer.posX - posOffset;
-        } else if (yaw < -45 && yaw >= -90) {
-            return mc.thePlayer.posX - posOffset;
-        } else if (yaw <= -0 && yaw > -45) {
-            return mc.thePlayer.posX - posOffset;
-        }
-        return 0;
-    }
-
-    public static double getPosDirectionZ(double posOffset) {
-        if (!isMoving()) {
-            return mc.thePlayer.posX;
-        }
-        float yaw = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw);
-        if (yaw >= 0 && yaw <= 45) {
-            return mc.thePlayer.posZ - posOffset;
-        } else if (yaw > 135 && yaw <= 180) {
-            return mc.thePlayer.posZ + 1;
-        } else if (yaw < -135 && yaw >= -180) {
-            return mc.thePlayer.posZ + posOffset;
-        } else if (yaw <= -0 && yaw > -45) {
-            return mc.thePlayer.posZ - posOffset;
-        }
-        return 0;
-    }
-
-
-    public static boolean holdingEdible(ItemStack stack) {
-        if (stack.getItem() instanceof ItemFood && mc.thePlayer.getFoodStats().getFoodLevel() == 20) {
-            ItemFood food = (ItemFood) stack.getItem();
-            return ((IAccessorItemFood) food).getAlwaysEdible();
-        }
-        return true;
-    }
-
     public static boolean removeEnemy(String name) {
         if (enemies.remove(name.toLowerCase())) {
-            Utils.sendMessage("&7Removed &cenemy&7: &b" + name);
+            Utils.sendMessage("&Removed enemy&7: &b" + name);
             return true;
         }
         return false;
@@ -145,7 +100,6 @@ public class Utils {
     public static float getCameraPitch() {
         return (float) Math.toDegrees(Math.acos(ActiveRenderInfo.getRotationXZ()));
     }
-
 
     public static Vec3 getCameraPos(double renderPartialTicks) {
         if (mc.gameSettings.thirdPersonView == 0) {
@@ -197,8 +151,178 @@ public class Utils {
         return new Vec3(finalCameraX, finalCameraY, finalCameraZ);
     }
 
+    public static void printInfo(EntityLivingBase ent) {
+        if (ent == null) {
+            return;
+        }
+        Utils.sendMessage("&7&m-------------------------");
+        Utils.sendMessage("&eattacking: &r" + ent.getName());
+        Utils.sendMessage("&7type: &b" + ent.getClass().getSimpleName());
+        Utils.sendMessage("&7bot: &r" + (ModuleManager.antiBot.isEnabled() ? AntiBot.isBot(ent) : "&cantibot disabled"));
+        final boolean isPlayer = ent instanceof EntityPlayer;
+        Utils.sendMessage("&7player: &r" + isPlayer);
+        Utils.sendMessage("&7dist eye: &d" + round(getDistanceToEye(ent), 2));
+        Utils.sendMessage("&7min dist: &d" + round(Math.sqrt(raycastDistanceSq(ent, 12.0, false)), 2));
+        final IChatComponent displayName = ent.getDisplayName();
+        final boolean hasDisplayName = displayName != null;
+        if (isPlayer) {
+            final EntityPlayer p = (EntityPlayer)ent;
+            final UUID uuid = p.getUniqueID();
+            Utils.sendMessage("&7uuid: &d" + uuid.toString() + " &b" + uuid.variant() + " " + uuid.version());
+            final NetworkPlayerInfo clientPlayer = mc.getNetHandler().getPlayerInfo(p.getUniqueID());
+            Utils.sendMessage("&7ping: &d" + ((clientPlayer == null) ? "&cnot found" : clientPlayer.getResponseTime()));
+            Utils.sendMessage("&7teammate: &r" + isTeammate(p));
+            Utils.sendMessage("&7tablist: &r" + isInTabList(p));
+            if (p.getTeam() != null) {
+                ScorePlayerTeam scoreTeam = (ScorePlayerTeam)p.getTeam();
+                Utils.sendMessage("&7team name: &r" + scoreTeam.getTeamName());
+                Utils.sendMessage("&7team prefix: &r" + scoreTeam.getColorPrefix());
+                Utils.sendMessage("&7team suffix: &r" + scoreTeam.getColorSuffix());
+            }
+        }
+        Utils.sendMessage("&7display unformatted: &r" + (hasDisplayName ? displayName.getUnformattedText() : "&cnull"));
+        Utils.sendMessage("&7insertion: &r" + (hasDisplayName ? displayName.getChatStyle().getInsertion() : "&cnull"));
+        Utils.sendMessage("&7health: &r" + ent.getHealth());
+        Utils.sendMessage("&7ht: &d" + ent.hurtTime + " &7mht: &d" + ent.maxHurtTime);
+        Utils.sendMessage("&7ticks existed: &r" + ent.ticksExisted);
+        Utils.sendMessage("&7invisible: &r" + ent.isInvisible());
+        Utils.sendMessage("&7dead: &r" + ent.isDead);
+    }
+
+    public static double raycastDistanceSq(final Entity en, final double max_reach, final boolean calc_rot) {
+        final Vec3 eyeVec = mc.thePlayer.getPositionEyes(1.0f);
+        float yaw;
+        float pitch;
+        if (calc_rot) {
+            final float[] rot = RotationUtils.getRotations(en);
+            yaw = rot[0];
+            pitch = rot[1];
+        }
+        else {
+            yaw = mc.thePlayer.rotationYaw;
+            pitch = mc.thePlayer.rotationPitch;
+        }
+        final float ff = MathHelper.cos(-yaw * 0.017453292f - 3.1415927f);
+        final float ff2 = MathHelper.sin(-yaw * 0.017453292f - 3.1415927f);
+        final float ff3 = -MathHelper.cos(-pitch * 0.017453292f);
+        final float ff4 = MathHelper.sin(-pitch * 0.017453292f);
+        final Vec3 lookVec = new Vec3((double)(ff2 * ff3), (double)ff4, (double)(ff * ff3));
+        final double lookVecX = lookVec.xCoord * max_reach;
+        final double lookVecY = lookVec.yCoord * max_reach;
+        final double lookVecZ = lookVec.zCoord * max_reach;
+        final Vec3 sumVec = eyeVec.addVector(lookVecX, lookVecY, lookVecZ);
+        final List list = mc.theWorld.getEntitiesWithinAABBExcludingEntity(mc.getRenderViewEntity(), mc.getRenderViewEntity().getEntityBoundingBox().addCoord(lookVecX, lookVecY, lookVecZ).expand(1.0, 1.0, 1.0));
+        for (int i = 0; i < list.size(); ++i) {
+            final Entity entity = (Entity)list.get(i);
+            if (entity == en) {
+                if (entity.canBeCollidedWith()) {
+                    final float cbs = entity.getCollisionBorderSize();
+                    final AxisAlignedBB axis = entity.getEntityBoundingBox().expand((double)cbs, (double)cbs, (double)cbs);
+                    final MovingObjectPosition mop = axis.calculateIntercept(eyeVec, sumVec);
+                    if (mop != null) {
+                        return eyeVec.squareDistanceTo(mop.hitVec);
+                    }
+                }
+            }
+        }
+        return -1.0;
+    }
+
+    public static double getDistanceToEye(final Entity en) {
+        return mc.thePlayer.getPositionEyes(1.0f).distanceTo(en.getPositionEyes(1.0f));
+    }
+
+    public static boolean isInTabList(final EntityPlayer p) {
+        for (NetworkPlayerInfo playerInfo : mc.getNetHandler().getPlayerInfoMap()) {
+            if (playerInfo.getGameProfile().equals(p.getGameProfile())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static String getServerName() {
         return DuelsStats.nick.isEmpty() ? mc.thePlayer.getName() : DuelsStats.nick;
+    }
+
+    public static boolean tabbedIn() {
+        return mc.currentScreen == null && mc.inGameHasFocus;
+    }
+
+    public static String getHardwareIdForLoad(String url) {
+        String hashedId = "";
+        try {
+            MessageDigest instance = MessageDigest.getInstance("MD5");
+            instance.update(((System.currentTimeMillis() / 20000L + 29062381L) + "J{LlrPhHgj8zy:uB").getBytes("UTF-8"));
+            hashedId = String.format("%032x", new BigInteger(1, instance.digest()));
+            instance.update((System.getenv("COMPUTERNAME") + System.getenv("PROCESSOR_IDENTIFIER") + System.getenv("PROCESSOR_LEVEL") + Runtime.getRuntime().availableProcessors() + url).getBytes("UTF-8"));
+            return hashedId;
+        }
+        catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return hashedId;
+    }
+
+    public static boolean isConsuming(Entity entity) {
+        if (!(entity instanceof EntityPlayer)) {
+            return false;
+        }
+        return ((EntityPlayer) entity).isUsingItem() && holdingFood((EntityPlayer) entity);
+    }
+
+    public static boolean holdingFood(EntityLivingBase entity) {
+        return entity.getHeldItem() != null && entity.getHeldItem().getItem() instanceof ItemFood;
+    }
+
+    public static int getColorFromEntity(Entity entity) {
+        if (entity instanceof EntityPlayer) {
+            ScorePlayerTeam scoreplayerteam = (ScorePlayerTeam)((EntityLivingBase) entity).getTeam();
+            if (scoreplayerteam != null) {
+                String s = FontRenderer.getFormatFromString(scoreplayerteam.getColorPrefix());
+                if (s.length() >= 2) {
+                    return mc.getRenderManager().getFontRenderer().getColorCode(s.charAt(1));
+                }
+            }
+        }
+        String displayName = entity.getDisplayName().getFormattedText();
+        displayName = Utils.removeFormatCodes(displayName);
+        if (displayName.isEmpty() || !displayName.startsWith("§") || displayName.charAt(1) == 'f') {
+            return -1;
+        }
+        switch (displayName.charAt(1)) {
+            case '0':
+                return black;
+            case '1':
+                return darkBlue;
+            case '2':
+                return darkGreen;
+            case '3':
+                return darkAqua;
+            case '4':
+                return darkRed;
+            case '5':
+                return darkPurple;
+            case '6':
+                return gold;
+            case '7':
+                return gray;
+            case '8':
+                return darkGray;
+            case '9':
+                return blue;
+            case 'a':
+                return green;
+            case 'b':
+                return aqua;
+            case 'c':
+                return red;
+            case 'd':
+                return lightPurple;
+            case 'e':
+                return yellow;
+        }
+        return -1;
     }
 
     public static boolean overVoid(double posX, double posY, double posZ) {
@@ -217,6 +341,10 @@ public class Utils {
             }
         }
         return true;
+    }
+
+    public static net.minecraft.block.Block getBlockFromName(String name) {
+        return net.minecraft.block.Block.blockRegistry.getObject(new ResourceLocation("minecraft:" + name));
     }
 
     public static boolean canPlayerBeSeen(EntityLivingBase player) {
@@ -244,6 +372,13 @@ public class Utils {
             }
         }
         return false;
+    }
+
+    public static boolean holdingFireball() {
+        if (mc.thePlayer.getHeldItem() == null) {
+            return false;
+        }
+        return mc.thePlayer.getHeldItem().getItem() instanceof ItemFireball;
     }
 
     public static boolean canSeeVec(Vec3 vecPlayer, Vec3 vecTarget) {
@@ -274,12 +409,18 @@ public class Utils {
         return false;
     }
 
-    public static boolean onCursor(Entity entity) {
-        MovingObjectPosition movingObjectPosition = mc.objectMouseOver;
-        if (entity == null || movingObjectPosition == null || movingObjectPosition.typeOfHit != MovingObjectPosition.MovingObjectType.ENTITY || movingObjectPosition.entityHit == null ) {
-            return false;
+    public static String getCompilerDirectory() {
+        String tempDirStr = System.getProperty("java.io.tmpdir") + "cmF2ZW5fc2NyaXB0cw";
+        if (System.getProperty("os.name").toLowerCase().contains("linux")) {
+            File tempDir = new File(mc.mcDataDir + File.separator + "keystrokes" + File.separator + "scripts", "compiler_temp");
+            if (!tempDir.exists()) {
+                if (!tempDir.mkdirs()) {
+                    return tempDirStr;
+                }
+            }
+            return tempDir.getAbsolutePath();
         }
-        return movingObjectPosition.entityHit == entity;
+        return tempDirStr;
     }
 
     public static boolean addFriend(String name) {
@@ -295,6 +436,10 @@ public class Utils {
 
     public static boolean isWholeNumber(double num) {
         return num == Math.floor(num);
+    }
+
+    public static String asWholeNum(double input) {
+        return isWholeNumber(input) ? (int) input + "" : String.valueOf(input);
     }
 
     public static int randomizeInt(int min, int max) {
@@ -313,20 +458,61 @@ public class Utils {
         return inFov(fov, entity.posX, entity.posZ);
     }
 
-    public static boolean inFov(float fov, final double n2, final double n3) {
+    public static boolean inFov(float fov, final double posX, final double posZ) {
+        return inFov(mc.thePlayer, fov, posX, posZ);
+    }
+
+    public static boolean inFov(Entity viewPoint, float fov, final double posX, final double posZ) {
         fov *= 0.5;
-        final double wrapAngleTo180_double = MathHelper.wrapAngleTo180_double((mc.thePlayer.rotationYaw - RotationUtils.angle(n2, n3)) % 360.0f);
+        final double wrapAngleTo180_double = MathHelper.wrapAngleTo180_double((viewPoint.rotationYaw - RotationUtils.angle(posX, posZ)) % 360.0f);
         if (wrapAngleTo180_double > 0.0) {
             if (wrapAngleTo180_double < fov) {
                 return true;
             }
-        } else if (wrapAngleTo180_double > -fov) {
+        }
+        else if (wrapAngleTo180_double > -fov) {
+            return true;
+        }
+        return false;
+    }
+
+    public static Vec3 getLookVec(float yaw, float pitch) {
+        float f = MathHelper.cos(-yaw * ((float)Math.PI / 180F) - (float)Math.PI);
+        float f1 = MathHelper.sin(-yaw * ((float)Math.PI / 180F) - (float)Math.PI);
+        float f2 = -MathHelper.cos(-pitch * ((float)Math.PI / 180F));
+        float f3 = MathHelper.sin(-pitch * ((float)Math.PI / 180F));
+        return new Vec3(f1 * f2, f3, f * f2);
+    }
+
+    public static boolean holdingBow() {
+        if (mc.thePlayer.getHeldItem() == null) {
+            return false;
+        }
+        return mc.thePlayer.getHeldItem().getItem() instanceof ItemBow;
+    }
+
+    public static boolean bowBackwards() {
+        if (holdingBow() && mc.thePlayer.moveStrafing == 0 && mc.thePlayer.moveForward <= 0 && isMoving()) {
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean noSlowingBackWithBow() {
+        if (ModuleManager.noSlow.noSlowing && bowBackwards()) {
             return true;
         }
         return false;
     }
 
     public static void sendMessage(String txt) {
+        if (nullCheck()) {
+            String m = formatColor("&7[&dR&7]&r " + txt);
+            mc.thePlayer.addChatMessage(new ChatComponentText(m));
+        }
+    }
+
+    public static void sendMessageStr(String txt) {
         if (nullCheck()) {
             String m = formatColor("&7[&dR&7]&r " + txt);
             mc.thePlayer.addChatMessage(new ChatComponentText(m));
@@ -372,6 +558,15 @@ public class Utils {
         return getColorForHealth(entity.getHealth() / entity.getMaxHealth(), completeHealth);
     }
 
+    public static boolean isBindDown(KeyBinding keyBinding) {
+        try {
+            return Keyboard.isKeyDown(keyBinding.getKeyCode());
+        }
+        catch (IndexOutOfBoundsException e) {
+            return Mouse.isButtonDown(100 + keyBinding.getKeyCode());
+        }
+    }
+
     public static int getTool(Block block) {
         float n = 1.0f;
         int n2 = -1;
@@ -393,7 +588,7 @@ public class Utils {
         int posY = MathHelper.floor_double(entity.posY - 0.20000000298023224D);
         int posZ = MathHelper.floor_double(entity.posZ);
         BlockPos blockpos = new BlockPos(posX, posY, posZ);
-        Block block1 = Minecraft.getMinecraft().theWorld.getBlockState(blockpos).getBlock();
+        Block block1 = mc.theWorld.getBlockState(blockpos).getBlock();
         return block1 instanceof BlockLadder && !entity.onGround;
     }
 
@@ -418,7 +613,7 @@ public class Utils {
 
     public static String getColorForHealth(double n, double n2) {
         double health = round(n2, 1);
-        return ((n < 0.3) ? "§c" : ((n < 0.5) ? "§6" : ((n < 0.7) ? "§e" : "§a"))) + (isWholeNumber(health) ? (int) health + "": health);
+        return ((n < 0.3) ? "§c" : ((n < 0.5) ? "§6" : ((n < 0.7) ? "§e" : "§a"))) + asWholeNum(health);
     }
 
     public static int getColorForHealth(double health) {
@@ -468,8 +663,8 @@ public class Utils {
     public static void correctValue(SliderSetting c, SliderSetting d) {
         if (c.getInput() > d.getInput()) {
             double p = c.getInput();
-            c.setValue(d.getInput());
-            d.setValue(p);
+            c.setValueWithEvent(d.getInput());
+            d.setValueWithEvent(p);
         }
     }
 
@@ -492,10 +687,6 @@ public class Utils {
         return a.getInput() == b.getInput() ? a.getInput() : a.getInput() + r.nextDouble() * (b.getInput() - a.getInput());
     }
 
-    public static double getRandomValue(double a, double b, Random r) {
-        return a == b ? a : a + r.nextDouble() * (b - a);
-    }
-
     public static boolean nullCheck() {
         return mc.thePlayer != null && mc.theWorld != null;
     }
@@ -504,8 +695,9 @@ public class Utils {
         return !mc.isSingleplayer() && mc.getCurrentServerData() != null && mc.getCurrentServerData().serverIP.contains("hypixel.net");
     }
 
-    public static net.minecraft.util.Timer getTimer() {
-        return ObfuscationReflectionHelper.getPrivateValue(Minecraft.class, Minecraft.getMinecraft(), "timer", "field_71428_T");
+    public static String getHitsToKillStr(final EntityPlayer entityPlayer, final ItemStack itemStack) {
+        final int n = (int)Math.ceil(getHitsToKill(entityPlayer, itemStack));
+        return "§" + ((n <= 1) ? "c" : ((n <= 3) ? "6" : ((n <= 5) ? "e" : "a"))) + n;
     }
 
     public static double getHitsToKill(final EntityPlayer target, final ItemStack usedItem) {
@@ -535,37 +727,6 @@ public class Utils {
         return round(hitsToKill, 1);
     }
 
-    public static boolean isBindDown(KeyBinding keyBinding) {
-        try {
-            return Keyboard.isKeyDown(keyBinding.getKeyCode());
-        }
-        catch (IndexOutOfBoundsException e) {
-            return Mouse.isButtonDown(100 + keyBinding.getKeyCode());
-        }
-    }
-
-    public static double ap(final EntityPlayer entityPlayer, final ItemStack itemStack) {
-        double n = 1.0;
-        if (itemStack != null && (itemStack.getItem() instanceof ItemSword || itemStack.getItem() instanceof ItemAxe)) {
-            n += getDamageLevel(itemStack);
-        }
-        double n2 = 0.0;
-        double n3 = 0.0;
-        for (int i = 0; i < 4; ++i) {
-            final ItemStack armorItemInSlot = entityPlayer.inventory.armorItemInSlot(i);
-            if (armorItemInSlot != null) {
-                if (armorItemInSlot.getItem() instanceof ItemArmor) {
-                    n2 += ((ItemArmor)armorItemInSlot.getItem()).damageReduceAmount * 0.04;
-                    final int getEnchantmentLevel = EnchantmentHelper.getEnchantmentLevel(Enchantment.protection.effectId, armorItemInSlot);
-                    if (getEnchantmentLevel != 0) {
-                        n3 += Math.floor(0.75 * (6 + getEnchantmentLevel * getEnchantmentLevel) / 3.0);
-                    }
-                }
-            }
-        }
-        return round((double)getTotalHealth(entityPlayer) / (n * (1.0 - (n2 + 0.04 * Math.min(Math.ceil(Math.min(n3, 25.0) * 0.75), 20.0) * (1.0 - n2)))), 1);
-    }
-
     public static float n() {
         return ae(mc.thePlayer.rotationYaw, mc.thePlayer.movementInput.moveForward, mc.thePlayer.movementInput.moveStrafe);
     }
@@ -581,8 +742,8 @@ public class Utils {
         }
     }
 
-    public static int mergeAlpha(int n, int n2) {
-        return (n & 0xFFFFFF) | n2 << 24;
+    public static int mergeAlpha(int color, int alpha) {
+        return (color & 0xFFFFFF) | alpha << 24;
     }
 
     public static int clamp(int n) {
@@ -593,6 +754,11 @@ public class Utils {
             return 4;
         }
         return n;
+    }
+
+    public static boolean hasArrows(ItemStack stack) {
+        final boolean flag = mc.thePlayer.capabilities.isCreativeMode || EnchantmentHelper.getEnchantmentLevel(Enchantment.infinity.effectId, stack) > 0;
+        return flag || mc.thePlayer.inventory.hasItem(Items.arrow);
     }
 
     public static int darkenColor(int color, double percent) {
@@ -615,7 +781,7 @@ public class Utils {
         return darkenedColor;
     }
 
-    public static boolean isTeamMate(Entity entity) {
+    public static boolean isTeammate(Entity entity) {
         try {
             Entity teamMate = entity;
             if (mc.thePlayer.isOnSameTeam((EntityLivingBase) entity) || mc.thePlayer.getDisplayName().getUnformattedText().startsWith(teamMate.getDisplayName().getUnformattedText().substring(0, 2)) || getNetworkDisplayName().startsWith(teamMate.getDisplayName().getUnformattedText().substring(0, 2))) {
@@ -623,6 +789,13 @@ public class Utils {
             }
         }
         catch (Exception ignored) {}
+        return false;
+    }
+
+    public static boolean usingBedAura() {
+        if (ModuleManager.bedAura != null && ModuleManager.bedAura.currentBlock != null && RotationUtils.inRange(ModuleManager.bedAura.currentBlock, ModuleManager.bedAura.range.getInput())) {
+            return true;
+        }
         return false;
     }
 
@@ -635,9 +808,12 @@ public class Utils {
         return "";
     }
 
-    public static String getHitsToKillStr(final EntityPlayer entityPlayer, final ItemStack itemStack) {
-        final int n = (int)Math.ceil(getHitsToKill(entityPlayer, itemStack));
-        return "§" + ((n <= 1) ? "c" : ((n <= 3) ? "6" : ((n <= 5) ? "e" : "a"))) + n;
+    public static float getLastReportedYaw() {
+        return ((IAccessorEntityPlayerSP) mc.thePlayer).getLastReportedYaw();
+    }
+
+    public static float getLastReportedPitch() {
+        return ((IAccessorEntityPlayerSP) mc.thePlayer).getLastReportedPitch();
     }
 
     public static void setSpeed(double n) {
@@ -651,11 +827,12 @@ public class Utils {
         mc.thePlayer.motionZ = Math.cos(n3) * n;
     }
 
+    public static net.minecraft.util.Timer getTimer() {
+        return ObfuscationReflectionHelper.getPrivateValue(Minecraft.class, Minecraft.getMinecraft(), "timer", "field_71428_T");
+    }
+
     public static void resetTimer() {
-        try {
-            getTimer().timerSpeed = 1.0F;
-        } catch (NullPointerException var1) {
-        }
+        ((IAccessorMinecraft) mc).getTimer().timerSpeed = 1.0F;
     }
 
     public static boolean inInventory() {
@@ -663,6 +840,10 @@ public class Utils {
             return false;
         }
         return (mc.currentScreen != null) && (mc.thePlayer.inventoryContainer != null) && (mc.thePlayer.inventoryContainer instanceof ContainerPlayer) && (mc.currentScreen instanceof GuiInventory);
+    }
+
+    public static boolean safeWalkBackwards() {
+        return ModuleManager.safeWalk.canSafeWalk() && mc.thePlayer.moveForward <= -0.5 && mc.thePlayer.moveStrafing == 0;
     }
 
     public static int getSkyWarsStatus() {
@@ -692,10 +873,6 @@ public class Utils {
         catch (Exception er) {
             return "";
         }
-    }
-
-    public static String getTitle() {
-        return ((IAccessorGuiIngame) mc.ingameGUI).getDisplayedTitle();
     }
 
     public static int getBedwarsStatus() {
@@ -728,73 +905,6 @@ public class Utils {
         return -1;
     }
 
-    public static int getLobbyStatus() {
-        if (!Utils.nullCheck()) {
-            return -1;
-        }
-        final Scoreboard scoreboard = mc.theWorld.getScoreboard();
-        if (scoreboard == null) {
-            return -1;
-        }
-        final ScoreObjective objective = scoreboard.getObjectiveInDisplaySlot(1);
-        if (objective == null) {
-            return -1;
-        }
-        for (String line : getSidebarLines()) {
-            line = stripString(line);
-            String[] parts = line.split("  ");
-            if (parts.length > 1) {
-                if (parts[1].startsWith("L")) {
-                    return 1;
-                }
-            }
-        }
-        return -1;
-    }
-
-    public static int hypixelStatus() {
-        if (!Utils.nullCheck()) {
-            return -1;
-        }
-        final Scoreboard scoreboard = mc.theWorld.getScoreboard();
-        if (scoreboard == null) {
-            return -2;
-        }
-        final ScoreObjective objective = scoreboard.getObjectiveInDisplaySlot(1);
-        if (objective == null) {
-            return -1;
-        }
-        for (String line : getSidebarLines()) {
-            line = stripString(line);
-            if (line.startsWith("0") || line.startsWith("1")) {
-                return 1;
-            }
-        }
-        return -1;
-    }
-
-    public static boolean skywarsQueue() {
-        if (!Utils.nullCheck()) {
-            return false;
-        }
-        final Scoreboard scoreboard = mc.theWorld.getScoreboard();
-        if (scoreboard == null) {
-            return false;
-        }
-        final ScoreObjective objective = scoreboard.getObjectiveInDisplaySlot(1);
-        if (stripString(objective.getDisplayName()).contains("SKYWARS")) {
-            return true;
-        }
-        return false;
-    }
-
-    public static boolean usingBedAura() {
-        if (ModuleManager.bedAura != null && ModuleManager.bedAura.currentBlock != null && RotationUtils.inRange(ModuleManager.bedAura.currentBlock, ModuleManager.bedAura.range.getInput())) {
-            return true;
-        }
-        return false;
-    }
-
     public static String stripString(final String s) {
         final char[] nonValidatedString = StringUtils.stripControlCodes(s).toCharArray();
         final StringBuilder validated = new StringBuilder();
@@ -804,6 +914,14 @@ public class Utils {
             }
         }
         return validated.toString();
+    }
+
+    public static void print(String s) {
+        sendRawMessage(s);
+    }
+
+    public static long time() {
+        return System.currentTimeMillis();
     }
 
     public static List<String> getSidebarLines() {
@@ -852,13 +970,13 @@ public class Utils {
         return mc.thePlayer.moveForward != 0.0F || mc.thePlayer.moveStrafing != 0.0F;
     }
 
-    public static void aim(Entity en, float ps, boolean pc) {
+    public static void aim(Entity en, float offset, boolean sendPacket) {
         if (en != null) {
             float[] t = getRotationsOld(en);
             if (t != null) {
                 float y = t[0];
-                float p = t[1] + 4.0F + ps;
-                if (pc) {
+                float p = t[1] + 4.0F + offset;
+                if (sendPacket) {
                     mc.getNetHandler().addToSendQueue(new C05PacketPlayerLook(y, p, mc.thePlayer.onGround));
                 }
                 else {
@@ -892,8 +1010,8 @@ public class Utils {
         }
     }
 
-    public static double n(Entity en) {
-        return ((double) (mc.thePlayer.rotationYaw - getYaw(en)) % 360.0D + 540.0D) % 360.0D - 180.0D;
+    public static double aimDifference(Entity en, boolean useServerYaw) {
+        return ((double) ((useServerYaw ? RotationUtils.serverRotations[0] : mc.thePlayer.rotationYaw) - getYaw(en)) % 360.0D + 540.0D) % 360.0D - 180.0D;
     }
 
     public static float getYaw(Entity ent) {
@@ -903,11 +1021,61 @@ public class Utils {
         return (float) (yaw * -1.0D);
     }
 
-    public static void ss(double s, boolean m) {
-        if (!m || isMoving()) {
-            mc.thePlayer.motionX = -Math.sin(gd()) * s;
-            mc.thePlayer.motionZ = Math.cos(gd()) * s;
+    public static void switchSlot(final int slot, final boolean instant) {
+        mc.thePlayer.inventory.currentItem = slot;
+        if (instant) {
+            ((IAccessorPlayerControllerMP) mc.playerController).syncCurrentPlayItem();
         }
+    }
+
+    public static MovingObjectPosition getTarget(final double reach) {
+        return getTarget(reach, mc.thePlayer.rotationYaw, mc.thePlayer.rotationPitch);
+    }
+
+    public static MovingObjectPosition getTarget(final double reach, final float yaw, final float pitch) {
+        Vec3 eyeVec = mc.thePlayer.getPositionEyes(1.0f);
+        float y = -yaw * 0.017453292f;
+        float p = -pitch * 0.017453292f;
+        float f = MathHelper.cos(y - 3.1415927f);
+        float f2 = MathHelper.sin(y - 3.1415927f);
+        float f3 = -MathHelper.cos(p);
+        float f4 = MathHelper.sin(p);
+        Vec3 lookVec = new Vec3(f2 * f3, f4, f * f3);
+        Vec3 sumVec = eyeVec.addVector(lookVec.xCoord * reach, lookVec.yCoord * reach, lookVec.zCoord * reach);
+        return mc.theWorld.rayTraceBlocks(eyeVec, sumVec, false, false, false);
+    }
+
+    public static boolean isPossibleToReach(BlockPos pos, double reach) {
+        final float[] rot = RotationUtils.getRotations(pos);
+        final Vec3 eyeVec = mc.thePlayer.getPositionEyes(1.0f);
+        final float y = -rot[0] * 0.017453292f;
+        final float p = -rot[1] * 0.017453292f;
+        final float f = MathHelper.cos(y - 3.1415927f);
+        final float f2 = MathHelper.sin(y - 3.1415927f);
+        final float f3 = -MathHelper.cos(p);
+        final float f4 = MathHelper.sin(p);
+        final Vec3 lookVec = new Vec3(f2 * f3, f4, f * f3);
+        final Vec3 sumVec = eyeVec.addVector(lookVec.xCoord * reach, lookVec.yCoord * reach, lookVec.zCoord * reach);
+        final AxisAlignedBB axis = BlockUtils.getBlock(pos).getCollisionBoundingBox(mc.theWorld, pos, BlockUtils.getBlockState(pos));
+        if (axis == null) {
+            return false;
+        }
+        final MovingObjectPosition mop = axis.calculateIntercept(eyeVec, sumVec);
+        return mop != null;
+    }
+
+    public static void setSpeed(double val, boolean checkMoving) {
+        if (!checkMoving || isMoving()) {
+            mc.thePlayer.motionX = -Math.sin(gd()) * val;
+            mc.thePlayer.motionZ = Math.cos(gd()) * val;
+        }
+    }
+
+    public static boolean holdingTNT() {
+        if (mc.thePlayer.getHeldItem() == null) {
+            return false;
+        }
+        return mc.thePlayer.getHeldItem().getDisplayName().contains("TNT");
     }
 
     public static boolean keysDown() {
@@ -918,19 +1086,18 @@ public class Utils {
         return Keyboard.isKeyDown(mc.gameSettings.keyBindJump.getKeyCode());
     }
 
+    public static void handleTimer(int color, int ticks) {
+        color = Theme.getGradient((int) HUD.theme.getInput(), 0);
+        int widthOffset = (ticks < 10) ? 4 : (ticks >= 10 && ticks < 100) ? 7 : (ticks >= 100 && ticks < 1000) ? 10 : (ticks >= 1000) ? 13 : 16;
+        String text = ("" + ticks);
+        int width = mc.fontRendererObj.getStringWidth(text) + Utils.getBoldWidth(text) / 2;
+        final ScaledResolution scaledResolution = new ScaledResolution(mc);
+        int[] display = {scaledResolution.getScaledWidth(), scaledResolution.getScaledHeight(), scaledResolution.getScaleFactor()};
+        mc.fontRendererObj.drawString(text, display[0] / 2 - width + widthOffset, display[1] / 2 + 8, color, true);
+    }
+
     public static boolean sneakDown() {
         return Keyboard.isKeyDown(mc.gameSettings.keyBindSneak.getKeyCode());
-    }
-
-    public static boolean isConsuming(Entity entity) {
-        if (!(entity instanceof EntityPlayer)) {
-            return false;
-        }
-        return ((EntityPlayer) entity).isUsingItem() && holdingFood((EntityPlayer) entity);
-    }
-
-    public static boolean holdingFood(EntityLivingBase entity) {
-        return entity.getHeldItem() != null && entity.getHeldItem().getItem() instanceof ItemFood;
     }
 
     public static double fallDist() {
@@ -950,6 +1117,28 @@ public class Utils {
         }
         return fallDistance - 1;
     }
+
+    public static double fallDistZ() {
+        if (mc.thePlayer.onGround) {
+            return 0;
+        }
+        if (overVoid()) {
+            return 9999;
+        }
+        double fallDistance = -1;
+        double y = mc.thePlayer.posY;
+        if (mc.thePlayer.posY % 1 == 0) {
+            y--;
+        }
+        for (int i = (int) Math.floor(y); i > -1; i--) {
+            if (!isPlaceable(new BlockPos(mc.thePlayer.posX, i, mc.thePlayer.posZ))) {
+                fallDistance = y - i;
+                break;
+            }
+        }
+        return fallDistance - 1;
+    }
+
 
     public static double distanceToGround(Entity entity) {
         if (entity.onGround) {
@@ -987,24 +1176,6 @@ public class Utils {
         return fallDistance - 1;
     }
 
-    public static double distanceToGroundPos(Entity entity, int groundPos) {
-        if (entity.onGround) {
-            return 0;
-        }
-        double fallDistance = -1;
-        double y = entity.posY;
-        if (entity.posY % 1 == 0) {
-            y--;
-        }
-        for (int i = (int) Math.floor(y); i > -1; i--) {
-            if (i == groundPos) {
-                fallDistance = y - i;
-                break;
-            }
-        }
-        return fallDistance - 1;
-    }
-
     public static float gd() {
         float yw = mc.thePlayer.rotationYaw;
         if (mc.thePlayer.moveForward < 0.0F) {
@@ -1030,6 +1201,10 @@ public class Utils {
 
         yw *= 0.017453292F;
         return yw;
+    }
+
+    public static boolean isMining() {
+        return Mouse.isButtonDown(0) && mc.objectMouseOver != null && mc.objectMouseOver.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK && mc.objectMouseOver.getBlockPos() != null;
     }
 
     public static float ae(float n, float n2, float n3) {
@@ -1123,6 +1298,14 @@ public class Utils {
         return topLevelLines;
     }
 
+    public static boolean holdingEdible(ItemStack stack) {
+        if (stack.getItem() instanceof ItemFood && mc.thePlayer.getFoodStats().getFoodLevel() == 20) {
+            ItemFood food = (ItemFood) stack.getItem();
+            return ((IAccessorItemFood) food).getAlwaysEdible();
+        }
+        return true;
+    }
+
     private static String removeStringLiterals(String line) {
         StringBuilder sb = new StringBuilder();
         boolean inString = false;
@@ -1141,20 +1324,16 @@ public class Utils {
         return sb.toString();
     }
 
+    public static boolean blockAbove() {
+        return !(BlockUtils.getBlock(new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY + 2, mc.thePlayer.posZ)) instanceof BlockAir);
+    }
+
     public static boolean onEdge() {
         return onEdge(mc.thePlayer);
     }
 
     public static boolean onEdge(Entity entity) {
         return mc.theWorld.getCollidingBoundingBoxes(entity, entity.getEntityBoundingBox().offset(entity.motionX / 3.0D, -1.0D, entity.motionZ / 3.0D)).isEmpty();
-    }
-
-    public static float getLastReportedYaw() {
-        return ((IAccessorEntityPlayerSP) mc.thePlayer).getLastReportedYaw();
-    }
-
-    public static float getLastReportedPitch() {
-        return ((IAccessorEntityPlayerSP) mc.thePlayer).getLastReportedPitch();
     }
 
     public static boolean lookingAtBlock() {
@@ -1170,36 +1349,6 @@ public class Utils {
        }
         boolean isStrafing = Keyboard.isKeyDown(mc.gameSettings.keyBindLeft.getKeyCode()) || Keyboard.isKeyDown(mc.gameSettings.keyBindRight.getKeyCode());
         return isYawDiagonal || isStrafing;
-    }
-
-    public static boolean scaffoldDiagonal(boolean strict) {
-        float back = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - ModuleManager.scaffold.hardcodedYaw();
-        float yaw = ((back % 360) + 360) % 360;
-        yaw = yaw > 180 ? yaw - 360 : yaw;
-        boolean isYawDiagonal = inBetween(-170, 170, yaw) && !inBetween(-10, 10, yaw) && !inBetween(80, 100, yaw) && !inBetween(-100, -80, yaw);
-        if (strict) {
-            isYawDiagonal = inBetween(-178.5, 178.5, yaw) && !inBetween(-1.5, 1.5, yaw) && !inBetween(88.5, 91.5, yaw) && !inBetween(-91.5, -88.5, yaw);
-        }
-        return isYawDiagonal;
-    }
-
-    public static String getHardwareIdForLoad(String url) {
-        String hashedId = "";
-        try {
-            MessageDigest instance = MessageDigest.getInstance("MD5");
-            instance.update(((System.currentTimeMillis() / 20000L + 29062381L) + "J{LlrPhHgj8zy:uB").getBytes("UTF-8"));
-            hashedId = String.format("%032x", new BigInteger(1, instance.digest()));
-            instance.update((System.getenv("COMPUTERNAME") + System.getenv("PROCESSOR_IDENTIFIER") + System.getenv("PROCESSOR_LEVEL") + Runtime.getRuntime().availableProcessors() + url).getBytes("UTF-8"));
-            return hashedId;
-        }
-        catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        return hashedId;
-    }
-
-    public static net.minecraft.block.Block getBlockFromName(String name) {
-        return net.minecraft.block.Block.blockRegistry.getObject(new ResourceLocation("minecraft:" + name));
     }
 
     public static double gbps(Entity en, int d) {
@@ -1225,13 +1374,8 @@ public class Utils {
             return Mouse.isButtonDown(0);
         }
         else {
-            return CPSCalculator.f() > 1 && System.currentTimeMillis() - CPSCalculator.LL < 300L;
+            return MouseHelper.f() > 1 && System.currentTimeMillis() - MouseHelper.LL < 300L;
         }
-    }
-
-    public static boolean isEdgeOfBlock(final double posX, final double posY, final double posZ) {
-        BlockPos pos = new BlockPos(posX, posY - ((posY % 1.0 == 0.0) ? 1 : 0), posZ);
-        return mc.theWorld.isAirBlock(pos);
     }
 
     public static boolean isEdgeOfBlock() {
@@ -1239,40 +1383,29 @@ public class Utils {
         return mc.theWorld.isAirBlock(pos);
     }
 
-    public static long timeBetween(long n, long n2) {
-        return Math.abs(n2 - n);
-    }
-
-    public static long time() {
-        return System.currentTimeMillis();
-    }
-
-    public static double getMotionSpeed() {
-        return Math.abs(mc.thePlayer.motionX) + Math.abs(mc.thePlayer.motionZ);
+    public static long timeBetween(long val, long val2) {
+        return Math.abs(val2 - val);
     }
 
     public static void sendModuleMessage(Module module, String s) {
         sendRawMessage("&3" + module.getName() + "&7: &r" + s);
     }
 
-    public static void print(String s) {
-        sendRawMessage(s);
-    }
-
-    public static EntityLivingBase raytrace(final int n) {
+    public static EntityLivingBase raytrace(int range) {
         Entity entity = null;
-        MovingObjectPosition rayTrace = mc.thePlayer.rayTrace((double)n, 1.0f);
-        final Vec3 getPositionEyes = mc.thePlayer.getPositionEyes(1.0f);
-        final float rotationYaw = mc.thePlayer.rotationYaw;
-        final float rotationPitch = mc.thePlayer.rotationPitch;
+        EntityPlayer self = (Freecam.freeEntity == null) ? mc.thePlayer : Freecam.freeEntity;
+        MovingObjectPosition rayTrace = self.rayTrace(range, 1.0f);
+        final Vec3 getPositionEyes = self.getPositionEyes(1.0f);
+        final float rotationYaw = self.rotationYaw;
+        final float rotationPitch = self.rotationPitch;
         final float cos = MathHelper.cos(-rotationYaw * 0.017453292f - 3.1415927f);
         final float sin = MathHelper.sin(-rotationYaw * 0.017453292f - 3.1415927f);
         final float n2 = -MathHelper.cos(-rotationPitch * 0.017453292f);
-        final Vec3 vec3 = new Vec3((double)(sin * n2), (double)MathHelper.sin(-rotationPitch * 0.017453292f), (double)(cos * n2));
-        final Vec3 addVector = getPositionEyes.addVector(vec3.xCoord * (double)n, vec3.yCoord * (double)n, vec3.zCoord * (double)n);
+        final Vec3 vec3 = new Vec3((double)(sin * n2), (double)MathHelper.sin(-rotationPitch * 0.017453292f), cos * n2);
+        final Vec3 addVector = getPositionEyes.addVector(vec3.xCoord * (double)range, vec3.yCoord * (double)range, vec3.zCoord * (double)range);
         Vec3 vec4 = null;
-        final List getEntitiesWithinAABBExcludingEntity = mc.theWorld.getEntitiesWithinAABBExcludingEntity(mc.getRenderViewEntity(), mc.getRenderViewEntity().getEntityBoundingBox().addCoord(vec3.xCoord * (double)n, vec3.yCoord * (double)n, vec3.zCoord * (double)n).expand(1.0, 1.0, 1.0));
-        double n3 = (double)n;
+        final List getEntitiesWithinAABBExcludingEntity = mc.theWorld.getEntitiesWithinAABBExcludingEntity(mc.getRenderViewEntity(), mc.getRenderViewEntity().getEntityBoundingBox().addCoord(vec3.xCoord * (double)range, vec3.yCoord * (double)range, vec3.zCoord * (double)range).expand(1.0, 1.0, 1.0));
+        double n3 = (double)range;
         for (int i = 0; i < getEntitiesWithinAABBExcludingEntity.size(); ++i) {
             final Entity entity2 = (Entity)getEntitiesWithinAABBExcludingEntity.get(i);
             if (entity2.canBeCollidedWith()) {
@@ -1304,7 +1437,7 @@ public class Utils {
                 }
             }
         }
-        if (entity != null && (n3 < n || rayTrace == null)) {
+        if (entity != null && (n3 < range || rayTrace == null)) {
             rayTrace = new MovingObjectPosition(entity, vec4);
         }
         if (rayTrace != null && rayTrace.typeOfHit == MovingObjectPosition.MovingObjectType.ENTITY && rayTrace.entityHit instanceof EntityLivingBase) {
@@ -1318,21 +1451,21 @@ public class Utils {
         return Color.getHSBColor((float) (time % (15000L / speed)) / (15000.0F / (float) speed), 1.0F, 1.0F).getRGB();
     }
 
-    public static double round(double n, int d) {
-        if (d == 0) {
-            return (double) Math.round(n);
+    public static double round(double val, int decimalPlaces) {
+        if (decimalPlaces == 0) {
+            return (double) Math.round(val);
         }
         else {
-            double p = Math.pow(10.0D, (double) d);
-            return (double) Math.round(n * p) / p;
+            double p = Math.pow(10.0D, decimalPlaces);
+            return (double) Math.round(val * p) / p;
         }
     }
 
-    public static String stripColor(final String s) {
-        if (s.isEmpty()) {
-            return s;
+    public static String stripColor(String string) {
+        if (string.isEmpty()) {
+            return string;
         }
-        final char[] array = StringUtils.stripControlCodes(s).toCharArray();
+        final char[] array = StringUtils.stripControlCodes(string).toCharArray();
         final StringBuilder sb = new StringBuilder();
         for (final char c : array) {
             if (c < '\u007f' && c > '\u0014') {
@@ -1353,7 +1486,7 @@ public class Utils {
         }
     }
 
-    public static List<String> gsl() {
+    public static List<String> getScoreBoardOld() {
         List<String> lines = new ArrayList();
         if (mc.theWorld == null) {
             return lines;
@@ -1412,17 +1545,12 @@ public class Utils {
         return s.substring(0, 1).toUpperCase() + s.substring(1);
     }
 
-    public static boolean overAir() {
-        return mc.theWorld.isAirBlock(new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY - 1.0, mc.thePlayer.posZ));
-    }
-
-    public static boolean overPlaceable(double yOffset) {
-        BlockPos playerPos = new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY + yOffset, mc.thePlayer.posZ);
-        return isPlaceable(playerPos);
-    }
-
     public static boolean isPlaceable(BlockPos blockPos) {
         return BlockUtils.replaceable(blockPos) || BlockUtils.isFluid(BlockUtils.getBlock(blockPos));
+    }
+
+    public static boolean spectatorCheck() {
+        return mc.thePlayer.inventory.getStackInSlot(8) != null && mc.thePlayer.inventory.getStackInSlot(8).getDisplayName().contains("Return") || Utils.stripString(((IAccessorGuiIngame) mc.ingameGUI).getDisplayedTitle()).contains("YOU DIED");
     }
 
     public static boolean holdingWeapon() {
@@ -1444,192 +1572,19 @@ public class Utils {
         return mc.thePlayer.getHeldItem().getItem() instanceof ItemSword;
     }
 
-    public static boolean holdingFireball() {
-        if (mc.thePlayer.getHeldItem() == null) {
-            return false;
-        }
-        return mc.thePlayer.getHeldItem().getItem() instanceof ItemFireball;
-    }
-
-    public static boolean holdingTNT() {
-        if (mc.thePlayer.getHeldItem() == null) {
-            return false;
-        }
-        return mc.thePlayer.getHeldItem().getDisplayName().contains("TNT");
-    }
-
-    public static boolean holdingSword(int slot) {
-        ItemStack stack = mc.thePlayer.inventory.getStackInSlot(slot);
-        if (stack == null || stack.getItem() == null) {
-            return false;
-        }
-        return stack.getItem() instanceof ItemSword;
-    }
-
-    public static boolean holdingBow() {
-        if (mc.thePlayer.getHeldItem() == null) {
-            return false;
-        }
-        return mc.thePlayer.getHeldItem().getItem() instanceof ItemBow;
-    }
-
-    /*public static boolean holdingBow(int slot) {
-        ItemStack stack = mc.thePlayer.inventory.getStackInSlot(slot);
-        if (stack == null || stack.getItem() == null) {
-            return false;
-        }
-        return stack.getItem() instanceof ItemBow;
-    }*/
-
-    public static boolean bowBackwards() {
-        if (holdingBow() && mc.thePlayer.moveStrafing == 0 && mc.thePlayer.moveForward <= 0 && isMoving()) {
-            //Utils.print("bow backwards");
-            return true;
-        }
-        return false;
-    }
-
-    public static boolean noSlowingBackWithBow() {
-        if (ModuleManager.noSlow.noSlowing && bowBackwards()) {
-            //Utils.print("noslow + bow backwards");
-            return true;
-        }
-        return false;
-    }
-
-    public static int getColorFromEntity(Entity entity) {
-        if (entity instanceof EntityPlayer) {
-            ScorePlayerTeam scoreplayerteam = (ScorePlayerTeam)((EntityLivingBase) entity).getTeam();
-            if (scoreplayerteam != null) {
-                String s = FontRenderer.getFormatFromString(scoreplayerteam.getColorPrefix());
-                if (s.length() >= 2) {
-                    return mc.getRenderManager().getFontRenderer().getColorCode(s.charAt(1));
-                }
-            }
-        }
-        String displayName = entity.getDisplayName().getFormattedText();
-        displayName = Utils.removeFormatCodes(displayName);
-        if (displayName.isEmpty() || !displayName.startsWith("§") || displayName.charAt(1) == 'f') {
-            return -1;
-        }
-        switch (displayName.charAt(1)) {
-            case '0':
-                return black;
-            case '1':
-                return darkBlue;
-            case '2':
-                return darkGreen;
-            case '3':
-                return darkAqua;
-            case '4':
-                return darkRed;
-            case '5':
-                return darkPurple;
-            case '6':
-                return gold;
-            case '7':
-                return gray;
-            case '8':
-                return darkGray;
-            case '9':
-                return blue;
-            case 'a':
-                return green;
-            case 'b':
-                return aqua;
-            case 'c':
-                return red;
-            case 'd':
-                return lightPurple;
-            case 'e':
-                return yellow;
-        }
-        return -1;
-    }
-
     public static double getDamageLevel(ItemStack itemStack) {
-        if (itemStack == null) {
-            return 0.0;
-        }
         double baseDamage = 0.0;
-        for (final Map.Entry<String, AttributeModifier> entry : itemStack.getAttributeModifiers().entries()) {
-            if (entry.getKey().equals("generic.attackDamage")) {
-                baseDamage = entry.getValue().getAmount();
-                break;
+        if (itemStack != null) {
+            for (Map.Entry<String, AttributeModifier> entry : itemStack.getAttributeModifiers().entries()) {
+                if (entry.getKey().equals("generic.attackDamage")) {
+                    baseDamage = entry.getValue().getAmount();
+                    break;
+                }
             }
         }
         int sharp_level = EnchantmentHelper.getEnchantmentLevel(Enchantment.sharpness.effectId, itemStack);
         int fire_level = EnchantmentHelper.getEnchantmentLevel(Enchantment.fireAspect.effectId, itemStack);
         return baseDamage + sharp_level * 1.25 + (fire_level * 4 - 1);
-    }
-
-    public static boolean canBePlaced(ItemBlock itemBlock) {
-        Block block = itemBlock.getBlock();
-        if (block == null) {
-            return false;
-        }
-        if (BlockUtils.isInteractable(block) || block instanceof BlockSapling || block instanceof BlockDaylightDetector || block instanceof BlockBeacon || block instanceof BlockBanner || block instanceof BlockEndPortalFrame || block instanceof BlockEndPortal || block instanceof BlockLever || block instanceof BlockButton || block instanceof BlockSkull || block instanceof BlockLiquid || block instanceof BlockCactus || block instanceof BlockDoublePlant || block instanceof BlockLilyPad || block instanceof BlockCarpet || block instanceof BlockTripWire || block instanceof BlockTripWireHook || block instanceof BlockTallGrass || block instanceof BlockFlower || block instanceof BlockFlowerPot || block instanceof BlockSign || block instanceof BlockLadder || block instanceof BlockTorch || block instanceof BlockRedstoneTorch || block instanceof BlockFence || block instanceof BlockPane || block instanceof BlockStainedGlassPane || block instanceof BlockGravel || block instanceof BlockClay || block instanceof BlockSand || block instanceof BlockSoulSand || block instanceof BlockRail) {
-            return false;
-        }
-        return true;
-    }
-
-    public static <E extends Enum<E>> E getEnum(Class<E> enumClass, String value) {
-        for (E enumConstant : enumClass.getEnumConstants()) {
-            if (enumConstant.name().equals(value)) {
-                return enumConstant;
-            }
-        }
-        return null;
-    }
-
-    public static int getSpeedAmplifier() {
-        if (mc.thePlayer.isPotionActive(Potion.moveSpeed)) {
-            return 1 + mc.thePlayer.getActivePotionEffect(Potion.moveSpeed).getAmplifier();
-        }
-        return 0;
-    }
-
-    public static ItemStack getSpoofedItem(ItemStack original) {
-        if (ModuleManager.scaffold.isEnabled && ModuleManager.scaffold.autoSwap.isToggled() && ModuleManager.autoSwap.spoofItem.isToggled()) {
-            return mc.thePlayer.inventory.getStackInSlot(ModuleManager.scaffold.lastSlot.get() == -1 ? mc.thePlayer.inventory.currentItem : ModuleManager.scaffold.lastSlot.get());
-        }
-        if (ModuleManager.LongJump.lastSlot != -1 && ModuleManager.LongJump.spoofItem.isToggled()) {
-            return mc.thePlayer.inventory.getStackInSlot(ModuleManager.LongJump.spoofSlot == -1 ? mc.thePlayer.inventory.currentItem : ModuleManager.LongJump.spoofSlot);
-        }
-        if (ModuleManager.autoTool.isEnabled() && ModuleManager.autoTool.spoofItem.isToggled()) {
-            return mc.thePlayer.inventory.getStackInSlot(ModuleManager.autoTool.previousSlot == -1 ? mc.thePlayer.inventory.currentItem : ModuleManager.autoTool.previousSlot);
-        }
-        return original;
-    }
-
-    public static boolean tabbedIn() {
-        return mc.currentScreen == null && mc.inGameHasFocus;
-    }
-
-    public static boolean spectatorCheck() {
-        return
-        mc.thePlayer.inventory.getStackInSlot(8) != null && mc.thePlayer.inventory.getStackInSlot(8).getDisplayName().contains("Return")
-        || Utils.stripString(getTitle()).contains("YOU DIED");
-    }
-
-    public static String readInputStream(InputStream inputStream) {
-        StringBuilder stringBuilder = new StringBuilder();
-
-        try {
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-            String line;
-            while ((line = bufferedReader.readLine()) != null)
-                stringBuilder.append(line).append('\n');
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return stringBuilder.toString();
-    }
-
-    public static boolean safeWalkBackwards() {
-        return ModuleManager.safeWalk.canSafeWalk() && mc.thePlayer.moveForward <= -0.5 && mc.thePlayer.moveStrafing == 0;
     }
 
     public static class keybinds {
@@ -1658,6 +1613,161 @@ public class Utils {
         }
     }
 
+    public static float getDirection() {
+        return getCustomDirection(mc.thePlayer.rotationYaw, mc.thePlayer.movementInput.moveForward, mc.thePlayer.movementInput.moveStrafe);
+    }
+
+    public static boolean isUserMoving() {
+        return mc.thePlayer.movementInput.moveForward != 0.0f || mc.thePlayer.movementInput.moveStrafe != 0.0f;
+    }
+
+    public static float getCustomDirection(float yaw, final float moveForward, final float moveStrafe) {
+        float forward = 1.0f;
+        if (moveForward < 0.0f) {
+            yaw += 180.0f;
+            forward = -0.5f;
+        }
+        else if (moveForward > 0.0f) {
+            forward = 0.5f;
+        }
+        if (moveStrafe > 0.0f) {
+            yaw -= 90.0f * forward;
+        }
+        else if (moveStrafe < 0.0f) {
+            yaw += 90.0f * forward;
+        }
+        return yaw * 0.017453292f;
+    }
+
+    public static int getLobbyStatus() {
+        if (!Utils.nullCheck()) {
+            return -1;
+        }
+        final Scoreboard scoreboard = mc.theWorld.getScoreboard();
+        if (scoreboard == null) {
+            return -1;
+        }
+        final ScoreObjective objective = scoreboard.getObjectiveInDisplaySlot(1);
+        if (objective == null) {
+            return -1;
+        }
+        for (String line : getSidebarLines()) {
+            line = stripString(line);
+            String[] parts = line.split("  ");
+            if (parts.length > 1) {
+                if (parts[1].startsWith("L")) {
+                    return 1;
+                }
+            }
+        }
+        return -1;
+    }
+
+    public static int hypixelStatus() {
+        if (!Utils.nullCheck()) {
+            return -1;
+        }
+        final Scoreboard scoreboard = mc.theWorld.getScoreboard();
+        if (scoreboard == null) {
+            return -2;
+        }
+        final ScoreObjective objective = scoreboard.getObjectiveInDisplaySlot(1);
+        if (objective == null) {
+            return -1;
+        }
+        for (String line : getSidebarLines()) {
+            line = stripString(line);
+            if (line.startsWith("0") || line.startsWith("1")) {
+                return 1;
+            }
+        }
+        return -1;
+    }
+
+    public static boolean isReplay() {
+        if (Utils.isHypixel()) {
+            if (!Utils.nullCheck()) {
+                return false;
+            }
+            final Scoreboard scoreboard = mc.theWorld.getScoreboard();
+            if (scoreboard == null) {
+                return false;
+            }
+            final ScoreObjective objective = scoreboard.getObjectiveInDisplaySlot(1);
+            if (objective == null || !stripString(objective.getDisplayName()).contains("REPLAY")) {
+                return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean canBePlaced(ItemBlock itemBlock) {
+        Block block = itemBlock.getBlock();
+        if (block == null) {
+            return false;
+        }
+        if (BlockUtils.isInteractable(block) || block instanceof BlockSnow || block instanceof BlockWeb || block instanceof BlockSapling || block instanceof BlockDaylightDetector || block instanceof BlockBeacon || block instanceof BlockBanner || block instanceof BlockEndPortalFrame || block instanceof BlockEndPortal || block instanceof BlockLever || block instanceof BlockButton || block instanceof BlockSkull || block instanceof BlockLiquid || block instanceof BlockCactus || block instanceof BlockDoublePlant || block instanceof BlockLilyPad || block instanceof BlockCarpet || block instanceof BlockTripWire || block instanceof BlockTripWireHook || block instanceof BlockTallGrass || block instanceof BlockFlower || block instanceof BlockFlowerPot || block instanceof BlockSign || block instanceof BlockLadder || block instanceof BlockTorch || block instanceof BlockRedstoneTorch || block instanceof BlockStairs || block instanceof BlockSlab || block instanceof BlockFence || block instanceof BlockPane || block instanceof BlockStainedGlassPane || block instanceof BlockGravel || block instanceof BlockClay || block instanceof BlockSand || block instanceof BlockSoulSand || block instanceof BlockRailBase) {
+            return false;
+        }
+        return true;
+    }
+
+    public static <E extends Enum<E>> E getEnum(Class<E> enumClass, String value) {
+        for (E enumConstant : enumClass.getEnumConstants()) {
+            if (enumConstant.name().equals(value)) {
+                return enumConstant;
+            }
+        }
+        return null;
+    }
+
+    public static int getSpeedAmplifier() {
+        if (mc.thePlayer.isPotionActive(Potion.moveSpeed)) {
+            return 1 + mc.thePlayer.getActivePotionEffect(Potion.moveSpeed).getAmplifier();
+        }
+        return 0;
+    }
+
+    public static ItemStack getSpoofedItem(ItemStack original) {
+        if (ModuleManager.scaffold != null && ModuleManager.scaffold.isEnabled && ModuleManager.scaffold.autoSwap.isToggled() && ModuleManager.autoSwap.spoofItem.isToggled() && mc.thePlayer != null) {
+            return mc.thePlayer.inventory.getStackInSlot(ModuleManager.scaffold.lastSlot.get() == -1 ? mc.thePlayer.inventory.currentItem : ModuleManager.scaffold.lastSlot.get());
+        }
+        if (ModuleManager.LongJump != null && ModuleManager.LongJump.isEnabled() && ModuleManager.LongJump.spoofItem.isToggled() && mc.thePlayer != null) {
+            return mc.thePlayer.inventory.getStackInSlot(ModuleManager.LongJump.spoofSlot == -1 ? mc.thePlayer.inventory.currentItem : ModuleManager.LongJump.lastSlot);
+        }
+        if (ModuleManager.autoTool != null && ModuleManager.autoTool.isEnabled() && ModuleManager.autoTool.spoofItem.isToggled() && mc.thePlayer != null) {
+            return mc.thePlayer.inventory.getStackInSlot(ModuleManager.autoTool.previousSlot == -1 ? mc.thePlayer.inventory.currentItem : ModuleManager.autoTool.previousSlot);
+        }
+        return original;
+    }
+
+    public static boolean scaffoldDiagonal(boolean strict) {
+        float back = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - ModuleManager.scaffold.hardcodedYaw();
+        float yaw = ((back % 360) + 360) % 360;
+        yaw = yaw > 180 ? yaw - 360 : yaw;
+        boolean isYawDiagonal = inBetween(-170, 170, yaw) && !inBetween(-10, 10, yaw) && !inBetween(80, 100, yaw) && !inBetween(-100, -80, yaw);
+        if (strict) {
+            isYawDiagonal = inBetween(-178.5, 178.5, yaw) && !inBetween(-1.5, 1.5, yaw) && !inBetween(88.5, 91.5, yaw) && !inBetween(-91.5, -88.5, yaw);
+        }
+        return isYawDiagonal;
+    }
+
+    public static String readInputStream(InputStream inputStream) {
+        StringBuilder stringBuilder = new StringBuilder();
+
+        try {
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+            String line;
+            while ((line = bufferedReader.readLine()) != null)
+                stringBuilder.append(line).append('\n');
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return stringBuilder.toString();
+    }
+
     public static boolean isLobby() {
         if (Utils.isHypixel()) {
             List<String> sidebarLines = Utils.getSidebarLines();
@@ -1669,10 +1779,6 @@ public class Utils {
             }
         }
         return false;
-    }
-
-    public static String asWholeNum(double input) {
-        return isWholeNumber(input) ? (int) input + "" : String.valueOf(input);
     }
 
     public static boolean isBedwarsPractice() {
@@ -1693,7 +1799,7 @@ public class Utils {
         return false;
     }
 
-    public static boolean isReplay() {
+    public static boolean isBedwarsPracticeOrReplay() {
         if (Utils.isHypixel()) {
             if (!Utils.nullCheck()) {
                 return false;
@@ -1703,10 +1809,14 @@ public class Utils {
                 return false;
             }
             final ScoreObjective objective = scoreboard.getObjectiveInDisplaySlot(1);
-            if (objective == null || !stripString(objective.getDisplayName()).contains("REPLAY")) {
+            if (objective == null) {
                 return false;
             }
-            return true;
+            String stripped = stripString(objective.getDisplayName());
+            if (stripped.contains("BED WARS PRACTICE") || stripped.contains("REPLAY")) {
+                return true;
+            }
+            return false;
         }
         return false;
     }

@@ -15,6 +15,7 @@ public class TPAura extends Module {
     private double x = 0;
     private double z = 0;
     private double y = 0;
+
     public TPAura() {
         super("TPAura", category.combat);
         this.registerSetting(range = new SliderSetting("Range", 0, 0, 50, 1));

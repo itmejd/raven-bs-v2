@@ -29,11 +29,11 @@ public abstract class MixinEntityLivingBase extends Entity {
         super(worldIn);
     }
 
-    private final Map<Integer, PotionEffect> activePotionsMap = Maps.<Integer, PotionEffect>newHashMap();
+    private final Map<Integer, PotionEffect> activePotionsMap = Maps.newHashMap();
 
     @Shadow
     public PotionEffect getActivePotionEffect(Potion potionIn) {
-        return (PotionEffect) this.activePotionsMap.get(Integer.valueOf(potionIn.id));
+        return this.activePotionsMap.get(Integer.valueOf(potionIn.id));
     }
 
     @Shadow
@@ -51,9 +51,9 @@ public abstract class MixinEntityLivingBase extends Entity {
     public float swingProgress;
 
     @Inject(method = { "updateDistance", "func_110146_f" }, at = @At("HEAD"), cancellable = true)
-    protected void injectFunc110146_f(float p_110146_1_, float p_110146_2_, CallbackInfoReturnable<Float> cir) {
+    protected void injectUpdateDistance(float p_110146_1_, float p_110146_2_, CallbackInfoReturnable<Float> cir) {
         float rotationYaw = this.rotationYaw;
-        if (Settings.fullBody != null && Settings.rotateBody != null && !Settings.fullBody.isToggled() && Settings.rotateBody.isToggled() && (EntityLivingBase) (Object) this instanceof EntityPlayerSP) {
+        if (Settings.fullBody != null && Settings.rotateBody != null && !Settings.fullBody.isToggled() && Settings.rotateBody.isToggled() && (EntityLivingBase) (Object) this instanceof EntityPlayerSP && PreMotionEvent.setRenderYaw()) {
             if (this.swingProgress > 0F) {
                 p_110146_1_ = RotationUtils.renderYaw;
             }
@@ -100,20 +100,16 @@ public abstract class MixinEntityLivingBase extends Entity {
             return;
         }
 
-        if (Settings.movementFix != null && Settings.movementFix.isToggled() && PreMotionEvent.setRenderYaw()) {
-            jumpEvent.setYaw(RotationUtils.renderYaw);
-        }
-
         this.motionY = jumpEvent.getMotionY();
 
         if (this.isPotionActive(Potion.jump)) {
-            this.motionY += (double) ((float) (this.getActivePotionEffect(Potion.jump).getAmplifier() + 1) * 0.1F);
+            this.motionY += (float) (this.getActivePotionEffect(Potion.jump).getAmplifier() + 1) * 0.1F;
         }
 
         if (jumpEvent.applySprint()) {
             float f = jumpEvent.getYaw() * 0.017453292F;
-            this.motionX -= (double) (MathHelper.sin(f) * 0.2F);
-            this.motionZ += (double) (MathHelper.cos(f) * 0.2F);
+            this.motionX -= MathHelper.sin(f) * 0.2F;
+            this.motionZ += MathHelper.cos(f) * 0.2F;
         }
 
         this.isAirBorne = true;
@@ -122,8 +118,10 @@ public abstract class MixinEntityLivingBase extends Entity {
 
     @Inject(method = "isPotionActive(Lnet/minecraft/potion/Potion;)Z", at = @At("HEAD"), cancellable = true)
     private void isPotionActive(Potion p_isPotionActive_1_, final CallbackInfoReturnable<Boolean> callbackInfoReturnable) {
-        if (ModuleManager.potions != null && ModuleManager.potions.isEnabled() && ((p_isPotionActive_1_ == Potion.confusion && ModuleManager.potions.removeNausea.isToggled()) || (p_isPotionActive_1_ == Potion.blindness && ModuleManager.potions.removeBlindness.isToggled()))) {
-            callbackInfoReturnable.setReturnValue(false);
+        if (ModuleManager.antiDebuff != null && ModuleManager.antiDebuff.isEnabled() && ((p_isPotionActive_1_ == Potion.confusion && ModuleManager.antiDebuff.removeNausea.isToggled()) || (p_isPotionActive_1_ == Potion.blindness && ModuleManager.antiDebuff.removeBlindness.isToggled()))) {
+            if (ModuleManager.antiDebuff.removeSideEffects.isToggled()) {
+                callbackInfoReturnable.setReturnValue(false);
+            }
         }
     }
 }

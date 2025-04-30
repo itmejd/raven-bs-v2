@@ -8,7 +8,6 @@ import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.DescriptionSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
 import keystrokesmod.utility.BlockUtils;
-import keystrokesmod.utility.Reflection;
 import keystrokesmod.utility.RenderUtils;
 import keystrokesmod.utility.Utils;
 import net.minecraft.block.*;
@@ -21,14 +20,11 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.network.play.server.S08PacketPlayerPosLook;
 import net.minecraft.util.*;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
-import net.minecraftforge.client.event.DrawBlockHighlightEvent;
 import net.minecraftforge.client.event.MouseEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
-import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
-import org.lwjgl.input.Mouse;
 
 import java.awt.*;
 import java.util.*;
@@ -45,7 +41,9 @@ public class SpeedBuilders extends Module {
     private ButtonSetting infoHud;
     private ButtonSetting renderBlocks;
     private ButtonSetting renderOnlyPlaceable;
+
     private ConcurrentHashMap<BlockPos, BuildBlockInfo> buildInfo = new ConcurrentHashMap<>();
+
     private BlockPos platformCenter;
     private boolean listenForPacket;
     public List<BlockPos> platformPositions = Arrays.asList(
@@ -58,12 +56,12 @@ public class SpeedBuilders extends Module {
             new BlockPos(-45, 71, 18),
             new BlockPos(16, 71, -45)
     );
+
     private int highlightColor = new Color(31, 255, 22, 44).getRGB();
     private int notPlaceableColor = new Color(184, 255, 183, 30).getRGB();
+
     private boolean doneCollecting;
     private double blockCount;
-    private long lastPlace = 0L;
-    private BlockPos lastPlacePos = null;
     private int lastPlaceTick = 0;
     private boolean eliminated;
 
@@ -134,54 +132,12 @@ public class SpeedBuilders extends Module {
                                 mc.thePlayer.inventory.currentItem = slot;
                             }
                         }
-                        if ((hoverPlace.isToggled()) && holdingSameBlock(info.requiredState) && !autoPlace.isToggled() && correctPlaceState(info.requiredState, targetPos, mop.sideHit, mop.hitVec, mc.thePlayer.getHeldItem())) {
+                        if ((hoverPlace.isToggled()) && holdingSameBlock(info.requiredState) && correctPlaceState(info.requiredState, targetPos, mop.sideHit, mop.hitVec, mc.thePlayer.getHeldItem())) {
                             if (lastPlaceTick++ < placeDelay.getInput()) {
                                 return;
                             }
                             ((IAccessorMinecraft) mc).callRightClickMouse();
                             lastPlaceTick = 0;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public void onBlockHighlight(DrawBlockHighlightEvent ev) {
-        if (autoPlace.isToggled() && hoverPlace.isToggled() && Utils.nullCheck() && mc.currentScreen == null && getGameStatus() == 2) {
-            ItemStack i = mc.thePlayer.getHeldItem();
-            if (i != null && i.getItem() instanceof ItemBlock) {
-                MovingObjectPosition m = mc.objectMouseOver;
-                if (m != null && m.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK) {
-                    if (getLookInfo() != null) {
-                        MovingObjectPosition mop = getLookInfo();
-                        if (mop.sideHit != null) {
-                            BlockPos targetPos = mop.getBlockPos();
-                            BlockPos facePos = targetPos.offset(mop.sideHit);
-
-                            BuildBlockInfo info = buildInfo.get(facePos);
-                            if (info != null && !info.isPlaced && correctPlaceState(info.requiredState, targetPos, mop.sideHit, mop.hitVec, mc.thePlayer.getHeldItem())) {
-                                BlockPos pos = m.getBlockPos();
-                                if (this.lastPlacePos == null || pos.getX() != this.lastPlacePos.getX() || pos.getY() != this.lastPlacePos.getY() || pos.getZ() != this.lastPlacePos.getZ()) {
-                                    Block b = mc.theWorld.getBlockState(pos).getBlock();
-                                    if (b != null && b != Blocks.air && !(b instanceof BlockLiquid)) {
-                                        if (Mouse.isButtonDown(1) || hoverPlace.isToggled()) {
-                                            long n = System.currentTimeMillis();
-                                            if (n - this.lastPlace >= placeDelay.getInput() * 50) {
-                                                this.lastPlace = n;
-                                                if (mc.playerController.onPlayerRightClick(mc.thePlayer, mc.theWorld, i, pos, m.sideHit, m.hitVec)) {
-                                                    Reflection.setButton(1, true);
-                                                    mc.thePlayer.swingItem();
-                                                    mc.getItemRenderer().resetEquippedProgress();
-                                                    Reflection.setButton(1, false);
-                                                    this.lastPlacePos = pos;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
                         }
                     }
                 }
@@ -249,58 +205,58 @@ public class SpeedBuilders extends Module {
 
     @SubscribeEvent
     public void onRenderTick(TickEvent.RenderTickEvent e) {
-        if (e.phase != TickEvent.Phase.END || !Utils.nullCheck() || !infoHud.isToggled() || mc.currentScreen != null) {
+        if (e.phase != TickEvent.Phase.END || !Utils.nullCheck() || mc.currentScreen != null) {
             return;
         }
         int gameStatus = getGameStatus();
-
-        List<String> lines = new ArrayList<>();
-        lines.add("§6Speed Builders");
-        lines.add("§7Status: §b" + ((gameStatus == 1 || gameStatus == 4)
-                ? "Showing" : (gameStatus == 2)
-                ? "Building" : (gameStatus == 3)
-                ? "Judging" : "§cDisabled"));
-        if (gameStatus == 2 && !eliminated) {
-            double placedCount = 0;
-            for (BuildBlockInfo info : buildInfo.values()) {
-                if (info.isPlaced) placedCount++;
+        if (infoHud.isToggled()) {
+            List<String> lines = new ArrayList<>();
+            lines.add("§6Speed Builders");
+            lines.add("§7Status: §b" + ((gameStatus == 1 || gameStatus == 4)
+                    ? "Showing" : (gameStatus == 2)
+                    ? "Building" : (gameStatus == 3)
+                    ? "Judging" : "§cDisabled"));
+            if (gameStatus == 2 && !eliminated) {
+                double placedCount = 0;
+                for (BuildBlockInfo info : buildInfo.values()) {
+                    if (info.isPlaced) placedCount++;
+                }
+                double percentage = 0.0;
+                if (buildInfo.isEmpty()) {
+                    percentage = 100.0;
+                    placedCount = blockCount;
+                } else if (blockCount > 0) {
+                    percentage = ((placedCount) / blockCount) * 100.0;
+                }
+                lines.add("§7Progress: §b" + (int) placedCount + "§7/§b" + (int) blockCount + " " + Math.round(percentage) + "%");
             }
-            double percentage = 0.0;
-            if (buildInfo.isEmpty()) {
-                percentage = 100.0;
-                placedCount = blockCount;
+            lines.add("§7Auto: " + (autoEnabled() ? "§aENABLED" : "§cDISABLED"));
+
+            int padding = 4;
+            int maxWidth = 0;
+            for (String line : lines) {
+                int lineWidth = mc.fontRendererObj.getStringWidth(line);
+                if (lineWidth > maxWidth) {
+                    maxWidth = lineWidth;
+                }
             }
-            else if (blockCount > 0) {
-                percentage = ((placedCount) / blockCount) * 100.0;
+
+            int lineHeight = mc.fontRendererObj.FONT_HEIGHT;
+            int lineSpacing = 3;
+            int totalHeight = lines.size() * lineHeight + (lines.size() - 1) * lineSpacing + padding * 2;
+            int totalWidth = maxWidth + padding * 2;
+
+            float x = -5;
+            float y = 110;
+
+            RenderUtils.drawRoundedRectangle(x, y, x + totalWidth + 7, y + totalHeight - 2, 7, Utils.mergeAlpha(Color.black.getRGB(), 120));
+
+            float textX = x + padding;
+            float textY = y + padding;
+
+            for (int i = 0; i < lines.size(); i++) {
+                mc.fontRendererObj.drawString(lines.get(i), (int) (textX + 5), (int) (textY + i * (lineHeight + lineSpacing)), -1);
             }
-            lines.add("§7Progress: §b" + (int) placedCount + "§7/§b" + (int) blockCount + " " + Math.round(percentage) + "%");
-        }
-        lines.add("§7Auto: " + (autoEnabled() ? "§aENABLED" : "§cDISABLED"));
-
-        int padding = 4;
-        int maxWidth = 0;
-        for (String line : lines) {
-            int lineWidth = mc.fontRendererObj.getStringWidth(line);
-            if (lineWidth > maxWidth) {
-                maxWidth = lineWidth;
-            }
-        }
-
-        int lineHeight = mc.fontRendererObj.FONT_HEIGHT;
-        int lineSpacing = 3;
-        int totalHeight = lines.size() * lineHeight + (lines.size() - 1) * lineSpacing + padding * 2;
-        int totalWidth = maxWidth + padding * 2;
-
-        float x = -5;
-        float y = 110;
-
-        RenderUtils.drawRoundedRectangle(x, y, x + totalWidth + 7, y + totalHeight - 2, 7, Utils.mergeAlpha(Color.black.getRGB(), 120));
-
-        float textX = x + padding;
-        float textY = y + padding;
-
-        for (int i = 0; i < lines.size(); i++) {
-            mc.fontRendererObj.drawString(lines.get(i), (int) (textX + 5), (int) (textY + i * (lineHeight + lineSpacing)), -1);
         }
     }
 

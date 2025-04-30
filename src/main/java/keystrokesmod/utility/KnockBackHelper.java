@@ -25,6 +25,9 @@ public class KnockBackHelper {
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onReceivePacket(ReceivePacketEvent e) {
+        if (!Utils.nullCheck()) {
+            return;
+        }
         if (e.getPacket() instanceof S12PacketEntityVelocity || e.getPacket() instanceof S27PacketExplosion) {
             if (e.getPacket() instanceof S12PacketEntityVelocity &&
                     ((S12PacketEntityVelocity) e.getPacket()).getEntityID() == mc.thePlayer.getEntityId() &&

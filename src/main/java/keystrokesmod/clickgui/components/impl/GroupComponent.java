@@ -9,12 +9,12 @@ import org.lwjgl.opengl.GL11;
 public class GroupComponent extends Component {
     public GroupSetting setting;
     private ModuleComponent component;
-    public int o;
-    private int x;
-    private int y;
+    public float o;
+    private float x;
+    private float y;
     public boolean opened;
 
-    public GroupComponent(GroupSetting setting, ModuleComponent moduleComponent, int o) {
+    public GroupComponent(GroupSetting setting, ModuleComponent moduleComponent, float o) {
         this.setting = setting;
         this.component = moduleComponent;
         this.o = o;
@@ -51,7 +51,7 @@ public class GroupComponent extends Component {
         GL11.glPopMatrix();
     }
 
-    public void updateHeight(int n) {
+    public void updateHeight(float n) {
         this.o = n;
     }
 

@@ -17,20 +17,14 @@ import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.KeySetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
 import keystrokesmod.script.Manager;
-import keystrokesmod.utility.ModuleUtils;
-import keystrokesmod.utility.ScaffoldBlockCount;
 import keystrokesmod.utility.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.FMLCommonHandler;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ProfileManager {
     public static Minecraft mc = Minecraft.getMinecraft();
@@ -241,8 +235,8 @@ public class ProfileManager {
                             String element = setting.getValue().getAsString();
                             String[] statesStr = element.split(",");
 
-                            int posX = Integer.parseInt(statesStr[0]);
-                            int posY = Integer.parseInt(statesStr[1]);
+                            float posX = Float.parseFloat(statesStr[0]);
+                            float posY = Float.parseFloat(statesStr[1]);
 
                             for (CategoryComponent c : ClickGui.categories) {
                                 if (c.category.name().equals(settingName)) {
@@ -261,10 +255,7 @@ public class ProfileManager {
                     for (Setting setting : module.getSettings()) {
                         setting.loadProfile(moduleInformation);
                     }
-                    ScaffoldBlockCount.fadeInTimer = null;
-                    ScaffoldBlockCount.fadeTimer = null;
-                    FMLCommonHandler.instance().bus().unregister(this);
-                    ModuleUtils.profileTicks = 0;
+
                     Raven.currentProfile = getProfile(name);
                 }
                 MinecraftForge.EVENT_BUS.post(new PostProfileLoadEvent(Raven.currentProfile.getName()));

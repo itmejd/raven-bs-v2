@@ -1,6 +1,7 @@
 package keystrokesmod.module.impl.combat;
 
 import keystrokesmod.module.Module;
+import keystrokesmod.module.impl.world.AntiBot;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
 import keystrokesmod.utility.Utils;
@@ -12,12 +13,18 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import java.util.HashMap;
 
 public class WTap extends Module {
+    private SliderSetting delay;
+    private SliderSetting hurttime;
     private SliderSetting chance;
     private ButtonSetting playersOnly;
-    private final HashMap<Integer, Long> targets = new HashMap<>();
+
+    private final HashMap<Integer, Long> hits = new HashMap<>();
     public static boolean stopSprint = false;
+
     public WTap() {
         super("WTap", category.combat);
+        this.registerSetting(delay = new SliderSetting("Delay", "ms", 200, 0, 1000, 50));
+        this.registerSetting(hurttime = new SliderSetting("Hurttime", 0, 0, 10, 1));
         this.registerSetting(chance = new SliderSetting("Chance", "%", 100, 0, 100, 1));
         this.registerSetting(playersOnly = new ButtonSetting("Players only", true));
         this.closetModule = true;
@@ -35,8 +42,7 @@ public class WTap extends Module {
             if (!(event.target instanceof EntityPlayer)) {
                 return;
             }
-            final EntityPlayer entityPlayer = (EntityPlayer)event.target;
-            if (entityPlayer.maxHurtTime == 0 || entityPlayer.hurtTime > 3) {
+            if (AntiBot.isBot(event.target)) {
                 return;
             }
         }
@@ -46,9 +52,12 @@ public class WTap extends Module {
         if (((EntityLivingBase)event.target).deathTime != 0) {
             return;
         }
-        final long currentTimeMillis = System.currentTimeMillis();
-        final Long n = this.targets.get(event.target.getEntityId());
-        if (n != null && Utils.timeBetween(n, currentTimeMillis) <= 200L) {
+        if (((EntityLivingBase) event.target).hurtTime > hurttime.getInput()) {
+            return;
+        }
+        long currentMs = System.currentTimeMillis();
+        Long lastHit = this.hits.get(event.target.getEntityId());
+        if (lastHit != null && Utils.timeBetween(lastHit, currentMs) <= (long) delay.getInput()) {
             return;
         }
         if (chance.getInput() != 100.0D) {
@@ -57,12 +66,12 @@ public class WTap extends Module {
                 return;
             }
         }
-        this.targets.put(event.target.getEntityId(), currentTimeMillis);
+        this.hits.put(event.target.getEntityId(), currentMs);
         stopSprint = true;
     }
 
     public void onDisable() {
         stopSprint = false;
-        this.targets.clear();
+        this.hits.clear();
     }
 }

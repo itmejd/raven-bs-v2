@@ -1,12 +1,10 @@
 package keystrokesmod.module.impl.player;
 
 import keystrokesmod.Raven;
-import keystrokesmod.event.PreUpdateEvent;
-import keystrokesmod.event.ReceiveAllPacketsEvent;
-import keystrokesmod.event.ReceivePacketEvent;
-import keystrokesmod.event.SendPacketEvent;
+import keystrokesmod.event.*;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
+import keystrokesmod.module.impl.combat.KillAura;
 import keystrokesmod.module.impl.movement.LongJump;
 import keystrokesmod.module.impl.render.HUD;
 import keystrokesmod.module.setting.impl.ButtonSetting;
@@ -93,15 +91,14 @@ public class Blink extends Module {
         pos = null;
         blinkTicks = 0;
         started = false;
+
+        KillAura.blinkOn = KillAura.blinkChecked = false;
     }
 
     @SubscribeEvent
-    public void onSendPacket(SendPacketEvent e) {
+    public void onSendPacketAll(SendAllPacketsEvent e) {
         if (!Utils.nullCheck()) {
             this.disable();
-            return;
-        }
-        if (ModuleManager.killAura.isTargeting || ModuleManager.killAura.justUnTargeted) {
             return;
         }
         if (disableOnBreak.isToggled() && (Utils.usingBedAura() || ModuleUtils.isBreaking)) {
@@ -122,6 +119,7 @@ public class Blink extends Module {
         if (!e.isCanceled()) {
             started = true;
             blinkedPackets.add(packet);
+            KillAura.blinkOn = true;
             e.setCanceled(true);
         }
     }
@@ -169,13 +167,7 @@ public class Blink extends Module {
                 return;
             }
         }
-        color = Theme.getGradient((int) HUD.theme.getInput(), 0);
-        int widthOffset = (blinkTicks < 10) ? 4 : (blinkTicks >= 10 && blinkTicks < 100) ? 7 : (blinkTicks >= 100 && blinkTicks < 1000) ? 10 : (blinkTicks >= 1000) ? 13 : 16;
-        String text = ("" + blinkTicks);
-        int width = mc.fontRendererObj.getStringWidth(text) + Utils.getBoldWidth(text) / 2;
-        final ScaledResolution scaledResolution = new ScaledResolution(mc);
-        int[] display = {scaledResolution.getScaledWidth(), scaledResolution.getScaledHeight(), scaledResolution.getScaleFactor()};
-        mc.fontRendererObj.drawString(text, display[0] / 2 - width + widthOffset, display[1] / 2 + 8, color, true);
+        Utils.handleTimer(color, blinkTicks);
     }
 
     @SubscribeEvent

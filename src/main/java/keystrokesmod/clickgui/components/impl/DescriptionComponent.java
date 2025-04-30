@@ -9,11 +9,11 @@ import org.lwjgl.opengl.GL11;
 public class DescriptionComponent extends Component {
     public DescriptionSetting desc;
     private ModuleComponent p;
-    public int o;
-    public int x;
-    public int y;
+    public float o;
+    public float x;
+    public float y;
 
-    public DescriptionComponent(DescriptionSetting desc, ModuleComponent b, int o) {
+    public DescriptionComponent(DescriptionSetting desc, ModuleComponent b, float o) {
         this.desc = desc;
         this.p = b;
         this.x = b.categoryComponent.getX() + b.categoryComponent.getWidth();
@@ -28,7 +28,7 @@ public class DescriptionComponent extends Component {
         GL11.glPopMatrix();
     }
 
-    public void updateHeight(int n) {
+    public void updateHeight(float n) {
         this.o = n;
     }
 }

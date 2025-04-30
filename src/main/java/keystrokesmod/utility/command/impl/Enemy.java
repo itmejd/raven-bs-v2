@@ -22,6 +22,12 @@ public class Enemy extends Command {
                 Utils.removeEnemy(args[1]);
             }
         }
+        else if (args.length == 1) {
+            chatWithPrefix("&b" + Utils.enemies.size() + " &7enem" + (Utils.enemies.size() == 1 ? "y" : "ies") + ".");
+            for (String name : Utils.enemies) {
+                chatWithPrefix(" &b" + name);
+            }
+        }
         else {
             syntaxError();
         }

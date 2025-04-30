@@ -11,7 +11,6 @@ import keystrokesmod.module.impl.movement.LongJump;
 import keystrokesmod.module.impl.render.HUD;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
-import keystrokesmod.script.classes.Block;
 import keystrokesmod.utility.*;
 import net.minecraft.client.gui.GuiIngame;
 import net.minecraft.client.gui.ScaledResolution;
@@ -46,7 +45,7 @@ public class NoFall extends Module {
 
     private double initialY;
     private double dynamic;
-    private boolean isFalling;
+    public boolean isFalling;
     private double timerVal = 1;
 
     private int n;
@@ -151,7 +150,7 @@ public class NoFall extends Module {
             return;
         }
         else if ((double) mc.thePlayer.fallDistance >= minFallDistance.getInput()) {
-           isFalling = true;
+            isFalling = true;
         }
 
         if (ModuleManager.antiVoid.started) {
@@ -307,13 +306,7 @@ public class NoFall extends Module {
                 return;
             }
         }
-        color = Theme.getGradient((int) HUD.theme.getInput(), 0);
-        int widthOffset = (blinkTicks < 10) ? 4 : (blinkTicks >= 10 && blinkTicks < 100) ? 7 : (blinkTicks >= 100 && blinkTicks < 1000) ? 10 : (blinkTicks >= 1000) ? 13 : 16;
-        String text = ("" + blinkTicks);
-        int width = mc.fontRendererObj.getStringWidth(text) + Utils.getBoldWidth(text) / 2;
-        final ScaledResolution scaledResolution = new ScaledResolution(mc);
-        int[] display = {scaledResolution.getScaledWidth(), scaledResolution.getScaledHeight(), scaledResolution.getScaleFactor()};
-        mc.fontRendererObj.drawString(text, display[0] / 2 - width + widthOffset, display[1] / 2 + 8, color, true);
+        Utils.handleTimer(color, blinkTicks);
     }
 
     @SubscribeEvent

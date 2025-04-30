@@ -22,6 +22,12 @@ public class Friend extends Command {
                 Utils.removeFriend(args[1]);
             }
         }
+        else if (args.length == 1) {
+            chatWithPrefix("&b" + Utils.friends.size() + " &7friend" + (Utils.friends.size() == 1 ? "" : "s") + ".");
+            for (String name : Utils.friends) {
+                chatWithPrefix(" &b" + name);
+            }
+        }
         else {
             syntaxError();
         }

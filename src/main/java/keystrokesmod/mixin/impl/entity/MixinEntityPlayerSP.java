@@ -14,15 +14,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.entity.EntityPlayerSP;
-import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.network.NetHandlerPlayClient;
 import net.minecraft.network.play.client.C03PacketPlayer;
 import net.minecraft.network.play.client.C0BPacketEntityAction;
-import net.minecraft.network.play.client.C0CPacketInput;
 import net.minecraft.potion.Potion;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.MovementInput;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.*;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -37,8 +33,6 @@ public abstract class MixinEntityPlayerSP extends AbstractClientPlayer {
     @Shadow
     public int sprintingTicksLeft;
 
-    private boolean canSprint;
-
     public MixinEntityPlayerSP(World p_i45074_1_, GameProfile p_i45074_2_) {
         super(p_i45074_1_, p_i45074_2_);
     }
@@ -46,7 +40,6 @@ public abstract class MixinEntityPlayerSP extends AbstractClientPlayer {
     @Override
     @Shadow
     public abstract void setSprinting(boolean p_setSprinting_1_);
-
     @Shadow
     protected int sprintToggleTimer;
     @Shadow
@@ -57,35 +50,27 @@ public abstract class MixinEntityPlayerSP extends AbstractClientPlayer {
     protected Minecraft mc;
     @Shadow
     public MovementInput movementInput;
-
     @Override
     @Shadow
     public abstract void sendPlayerAbilities();
-
     @Shadow
     protected abstract boolean isCurrentViewEntity();
-
     @Shadow
     public abstract boolean isRidingHorse();
-
     @Shadow
     private int horseJumpPowerCounter;
     @Shadow
     private float horseJumpPower;
-
     @Shadow
     protected abstract void sendHorseJump();
-
     @Shadow
     private boolean serverSprintState;
     @Shadow
     @Final
     public NetHandlerPlayClient sendQueue;
-
     @Override
     @Shadow
     public abstract boolean isSneaking();
-
     @Shadow
     private boolean serverSneakState;
     @Shadow
@@ -120,6 +105,7 @@ public abstract class MixinEntityPlayerSP extends AbstractClientPlayer {
 
     @Overwrite
     public void onUpdateWalkingPlayer() {
+        PreMotionEvent.setRotations = false;
         PreMotionEvent.setRenderYaw(false);
         RotationUtils.setFakeRotations = false;
         PreMotionEvent preMotionEvent = new PreMotionEvent(
@@ -229,7 +215,7 @@ public abstract class MixinEntityPlayerSP extends AbstractClientPlayer {
         this.prevTimeInPortal = this.timeInPortal;
         if (this.inPortal) {
             if (this.mc.currentScreen != null && !this.mc.currentScreen.doesGuiPauseGame()) {
-                this.mc.displayGuiScreen((GuiScreen) null);
+                this.mc.displayGuiScreen(null);
             }
 
             if (this.timeInPortal == 0.0F) {
@@ -242,12 +228,16 @@ public abstract class MixinEntityPlayerSP extends AbstractClientPlayer {
             }
 
             this.inPortal = false;
-        } else if (this.isPotionActive(Potion.confusion) && this.getActivePotionEffect(Potion.confusion).getDuration() > 60) {
-            this.timeInPortal += 0.006666667F;
-            if (this.timeInPortal > 1.0F) {
-                this.timeInPortal = 1.0F;
+        }
+        else if (this.isPotionActive(Potion.confusion) && this.getActivePotionEffect(Potion.confusion).getDuration() > 60) {
+            if (ModuleManager.antiDebuff == null || !ModuleManager.antiDebuff.canRemoveNausea(Potion.confusion)) {
+                this.timeInPortal += 0.006666667F;
+                if (this.timeInPortal > 1.0F) {
+                    this.timeInPortal = 1.0F;
+                }
             }
-        } else {
+        }
+        else {
             if (this.timeInPortal > 0.0F) {
                 this.timeInPortal -= 0.05F;
             }
@@ -267,7 +257,7 @@ public abstract class MixinEntityPlayerSP extends AbstractClientPlayer {
         boolean flag2 = this.movementInput.moveForward >= f;
         this.movementInput.updatePlayerMoveState();
         boolean stopSprint = ModuleManager.noSlow == null || !ModuleManager.noSlow.isEnabled() || NoSlow.slowed.getInput() == 80;
-        if (this.isUsingItem() && !this.isRiding()) {
+        if ((this.isUsingItem() || (ModuleManager.killAura != null && ModuleManager.killAura.isEnabled() && ModuleManager.killAura.blockingClient)) && !this.isRiding()) {
             MovementInput var10000 = this.movementInput;
             float slowed = NoSlow.getSlowed();
             var10000.moveStrafe *= slowed;
@@ -295,7 +285,7 @@ public abstract class MixinEntityPlayerSP extends AbstractClientPlayer {
             this.setSprinting(true);
         }
 
-        if (this.isSprinting() && (!ModuleManager.sprint.omniSprint() && !ModuleManager.scaffold.sprint() && (this.movementInput.moveForward < f || !flag3)) || this.isCollidedHorizontally || ModuleManager.sprint.disableBackwards() || ModuleUtils.setSlow || (this.movementInput.moveForward == 0 && this.movementInput.moveStrafe == 0) || this.mc.gameSettings.keyBindSneak.isKeyDown() || (ModuleManager.scaffold != null && ModuleManager.scaffold.isEnabled && (!ModuleManager.scaffold.sprint() || ModuleManager.tower.canTower())) || (ModuleManager.wTap.isEnabled() && WTap.stopSprint) || ModuleManager.sprint.isEnabled() && ModuleManager.sprint.omniDirectional.getInput() > 0 && !ModuleManager.sprint.omniSprint()) {
+        if (this.isSprinting() && (!ModuleManager.sprint.omniSprint() && !ModuleManager.scaffold.sprint() && (this.movementInput.moveForward < f || !flag3)) || this.isCollidedHorizontally || ModuleManager.sprint.disableBackwards() || ModuleUtils.setSlow || (this.movementInput.moveForward == 0 && this.movementInput.moveStrafe == 0) || this.mc.gameSettings.keyBindSneak.isKeyDown() || (ModuleManager.scaffold != null && ModuleManager.scaffold.isEnabled && !ModuleManager.scaffold.sprint()) || (ModuleManager.wTap.isEnabled() && WTap.stopSprint) || ModuleManager.sprint.isEnabled() && ModuleManager.sprint.omniDirectional.getInput() > 0 && !ModuleManager.sprint.omniSprint()) {
             this.setSprinting(false);
             WTap.stopSprint = false;
         }
@@ -358,6 +348,5 @@ public abstract class MixinEntityPlayerSP extends AbstractClientPlayer {
             this.capabilities.isFlying = false;
             this.sendPlayerAbilities();
         }
-
     }
 }

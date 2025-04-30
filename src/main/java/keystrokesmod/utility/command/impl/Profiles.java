@@ -1,7 +1,6 @@
 package keystrokesmod.utility.command.impl;
 
 import keystrokesmod.Raven;
-import keystrokesmod.utility.ModuleUtils;
 import keystrokesmod.utility.Utils;
 import keystrokesmod.utility.command.Command;
 import keystrokesmod.utility.profile.Profile;

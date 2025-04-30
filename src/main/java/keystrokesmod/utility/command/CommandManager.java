@@ -1,6 +1,5 @@
 package keystrokesmod.utility.command;
 
-import keystrokesmod.module.impl.combat.Velocity;
 import keystrokesmod.utility.Utils;
 import keystrokesmod.utility.command.impl.*;
 
@@ -27,6 +26,8 @@ public class CommandManager {
         registerCommand(new Q());
         registerCommand(new QList());
         registerCommand(new Status());
+        registerCommand(new SpammerUtil());
+        registerCommand(new StopSpammer());
     }
 
     public void executeCommand(String input) {

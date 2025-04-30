@@ -1,5 +1,6 @@
 package keystrokesmod.module.impl.world;
 
+import keystrokesmod.Raven;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.player.Freecam;
@@ -34,8 +35,8 @@ public class AntiBot extends Module {
 
     @SubscribeEvent
     public void c(final EntityJoinWorldEvent e) {
-        if (e.entity instanceof EntityPlayer && e.entity != mc.thePlayer) {
-            if (delay.getInput() != -1) {
+        if ((e.entity instanceof EntityPlayer || Raven.debug) && e.entity != mc.thePlayer) {
+            if (delay.getInput() != -1 && e.entity instanceof EntityPlayer) {
                 entities.put((EntityPlayer) e.entity, System.currentTimeMillis());
             }
             if (printWorldJoin.isToggled()) {

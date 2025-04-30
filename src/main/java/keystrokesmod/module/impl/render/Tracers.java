@@ -1,6 +1,7 @@
 package keystrokesmod.module.impl.render;
 
 import keystrokesmod.Raven;
+import keystrokesmod.mixin.impl.accessor.IAccessorMinecraft;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.impl.world.AntiBot;
 import keystrokesmod.module.setting.impl.ButtonSetting;
@@ -68,7 +69,7 @@ public class Tracers extends Module {
                 while (var3.hasNext()) {
                     Entity en = (Entity) var3.next();
                     if (en instanceof EntityLivingBase && en != mc.thePlayer) {
-                        RenderUtils.drawTracerLine(en, rgb, (float) f.getInput(), Utils.getTimer().renderPartialTicks);
+                        RenderUtils.drawTracerLine(en, rgb, (float) f.getInput(), ((IAccessorMinecraft) mc).getTimer().renderPartialTicks);
                     }
                 }
 
@@ -90,7 +91,7 @@ public class Tracers extends Module {
                     } while (!a.isToggled() && en.isInvisible());
 
                     if (!AntiBot.isBot(en)) {
-                        RenderUtils.drawTracerLine(en, rgb, (float) f.getInput(), Utils.getTimer().renderPartialTicks);
+                        RenderUtils.drawTracerLine(en, rgb, (float) f.getInput(), ((IAccessorMinecraft) mc).getTimer().renderPartialTicks);
                     }
                 }
             }

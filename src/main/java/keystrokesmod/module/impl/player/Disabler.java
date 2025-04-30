@@ -52,7 +52,7 @@ public class Disabler extends Module {
     public boolean disablerLoaded, running;
 
     public Disabler() {
-        super("Disabler", Module.category.player);
+        super("Disabler", category.player);
         this.registerSetting(disablerTicks = new SliderSetting("Ticks", "", 100, 85, 150, 5));
         this.registerSetting(activationDelay = new SliderSetting("Activation delay", " seconds", 0, 0, 4, 0.5));
     }
@@ -183,7 +183,7 @@ public class Disabler extends Module {
 
     @SubscribeEvent()
     public void onMoveInput(PrePlayerInputEvent e) {
-        if (!running) {
+        if (!running || Utils.isReplay() || Utils.spectatorCheck()) {
             return;
         }
         e.setForward(0);

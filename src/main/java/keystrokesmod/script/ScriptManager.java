@@ -31,26 +31,26 @@ public class ScriptManager {
     public JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     public boolean deleteTempFiles = true;
     public File directory;
-    public List<String> imports = Arrays.asList(Color.class.getName(), Collections.class.getName(), List.class.getName(), ArrayList.class.getName(), Arrays.class.getName(), Map.class.getName(), HashMap.class.getName(), HashSet.class.getName(), ConcurrentHashMap.class.getName(), LinkedHashMap.class.getName(), Iterator.class.getName(), Comparator.class.getName(), AtomicInteger.class.getName(), AtomicLong.class.getName(), AtomicBoolean.class.getName(), Random.class.getName(), Matcher.class.getName());
-    public String COMPILED_DIR = System.getProperty("java.io.tmpdir") + "cmF2ZW5fc2NyaXB0cw";
-    public String b = ((String[])ScriptManager.class.getProtectionDomain().getCodeSource().getLocation().getPath().split("\\.jar!"))[0].substring(5) + ".jar";
+    public List<String> imports = Arrays.asList(Color.class.getName(), Collections.class.getName(), List.class.getName(), ArrayList.class.getName(), Arrays.class.getName(), Map.class.getName(), Set.class.getName(), HashMap.class.getName(), HashSet.class.getName(), ConcurrentHashMap.class.getName(), LinkedHashMap.class.getName(), LinkedHashSet.class.getName(), Iterator.class.getName(), Comparator.class.getName(), AtomicInteger.class.getName(), AtomicLong.class.getName(), AtomicBoolean.class.getName(), Random.class.getName(), Matcher.class.getName());
+    public String COMPILED_DIR = Utils.getCompilerDirectory();
+    public String jarPath = ((String[])ScriptManager.class.getProtectionDomain().getCodeSource().getLocation().getPath().split("\\.jar!"))[0].substring(5) + ".jar";
     private Map<String, String> loadedHashes = new HashMap<>();
 
     public ScriptManager() {
         directory = new File(mc.mcDataDir + File.separator + "keystrokes", "scripts");
     }
 
-    public void onEnable(Script dv) {
-        if (dv.event == null) {
-            dv.event = new ScriptEvents(getModule(dv));
-            MinecraftForge.EVENT_BUS.register(dv.event);
+    public void onEnable(Script script) {
+        if (script.event == null) {
+            script.event = new ScriptEvents(getModule(script));
+            MinecraftForge.EVENT_BUS.register(script.event);
         }
-        dv.invoke("onEnable");
+        script.invoke("onEnable");
     }
 
-    public Module getModule(Script dv) {
+    public Module getModule(Script script) {
         for (Map.Entry<Script, Module> entry : this.scripts.entrySet()) {
-            if (entry.getKey().equals(dv)) {
+            if (entry.getKey().equals(script)) {
                 return entry.getValue();
             }
         }
@@ -64,9 +64,9 @@ public class ScriptManager {
 
         if (deleteTempFiles) {
             deleteTempFiles = false;
-            final File tempDirectory = new File(COMPILED_DIR);
+            File tempDirectory = new File(COMPILED_DIR);
             if (tempDirectory.exists() && tempDirectory.isDirectory()) {
-                final File[] tempFiles = tempDirectory.listFiles();
+                File[] tempFiles = tempDirectory.listFiles();
                 if (tempFiles != null) {
                     for (File tempFile : tempFiles) {
                         if (!tempFile.delete()) {
@@ -98,11 +98,11 @@ public class ScriptManager {
             }
         }
 
-        final File scriptDirectory = directory;
+        File scriptDirectory = directory;
         if (scriptDirectory.exists() && scriptDirectory.isDirectory()) {
-            final File[] scriptFiles = scriptDirectory.listFiles();
+            File[] scriptFiles = scriptDirectory.listFiles();
             if (scriptFiles != null) {
-                for (final File scriptFile : scriptFiles) {
+                for (File scriptFile : scriptFiles) {
                     if (scriptFile.isFile() && scriptFile.getName().endsWith(".java")) {
                         String fileName = scriptFile.getName();
                         String hash = calculateHash(scriptFile);
@@ -137,9 +137,21 @@ public class ScriptManager {
         }
 
         ScriptDefaults.reloadModules();
+
+        File tempDirectory = new File(COMPILED_DIR);
+        if (tempDirectory.exists() && tempDirectory.isDirectory()) {
+            File[] tempFiles = tempDirectory.listFiles();
+            if (tempFiles != null) {
+                for (File tempFile : tempFiles) {
+                    if (!tempFile.delete()) {
+                        System.err.println("Failed to delete temp file: " + tempFile.getAbsolutePath());
+                    }
+                }
+            }
+        }
     }
 
-    private boolean parseFile(final File file) {
+    private boolean parseFile(File file) {
         if (file.getName().startsWith("_") || !file.getName().endsWith(".java")) {
             return false;
         }
@@ -173,6 +185,7 @@ public class ScriptManager {
                 }
             }
         }
+
         Script script = new Script(scriptName);
         script.file = file;
         script.setCode(scriptContents.toString());
@@ -193,7 +206,7 @@ public class ScriptManager {
         script.invoke("onDisable");
     }
 
-    public void invoke(String methodName, Module module, final Object... args) {
+    public void invoke(String methodName, Module module, Object... args) {
         for (Map.Entry<Script, Module> entry : this.scripts.entrySet()) {
             if (((entry.getValue().canBeEnabled() && entry.getValue().isEnabled()) || methodName.equals("onLoad")) && entry.getValue().equals(module)) {
                 entry.getKey().invoke(methodName, args);
@@ -201,16 +214,29 @@ public class ScriptManager {
         }
     }
 
-    public int invokeBoolean(String methodName, Module module, final Object... args) {
+    public int invokeBoolean(String methodName, Module module, Object... args) {
         for (Map.Entry<Script, Module> entry : this.scripts.entrySet()) {
             if (entry.getValue().canBeEnabled() && entry.getValue().isEnabled() && entry.getValue().equals(module)) {
-                final int c = entry.getKey().getBoolean(methodName, args);
+                int c = entry.getKey().getBoolean(methodName, args);
                 if (c != -1) {
                     return c;
                 }
             }
         }
         return -1;
+    }
+
+
+    public Float[] invokeFloatArray(String method, Module module, Object... args) {
+        for (Map.Entry<Script, Module> entry : this.scripts.entrySet()) {
+            if (entry.getValue().canBeEnabled() && entry.getValue().isEnabled() && entry.getValue().equals(module)) {
+                Float[] val = entry.getKey().getFloatArray(method, args);
+                if (val != null) {
+                    return val;
+                }
+            }
+        }
+        return null;
     }
 
     private String calculateHash(File file) {

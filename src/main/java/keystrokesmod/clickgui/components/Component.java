@@ -1,8 +1,6 @@
 package keystrokesmod.clickgui.components;
 
 public class Component {
-    public boolean visible = true;
-
     public void render() {
     }
 
@@ -19,7 +17,7 @@ public class Component {
     public void keyTyped(char t, int k) {
     }
 
-    public void updateHeight(int n) {
+    public void updateHeight(float n) {
     }
 
     public int getHeight() {

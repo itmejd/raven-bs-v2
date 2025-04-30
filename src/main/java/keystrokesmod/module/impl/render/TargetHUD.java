@@ -31,7 +31,6 @@ public class TargetHUD extends Module {
     private ButtonSetting renderEsp;
     private ButtonSetting showStatus;
     private ButtonSetting healthColor;
-    private ButtonSetting animations;
     private Timer fadeTimer;
     private Timer healthBarTimer = null;
     private EntityLivingBase target;
@@ -54,7 +53,6 @@ public class TargetHUD extends Module {
         this.registerSetting(renderEsp = new ButtonSetting("Render ESP", true));
         this.registerSetting(showStatus = new ButtonSetting("Show win or loss", true));
         this.registerSetting(healthColor = new ButtonSetting("Traditional health color", false));
-        this.registerSetting(animations = new ButtonSetting("Animations", false));
     }
 
     public void onDisable() {
@@ -90,7 +88,7 @@ public class TargetHUD extends Module {
                 health = 0;
             }
             if (health != lastHealth) {
-                (healthBarTimer = new Timer(animations.isToggled() ? (mode.getInput() == 0 ? 500 : 350) : 0)).start();
+                (healthBarTimer = new Timer(mode.getInput() == 0 ? 500 : 350)).start();
             }
             lastHealth = health;
             playerInfo += " " + Utils.getHealthStr(target, true);
@@ -111,7 +109,7 @@ public class TargetHUD extends Module {
         }
     }
 
-    private void drawTargetHUD(Timer cd, String string, double health) {
+    private void drawTargetHUD(Timer fadeTimer, String string, double health) {
         if (showStatus.isToggled()) {
             string = string + " " + ((health <= Utils.getTotalHealth(mc.thePlayer) / mc.thePlayer.getMaxHealth()) ? "§aW" : "§cL");
         }
@@ -124,22 +122,24 @@ public class TargetHUD extends Module {
         final int n7 = y - padding;
         final int n8 = x + targetStrWithPadding;
         final int n9 = y + (mc.fontRendererObj.FONT_HEIGHT + 5) - 6 + padding;
-        final int n10 = (cd == null) ? 255 : (255 - cd.getValueInt(0, 255, 1));
-        if (n10 > 0) {
-            final int maxAlphaOutline = (n10 > 110) ? 110 : n10;
-            final int maxAlphaBackground = (n10 > 210) ? 210 : n10;
+        final int alpha = (fadeTimer == null) ? 255 : (255 - fadeTimer.getValueInt(0, 255, 1));
+        if (alpha > 0) {
+            final int maxAlphaOutline = (alpha > 110) ? 110 : alpha;
+            final int maxAlphaBackground = (alpha > 210) ? 210 : alpha;
             final int[] gradientColors = Theme.getGradients((int) theme.getInput());
             switch ((int) mode.getInput()) {
                 case 0:
+                    float bloomRadius = (fadeTimer == null) ? 2f : (2f * alpha / 255f);
+                    float blurRadius = (fadeTimer == null) ? 3 : (3f * alpha / 255f);
                     BlurUtils.prepareBloom();
                     RoundedUtils.drawRound((float) n6, (float) n7, Math.abs((float) n6 - n8), Math.abs((float) n7 - (n9 + 13)), 8.0f, true, new Color(0, 0, 0, maxAlphaBackground));
-                    BlurUtils.bloomEnd(2, 3);
+                    BlurUtils.bloomEnd(3, bloomRadius);
                     BlurUtils.prepareBlur();
-                    RoundedUtils.drawRound((float) n6, (float) n7, Math.abs((float) n6 - n8), Math.abs((float) n7 - (n9 + 13)), 8.0f, true, Color.black);
-                    BlurUtils.blurEnd(1, 2.5f);
+                    RoundedUtils.drawRound((float) n6, (float) n7, Math.abs((float) n6 - n8), Math.abs((float) n7 - (n9 + 13)), 8.0f, true, new Color(Utils.mergeAlpha(Color.black.getRGB(), maxAlphaOutline)));
+                    BlurUtils.blurEnd(2, blurRadius);
                     break;
                 case 1:
-                    RenderUtils.drawRoundedGradientOutlinedRectangle((float) n6, (float) n7, (float) n8, (float) (n9 + 13), 10.0f, Utils.mergeAlpha(Color.black.getRGB(), maxAlphaOutline), Utils.mergeAlpha(gradientColors[0], n10), Utils.mergeAlpha(gradientColors[1], n10));
+                    RenderUtils.drawRoundedGradientOutlinedRectangle((float) n6, (float) n7, (float) n8, (float) (n9 + 13), 10.0f, Utils.mergeAlpha(Color.black.getRGB(), maxAlphaOutline), Utils.mergeAlpha(gradientColors[0], alpha), Utils.mergeAlpha(gradientColors[1], alpha));
                     break;
             }
             final int n13 = n6 + 6;
@@ -184,7 +184,7 @@ public class TargetHUD extends Module {
             }
             GL11.glPushMatrix();
             GL11.glEnable(GL11.GL_BLEND);
-            mc.fontRendererObj.drawString(string, (float) x, (float) y, (new Color(220, 220, 220, 255).getRGB() & 0xFFFFFF) | Utils.clamp(n10 + 15) << 24, true);
+            mc.fontRendererObj.drawString(string, (float) x, (float) y, (new Color(220, 220, 220, 255).getRGB() & 0xFFFFFF) | Utils.clamp(alpha + 15) << 24, true);
             GL11.glDisable(GL11.GL_BLEND);
             GL11.glPopMatrix();
         }

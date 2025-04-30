@@ -1,6 +1,7 @@
 package keystrokesmod.module.impl.movement;
 
 import keystrokesmod.clickgui.ClickGui;
+import keystrokesmod.mixin.impl.accessor.IAccessorMinecraft;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
@@ -18,7 +19,7 @@ public class Timer extends Module {
 
     @Override
     public String getInfo() {
-        return Utils.isWholeNumber(speed.getInput()) ? (int) speed.getInput() + "" : speed.getInput() + "";
+        return Utils.asWholeNum(speed.getInput());
     }
 
     public void onUpdate() {
@@ -27,7 +28,7 @@ public class Timer extends Module {
                 Utils.resetTimer();
                 return;
             }
-            Utils.getTimer().timerSpeed = (float) speed.getInput();
+            ((IAccessorMinecraft) mc).getTimer().timerSpeed = (float) speed.getInput();
         }
         else {
             Utils.resetTimer();

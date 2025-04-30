@@ -21,7 +21,9 @@ public class BreakProgress extends Module {
     private ButtonSetting manual;
     private ButtonSetting bedAura;
     private ButtonSetting fadeIn;
-    private String[] modes = new String[]{"Percentage", "Second", "Decimal"};
+
+    private String[] modes = new String[] { "Percentage", "Second", "Decimal" };
+
     private float progress;
     private BlockPos block;
     private String progressStr;
@@ -39,11 +41,11 @@ public class BreakProgress extends Module {
         if (this.progress == 0.0f || this.block == null || !Utils.nullCheck()) {
             return;
         }
-        final double n = this.block.getX() + 0.5 - mc.getRenderManager().viewerPosX;
-        final double n2 = this.block.getY() + 0.5 - mc.getRenderManager().viewerPosY;
-        final double n3 = this.block.getZ() + 0.5 - mc.getRenderManager().viewerPosZ;
+        final double x = this.block.getX() + 0.5 - mc.getRenderManager().viewerPosX;
+        final double y = this.block.getY() + 0.5 - mc.getRenderManager().viewerPosY;
+        final double z = this.block.getZ() + 0.5 - mc.getRenderManager().viewerPosZ;
         GlStateManager.pushMatrix();
-        GlStateManager.translate((float) n, (float) n2, (float) n3);
+        GlStateManager.translate((float) x, (float) y, (float) z);
         GlStateManager.rotate(-mc.getRenderManager().playerViewY, 0.0f, 1.0f, 0.0f);
         GlStateManager.rotate((mc.gameSettings.thirdPersonView == 2 ? -1 : 1) * mc.getRenderManager().playerViewX, 1.0f, 0.0f, 0.0f);
         GlStateManager.scale(-0.02266667f, -0.02266667f, -0.02266667f);

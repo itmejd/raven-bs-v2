@@ -1,7 +1,9 @@
 package keystrokesmod.utility;
 
-
-import keystrokesmod.event.*;
+import keystrokesmod.Raven;
+import keystrokesmod.event.PostUpdateEvent;
+import keystrokesmod.event.ReceivePacketEvent;
+import keystrokesmod.event.SendPacketEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.network.Packet;
@@ -16,168 +18,134 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class PacketsHandler {
     public Minecraft mc = Minecraft.getMinecraft();
-    public AtomicBoolean C0A = new AtomicBoolean(false);
-    public AtomicBoolean C08 = new AtomicBoolean(false);
-    public AtomicBoolean C07 = new AtomicBoolean(false);
-    public AtomicBoolean C02 = new AtomicBoolean(false);
-    public AtomicBoolean C09 = new AtomicBoolean(false);
-    public AtomicBoolean delayAttack = new AtomicBoolean(false);
-    public AtomicBoolean delay = new AtomicBoolean(false);
+
+    public PacketData C0A = new PacketData();
+    public PacketData C08 = new PacketData();
+    public PacketData C07 = new PacketData();
+    public PacketData C02 = new PacketData();
+    public PacketData C02_INTERACT_AT = new PacketData();
+    public PacketData C09 = new PacketData();
+
     public AtomicInteger playerSlot = new AtomicInteger(-1);
     public AtomicInteger serverSlot = new AtomicInteger(-1);
+    private final boolean handleSlots = true;
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onSendPacket(SendPacketEvent e) {
         if (e.isCanceled()) {
             return;
         }
-        if (e.getPacket() instanceof C02PacketUseEntity) { // sending a C07 on the same tick as C02 can ban, this usually happens when you unblock and attack on the same tick
-            if (C07.get()) {
+        Packet<?> packet = e.getPacket();
+        if (packet instanceof C02PacketUseEntity) {
+            if (C07.sentCurrentTick.get()) {
                 e.setCanceled(true);
                 return;
             }
-            C02.set(true);
+            if (((C02PacketUseEntity) packet).getAction() == C02PacketUseEntity.Action.INTERACT_AT) {
+                C02_INTERACT_AT.sentCurrentTick.set(true);
+            }
+            C02.sentCurrentTick.set(true);
         }
-        else if (e.getPacket() instanceof C08PacketPlayerBlockPlacement) {
-            C08.set(true);
+        else if (packet instanceof C08PacketPlayerBlockPlacement) {
+            C08.sentCurrentTick.set(true);
         }
-        else if (e.getPacket() instanceof C07PacketPlayerDigging) {
-            C07.set(true);
+        else if (packet instanceof C07PacketPlayerDigging) {
+            C07.sentCurrentTick.set(true);
         }
-        else if (e.getPacket() instanceof C0APacketAnimation) {
-            if (C07.get()) {
+        else if (packet instanceof C0APacketAnimation) {
+            C0A.sentCurrentTick.set(true);
+        }
+        else if (packet instanceof C09PacketHeldItemChange && handleSlots) {
+            C09PacketHeldItemChange slotPacket = (C09PacketHeldItemChange) packet;
+            int slotId = slotPacket.getSlotId();
+            if (slotId == playerSlot.get() && slotId == serverSlot.get()) {
+                if (Raven.debug) {
+                    Utils.sendMessage("&7bad packet detected (same slot): &b" + slotId);
+                }
                 e.setCanceled(true);
                 return;
             }
-            C0A.set(true);
-        }
-        else if (e.getPacket() instanceof C09PacketHeldItemChange) {
-            if (((C09PacketHeldItemChange) e.getPacket()).getSlotId() == playerSlot.get() && ((C09PacketHeldItemChange) e.getPacket()).getSlotId() == serverSlot.get()) {
-                e.setCanceled(true);
-                return;
-            }
-            C09.set(true);
-            playerSlot.set(((C09PacketHeldItemChange) e.getPacket()).getSlotId());
-            serverSlot.set(((C09PacketHeldItemChange) e.getPacket()).getSlotId());
+            C09.sentCurrentTick.set(true);
+            playerSlot.set(slotId);
+            serverSlot.set(slotId);
         }
     }
 
     @SubscribeEvent
     public void onReceivePacket(ReceivePacketEvent e) {
-        if (e.getPacket() instanceof S09PacketHeldItemChange) {
+        if (e.getPacket() instanceof S09PacketHeldItemChange && handleSlots) {
             S09PacketHeldItemChange packet = (S09PacketHeldItemChange) e.getPacket();
-            if (packet.getHeldItemHotbarIndex() >= 0 && packet.getHeldItemHotbarIndex() < InventoryPlayer.getHotbarSize()) {
-                serverSlot.set(packet.getHeldItemHotbarIndex());
+            int index = packet.getHeldItemHotbarIndex();
+            if (index >= 0 && index < InventoryPlayer.getHotbarSize()) {
+                serverSlot.set(index);
             }
         }
-        else if (e.getPacket() instanceof S0CPacketSpawnPlayer && Minecraft.getMinecraft().thePlayer != null) {
-            if (((S0CPacketSpawnPlayer) e.getPacket()).getEntityID() != Minecraft.getMinecraft().thePlayer.getEntityId()) {
+        else if (e.getPacket() instanceof S0CPacketSpawnPlayer && Minecraft.getMinecraft().thePlayer != null && handleSlots) {
+            S0CPacketSpawnPlayer packet = (S0CPacketSpawnPlayer) e.getPacket();
+            if (packet.getEntityID() != Minecraft.getMinecraft().thePlayer.getEntityId()) {
                 return;
             }
-            this.playerSlot.set(-1);
-        }
-    }
-
-    public void onSendPacketAll(SendAllPacketsEvent e) {
-        if (e.isCanceled()) {
-            return;
-        }
-        if (e.getPacket() instanceof C02PacketUseEntity) { // sending a C07 on the same tick as C02 can ban, this usually happens when you unblock and attack on the same tick
-            if (C07.get()) {
-                e.setCanceled(true);
-                return;
-            }
-            C02.set(true);
-        }
-        else if (e.getPacket() instanceof C08PacketPlayerBlockPlacement) {
-            C08.set(true);
-        }
-        else if (e.getPacket() instanceof C07PacketPlayerDigging) {
-            C07.set(true);
-        }
-        else if (e.getPacket() instanceof C0APacketAnimation) {
-            if (C07.get()) {
-                e.setCanceled(true);
-                return;
-            }
-            C0A.set(true);
-        }
-        else if (e.getPacket() instanceof C09PacketHeldItemChange) {
-            if (((C09PacketHeldItemChange) e.getPacket()).getSlotId() == playerSlot.get() && ((C09PacketHeldItemChange) e.getPacket()).getSlotId() == serverSlot.get()) {
-                e.setCanceled(true);
-                return;
-            }
-            C09.set(true);
-            playerSlot.set(((C09PacketHeldItemChange) e.getPacket()).getSlotId());
-            serverSlot.set(((C09PacketHeldItemChange) e.getPacket()).getSlotId());
-        }
-    }
-
-    @SubscribeEvent
-    public void onReceivePacketAll(ReceiveAllPacketsEvent e) {
-        if (e.getPacket() instanceof S09PacketHeldItemChange) {
-            S09PacketHeldItemChange packet = (S09PacketHeldItemChange) e.getPacket();
-            if (packet.getHeldItemHotbarIndex() >= 0 && packet.getHeldItemHotbarIndex() < InventoryPlayer.getHotbarSize()) {
-                serverSlot.set(packet.getHeldItemHotbarIndex());
-            }
-        }
-        else if (e.getPacket() instanceof S0CPacketSpawnPlayer && Minecraft.getMinecraft().thePlayer != null) {
-            if (((S0CPacketSpawnPlayer) e.getPacket()).getEntityID() != Minecraft.getMinecraft().thePlayer.getEntityId()) {
-                return;
-            }
-            this.playerSlot.set(-1);
+            playerSlot.set(-1);
         }
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onPostUpdate(PostUpdateEvent e) {
-        if (delay.get()) {
-            delayAttack.set(false);
-            delay.set(false);
-        }
-        if (C08.get() || C09.get()) {
-            delay.set(true);
-            delayAttack.set(true);
-        }
-        C08.set(false);
-        C07.set(false);
-        C02.set(false);
-        C0A.set(false);
-        C09.set(false);
+        C08.updateStatesPostUpdate();
+        C07.updateStatesPostUpdate();
+        C02.updateStatesPostUpdate();
+        C0A.updateStatesPostUpdate();
+        C02_INTERACT_AT.updateStatesPostUpdate();
+        C09.updateStatesPostUpdate();
     }
 
-    public void handlePacket(Packet packet) {
-        if (packet instanceof C09PacketHeldItemChange) {
-            this.playerSlot.set(((C09PacketHeldItemChange) packet).getSlotId());
-            C09.set(true);
+    public void handlePacket(Packet<?> packet) {
+        if (packet instanceof C09PacketHeldItemChange && handleSlots) {
+            int slotId = ((C09PacketHeldItemChange) packet).getSlotId();
+            this.playerSlot.set(slotId);
+            C09.sentCurrentTick.set(true);
         }
         else if (packet instanceof C02PacketUseEntity) {
-            C02.set(true);
+            C02.sentCurrentTick.set(true);
+            if (((C02PacketUseEntity) packet).getAction() == C02PacketUseEntity.Action.INTERACT_AT) {
+                C02_INTERACT_AT.sentCurrentTick.set(true);
+            }
         }
         else if (packet instanceof C07PacketPlayerDigging) {
-            C07.set(true);
+            C07.sentCurrentTick.set(true);
         }
         else if (packet instanceof C08PacketPlayerBlockPlacement) {
-            C08.set(true);
+            C08.sentCurrentTick.set(true);
         }
         else if (packet instanceof C0APacketAnimation) {
-            C0A.set(true);
+            C0A.sentCurrentTick.set(true);
         }
     }
 
     public boolean sent() {
-        if (C02.get() || C08.get() || C09.get() || C07.get() || C0A.get()) {
-            return true;
-        }
-        return false;
+        return C02.sentCurrentTick.get() || C08.sentCurrentTick.get() || C09.sentCurrentTick.get() || C07.sentCurrentTick.get() || C0A.sentCurrentTick.get();
     }
 
     public boolean updateSlot(int slot) {
+        if (!handleSlots) {
+            mc.thePlayer.sendQueue.addToSendQueue(new C09PacketHeldItemChange(slot));
+            return true;
+        }
         if (playerSlot.get() == slot || slot == -1) {
             return false;
         }
         mc.thePlayer.sendQueue.addToSendQueue(new C09PacketHeldItemChange(slot));
         playerSlot.set(slot);
         return true;
+    }
+
+    public static class PacketData {
+        public AtomicBoolean sentLastTick = new AtomicBoolean(false);
+        public AtomicBoolean sentCurrentTick = new AtomicBoolean(false);
+
+        public void updateStatesPostUpdate() {
+            sentLastTick.set(sentCurrentTick.get());
+            sentCurrentTick.set(false);
+        }
     }
 }

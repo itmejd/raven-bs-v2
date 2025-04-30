@@ -5,6 +5,7 @@ import keystrokesmod.mixin.impl.accessor.IAccessorEntityRenderer;
 import keystrokesmod.mixin.impl.accessor.IAccessorMinecraft;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.setting.impl.ButtonSetting;
+import keystrokesmod.module.setting.impl.GroupSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
 import keystrokesmod.utility.BlockUtils;
 import keystrokesmod.utility.RenderUtils;
@@ -17,9 +18,7 @@ import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityEnderPearl;
-import net.minecraft.entity.projectile.EntityArrow;
-import net.minecraft.entity.projectile.EntityFireball;
-import net.minecraft.entity.projectile.EntityLargeFireball;
+import net.minecraft.entity.projectile.*;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.BlockPos;
@@ -35,9 +34,13 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Indicators extends Module {
+    private GroupSetting items;
     private ButtonSetting renderArrows;
     private ButtonSetting renderPearls;
     private ButtonSetting renderFireballs;
+    private ButtonSetting renderEggs;
+    private ButtonSetting renderSnowballs;
+
     private SliderSetting arrow;
     private SliderSetting radius;
     private ButtonSetting itemColors;
@@ -53,9 +56,12 @@ public class Indicators extends Module {
 
     public Indicators() {
         super("Indicators", category.render);
-        this.registerSetting(renderArrows = new ButtonSetting("Render arrows", true));
-        this.registerSetting(renderPearls = new ButtonSetting("Render ender pearls", true));
-        this.registerSetting(renderFireballs = new ButtonSetting("Render fireballs", true));
+        this.registerSetting(items = new GroupSetting("Items"));
+        this.registerSetting(renderArrows = new ButtonSetting(items, "Render arrows", true));
+        this.registerSetting(renderPearls = new ButtonSetting(items, "Render ender pearls", true));
+        this.registerSetting(renderFireballs = new ButtonSetting(items, "Render fireballs", true));
+        this.registerSetting(renderEggs = new ButtonSetting(items, "Render eggs", false));
+        this.registerSetting(renderSnowballs = new ButtonSetting(items, "Render snowballs", false));
         this.registerSetting(arrow = new SliderSetting("Arrow", 0, arrowTypes));
         this.registerSetting(radius = new SliderSetting("Circle radius", 50, 30, 200, 5));
         this.registerSetting(itemColors = new ButtonSetting("Item colors", true));
@@ -97,6 +103,12 @@ public class Indicators extends Module {
                 else if (en instanceof EntityEnderPearl) {
                     itemStack = new ItemStack(Items.ender_pearl);
                 }
+                else if (en instanceof EntityEgg) {
+                    itemStack = new ItemStack(Items.egg);
+                }
+                else if (en instanceof EntitySnowball) {
+                    itemStack = new ItemStack(Items.snowball);
+                }
                 if (!threats.contains(en)) {
                     continue;
                 }
@@ -131,6 +143,12 @@ public class Indicators extends Module {
             return true;
         }
         else if (entity instanceof EntityEnderPearl && renderPearls.isToggled()) {
+            return true;
+        }
+        else if (entity instanceof EntityEgg && renderEggs.isToggled()) {
+            return true;
+        }
+        else if (entity instanceof EntitySnowball && renderSnowballs.isToggled()) {
             return true;
         }
         return false;
@@ -280,6 +298,9 @@ public class Indicators extends Module {
         }
         else if (itemStack.getItem() == Items.fire_charge) {
             return new Color(255, 150, 0);
+        }
+        else if (itemStack.getItem() == Items.egg) {
+            return new Color(255, 238, 154);
         }
         else {
             return Color.WHITE;

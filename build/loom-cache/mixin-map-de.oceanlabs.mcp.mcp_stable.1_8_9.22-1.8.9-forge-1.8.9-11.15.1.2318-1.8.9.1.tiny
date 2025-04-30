@@ -1,6 +1,5 @@
 v1	named	intermediary
 FIELD	keystrokesmod/mixin/impl/client/MixinMovementInputFromOptions	Lnet/minecraft/client/settings/GameSettings;	gameSettings	field_78903_e
-FIELD	keystrokesmod/mixin/impl/client/MixinWorld	Z	isRemote	field_72995_K
 FIELD	keystrokesmod/mixin/impl/entity/MixinEntity	D	motionX	field_70159_w
 FIELD	keystrokesmod/mixin/impl/entity/MixinEntity	D	motionZ	field_70179_y
 FIELD	keystrokesmod/mixin/impl/entity/MixinEntity	F	rotationYaw	field_70177_z
@@ -34,8 +33,11 @@ FIELD	keystrokesmod/mixin/impl/render/MixinItemRenderer	F	prevEquippedProgress	f
 FIELD	keystrokesmod/mixin/impl/render/MixinLayerCape	Lnet/minecraft/client/renderer/entity/RenderPlayer;	playerRenderer	field_177167_a
 FIELD	keystrokesmod/mixin/impl/render/MixinRendererLivingEntity	Z	renderOutlines	field_177098_i
 FIELD	keystrokesmod/mixin/impl/render/MixinRenderGlobal	Lnet/minecraft/client/Minecraft;	mc	field_72777_q
+FIELD	keystrokesmod/mixin/impl/world/MixinWorld	Z	isRemote	field_72995_K
+METHOD	keystrokesmod/mixin/impl/client/MixinGameSettings	(Lnet/minecraft/client/settings/KeyBinding;)Z	isKeyDown	func_100015_a
 METHOD	keystrokesmod/mixin/impl/client/MixinMovementInputFromOptions	()V	updatePlayerMoveState	func_78898_a
 METHOD	keystrokesmod/mixin/impl/entity/MixinEntity	(FFF)V	moveFlying	func_70060_a
+METHOD	keystrokesmod/mixin/impl/entity/MixinEntity	(FF)Lnet/minecraft/util/Vec3;	getVectorForRotation	func_174806_f
 METHOD	keystrokesmod/mixin/impl/entity/MixinEntityLivingBase	(Lnet/minecraft/potion/Potion;)Lnet/minecraft/potion/PotionEffect;	getActivePotionEffect	func_70660_b
 METHOD	keystrokesmod/mixin/impl/entity/MixinEntityLivingBase	(Lnet/minecraft/potion/Potion;)Z	isPotionActive	func_70644_a
 METHOD	keystrokesmod/mixin/impl/entity/MixinEntityLivingBase	()F	getJumpUpwardsMotion	func_175134_bD
@@ -58,3 +60,5 @@ METHOD	keystrokesmod/mixin/impl/entity/MixinEntityPlayerSP	()Z	isSneaking	func_7
 METHOD	keystrokesmod/mixin/impl/entity/MixinEntityPlayerSP	()V	onUpdateWalkingPlayer	func_175161_p
 METHOD	keystrokesmod/mixin/impl/entity/MixinEntityPlayerSP	()V	onLivingUpdate	func_70636_d
 METHOD	keystrokesmod/mixin/impl/render/MixinGuiChat	([Ljava/lang/String;)V	onAutocompleteResponse	func_146406_a
+METHOD	keystrokesmod/mixin/impl/world/MixinBlock	(Lnet/minecraft/world/World;Lnet/minecraft/util/BlockPos;Lnet/minecraft/block/state/IBlockState;)Lnet/minecraft/util/AxisAlignedBB;	getCollisionBoundingBox	func_180640_a
+METHOD	keystrokesmod/mixin/impl/world/MixinBlock	(Lnet/minecraft/world/World;Lnet/minecraft/util/BlockPos;Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/util/AxisAlignedBB;Ljava/util/List;Lnet/minecraft/entity/Entity;)V	addCollisionBoxesToList	func_180638_a

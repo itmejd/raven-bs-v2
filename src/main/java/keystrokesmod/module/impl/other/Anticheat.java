@@ -68,7 +68,7 @@ public class Anticheat extends Module {
     }
 
     private void alert(final EntityPlayer entityPlayer, ButtonSetting mode) {
-        if (Utils.isFriended(entityPlayer) || (ignoreTeammates.isToggled() && Utils.isTeamMate(entityPlayer))) {
+        if (Utils.isFriended(entityPlayer) || (ignoreTeammates.isToggled() && Utils.isTeammate(entityPlayer))) {
             return;
         }
         if (atlasSuspect.isToggled()) {

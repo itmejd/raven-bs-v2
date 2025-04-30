@@ -28,52 +28,58 @@ import java.io.IOException;
 import java.util.Iterator;
 
 public class BridgeInfo extends Module {
-    private static final int rgb = (new Color(0, 200, 200)).getRGB();
-    private final String bd = new String("the brid");
-    private final String g1t = new String("Defend!");
-    private final String g2t = new String("Jump in to score!");
-    private final String qt = new String("First player to score 5 goals wins");
-    private final String t1 = new String("Enemy: ");
-    private final String t2 = new String("Distance to goal: ");
-    private final String t3 = new String("Enemy distance to goal: ");
-    private final String t4 = new String("Blocks: ");
+    private final int textRGB = new Color(0, 200, 200).getRGB();
+    // message types
+    private final String bridge = "the brid";
+    private final String start = "Defend!";
+    private final String start2 = "Jump in to score!";
+    private final String qt = "First player to score 5 goals wins";
+    private final String enemyText = "Enemy: ";
+    private final String distance = "Distance to goal: ";
+    private final String enemyDistance = "Enemy distance to goal: ";
+    private final String blocks = "Blocks: ";
+
     private static int hudX = 5;
     private static int hudY = 70;
-    private String en = "";
+
+    private String enemyName = "";
     private BlockPos g1p = null;
     private BlockPos g2p = null;
+
     private boolean q = false;
     private double d1 = 0.0D;
     private double d2 = 0.0D;
     private int blc = 0;
 
     public BridgeInfo() {
-        super("Bridge Info", Module.category.minigames, 0);
+        super("Bridge Info", category.minigames, 0);
         this.registerSetting(new DescriptionSetting(new String("Only for solos.")));
         this.registerSetting(new ButtonSetting("Edit position", () -> {
-            mc.displayGuiScreen(new BridgeInfo.eh());
+            mc.displayGuiScreen(new EditScreen());
         }));
     }
 
+    @Override
     public void onDisable() {
         this.reset();
     }
 
     public void onUpdate() {
-        if (!this.en.isEmpty() && this.isBridge()) {
+        if (!this.enemyName.isEmpty() && this.isBridge()) {
             EntityPlayer enem = null;
             Iterator var2 = mc.theWorld.loadedEntityList.iterator();
 
             while (var2.hasNext()) {
                 Entity e = (Entity) var2.next();
                 if (e instanceof EntityPlayer) {
-                    if (e.getName().equals(this.en)) {
+                    if (e.getName().equals(this.enemyName)) {
                         enem = (EntityPlayer) e;
                     }
                 } else if (e instanceof EntityArmorStand) {
-                    if (e.getName().contains(this.g1t)) {
+                    if (e.getName().contains(this.start)) {
                         this.g1p = e.getPosition();
-                    } else if (e.getName().contains(this.g2t)) {
+                    }
+                    else if (e.getName().contains(this.start2)) {
                         this.g2p = e.getPosition();
                     }
                 }
@@ -105,16 +111,16 @@ public class BridgeInfo extends Module {
     }
 
     @SubscribeEvent
-    public void a(RenderTickEvent ev) {
+    public void onRenderTick(RenderTickEvent ev) {
         if (ev.phase == Phase.END && Utils.nullCheck() && this.isBridge()) {
             if (mc.currentScreen != null || mc.gameSettings.showDebugInfo) {
                 return;
             }
 
-            mc.fontRendererObj.drawString(this.t1 + this.en, (float) hudX, (float) hudY, rgb, true);
-            mc.fontRendererObj.drawString(this.t2 + this.d1, (float) hudX, (float) (hudY + 11), rgb, true);
-            mc.fontRendererObj.drawString(this.t3 + this.d2, (float) hudX, (float) (hudY + 22), rgb, true);
-            mc.fontRendererObj.drawString(this.t4 + this.blc, (float) hudX, (float) (hudY + 33), rgb, true);
+            mc.fontRendererObj.drawString(this.enemyText + this.enemyName, (float) hudX, (float) hudY, textRGB, true);
+            mc.fontRendererObj.drawString(this.distance + this.d1, (float) hudX, (float) (hudY + 11), textRGB, true);
+            mc.fontRendererObj.drawString(this.enemyDistance + this.d2, (float) hudX, (float) (hudY + 22), textRGB, true);
+            mc.fontRendererObj.drawString(this.blocks + this.blc, (float) hudX, (float) (hudY + 33), textRGB, true);
         }
 
     }
@@ -126,13 +132,13 @@ public class BridgeInfo extends Module {
             if (s.startsWith(" ")) {
                 if (s.contains(this.qt)) {
                     this.q = true;
-                } else if (this.q && s.contains("Opponent:")) {
+                }
+                else if (this.q && s.contains("Opponent:")) {
                     String n = s.split(":")[1].trim();
                     if (n.contains("[")) {
                         n = n.split("] ")[1];
                     }
-
-                    this.en = n;
+                    this.enemyName = n;
                     this.q = false;
                 }
             }
@@ -141,31 +147,29 @@ public class BridgeInfo extends Module {
     }
 
     @SubscribeEvent
-    public void w(EntityJoinWorldEvent j) {
-        if (j.entity == mc.thePlayer) {
+    public void onWorldJoin(EntityJoinWorldEvent e) {
+        if (e.entity == mc.thePlayer) {
             this.reset();
         }
-
     }
 
     private boolean isBridge() {
         if (Utils.isHypixel()) {
-            Iterator var1 = Utils.gsl().iterator();
+            Iterator var1 = Utils.getScoreBoardOld().iterator();
 
             while (var1.hasNext()) {
                 String s = (String) var1.next();
                 String s2 = s.toLowerCase();
-                if (s2.contains("mode") && s2.contains(this.bd)) {
+                if (s2.contains("mode") && s2.contains(bridge)) {
                     return true;
                 }
             }
         }
-
         return false;
     }
 
     private void reset() {
-        this.en = "";
+        this.enemyName = "";
         this.q = false;
         this.g1p = null;
         this.g2p = null;
@@ -174,9 +178,9 @@ public class BridgeInfo extends Module {
         this.blc = 0;
     }
 
-    static class eh extends GuiScreen {
-        final String a = new String("Enemy: Player123-Distance to goal: 17.2-Enemy distance to goal: 16.3-Blocks: 98");
-        GuiButtonExt rp;
+    private class EditScreen extends GuiScreen {
+        String example = new String("Enemy: Player123-Distance to goal: 17.2-Enemy distance to goal: 16.3-Blocks: 98");
+        GuiButtonExt resetPosition;
         boolean d = false;
         int miX = 0;
         int miY = 0;
@@ -191,7 +195,7 @@ public class BridgeInfo extends Module {
 
         public void initGui() {
             super.initGui();
-            this.buttonList.add(this.rp = new GuiButtonExt(1, this.width - 90, 5, 85, 20, new String("Reset position")));
+            this.buttonList.add(this.resetPosition = new GuiButtonExt(1, this.width - 90, 5, 85, 20, new String("Reset position")));
             this.aX = BridgeInfo.hudX;
             this.aY = BridgeInfo.hudY;
         }
@@ -202,7 +206,7 @@ public class BridgeInfo extends Module {
             int miY = this.aY;
             int maX = miX + 140;
             int maY = miY + 41;
-            this.d(this.mc.fontRendererObj, this.a);
+            this.d(this.mc.fontRendererObj, this.example);
             this.miX = miX;
             this.miY = miY;
             this.maX = maX;
@@ -230,7 +234,7 @@ public class BridgeInfo extends Module {
 
             for (int var7 = 0; var7 < var6; ++var7) {
                 String s = var5[var7];
-                fr.drawString(s, (float) x, (float) y, BridgeInfo.rgb, true);
+                fr.drawString(s, (float) x, (float) y, textRGB, true);
                 y += fr.FONT_HEIGHT + 2;
             }
 
@@ -262,7 +266,7 @@ public class BridgeInfo extends Module {
         }
 
         public void actionPerformed(GuiButton b) {
-            if (b == this.rp) {
+            if (b == this.resetPosition) {
                 this.aX = BridgeInfo.hudX = 5;
                 this.aY = BridgeInfo.hudY = 70;
             }

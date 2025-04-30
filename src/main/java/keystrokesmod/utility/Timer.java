@@ -3,7 +3,7 @@ package keystrokesmod.utility;
 public class Timer {
     public float updates;
     public long last;
-    private float cached;
+    public float cached;
 
     public Timer(float updates) {
         this.updates = updates;

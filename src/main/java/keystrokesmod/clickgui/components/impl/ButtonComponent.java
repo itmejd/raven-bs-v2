@@ -12,16 +12,18 @@ import java.awt.*;
 
 public class ButtonComponent extends Component {
     private final int enabledColor = (new Color(20, 255, 0)).getRGB();
+
     private Module mod;
     public ButtonSetting buttonSetting;
     private ModuleComponent moduleComponent;
-    public int o;
-    public int x;
-    private int y;
-    public int xOffset;
+
+    public float o;
+    public float x;
+    private float y;
+    public float xOffset;
     public boolean renderLine;
 
-    public ButtonComponent(Module mod, ButtonSetting op, ModuleComponent b, int o) {
+    public ButtonComponent(Module mod, ButtonSetting op, ModuleComponent b, float o) {
         this.mod = mod;
         this.buttonSetting = op;
         this.moduleComponent = b;
@@ -41,7 +43,7 @@ public class ButtonComponent extends Component {
         GL11.glPopMatrix();
     }
 
-    public void updateHeight(int n) {
+    public void updateHeight(float n) {
         this.o = n;
     }
 
