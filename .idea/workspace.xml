@@ -5,22 +5,18 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="371fdaac-49d2-42c5-a655-54882c949de7" name="Changes" comment="Latest release">
-      <change beforePath="$PROJECT_DIR$/.gradle/8.8/checksums/checksums.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.8/checksums/checksums.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.8/executionHistory/executionHistory.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.8/executionHistory/executionHistory.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.8/executionHistory/executionHistory.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.8/executionHistory/executionHistory.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.8/fileHashes/fileHashes.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.8/fileHashes/fileHashes.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.8/fileHashes/fileHashes.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.8/fileHashes/fileHashes.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.8/fileHashes/resourceHashesCache.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.8/fileHashes/resourceHashesCache.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/file-system.probe" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/file-system.probe" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/BedAura.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/BedAura.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Scaffold.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Scaffold.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/intermediates/raven-bS-13-non-obfuscated-with-deps.jar" beforeDir="false" afterPath="$PROJECT_DIR$/build/intermediates/raven-bS-13-non-obfuscated-with-deps.jar" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/intermediates/raven-bS-13-without-deps.jar" beforeDir="false" afterPath="$PROJECT_DIR$/build/intermediates/raven-bS-13-without-deps.jar" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/tmp/compileJava/previous-compilation-data.bin" beforeDir="false" afterPath="$PROJECT_DIR$/build/tmp/compileJava/previous-compilation-data.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/BedAura.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/BedAura.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/Scaffold.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/Scaffold.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -178,14 +174,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1736536952705</updated>
-    </task>
-    <task id="LOCAL-00012" summary="hi">
-      <option name="closed" value="true" />
-      <created>1737186865584</created>
-      <option name="number" value="00012" />
-      <option name="presentableId" value="LOCAL-00012" />
-      <option name="project" value="LOCAL" />
-      <updated>1737186865584</updated>
     </task>
     <task id="LOCAL-00013" summary="recoded scaffold rotations (10000x better) and fixed some other issues">
       <option name="closed" value="true" />
@@ -571,7 +559,15 @@
       <option name="project" value="LOCAL" />
       <updated>1745988465161</updated>
     </task>
-    <option name="localTasksCounter" value="61" />
+    <task id="LOCAL-00061" summary="Latest release">
+      <option name="closed" value="true" />
+      <created>1746079552603</created>
+      <option name="number" value="00061" />
+      <option name="presentableId" value="LOCAL-00061" />
+      <option name="project" value="LOCAL" />
+      <updated>1746079552603</updated>
+    </task>
+    <option name="localTasksCounter" value="62" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

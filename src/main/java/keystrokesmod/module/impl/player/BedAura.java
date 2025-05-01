@@ -64,7 +64,7 @@ public class BedAura extends Module {
     private BlockPos previousBlockBroken;
     private BlockPos rotateLastBlock;
     private boolean spoofGround, firstStop;
-    private boolean isBreaking, startPacket, stopPacket, ignoreSlow;
+    private boolean isBreaking, startPacket, stopPacket, ignoreSlow, delayStop;
 
     public BedAura() {
         super("BedAura", category.player, 0);
@@ -124,7 +124,11 @@ public class BedAura extends Module {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onClientRotation(ClientRotationEvent e) {
-        stopAutoblock = false;
+        if (delayStop) {
+            delayStop = false;
+        } else {
+            stopAutoblock = false;
+        }
         breakTick = false;
         if (!Utils.nullCheck()) {
             return;
@@ -174,6 +178,12 @@ public class BedAura extends Module {
 
     @SubscribeEvent
     public void onPreMotion(PreMotionEvent e) {
+
+        if (stopAutoblock) {
+            if (Raven.debug) {
+                Utils.sendModuleMessage(this, "&7stopping autoblock (&3" + mc.thePlayer.ticksExisted + "&7).");
+            }
+        }
 
         if (startPacket) {
             mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.START_DESTROY_BLOCK, packetPos, EnumFacing.UP));
@@ -362,6 +372,7 @@ public class BedAura extends Module {
         currentBlock = null;
         bedPos = null;
         ignoreSlow = false;
+        delayStop = false;
     }
 
     public void setPacketSlot(int slot) {
@@ -376,7 +387,6 @@ public class BedAura extends Module {
         setRots(e);
         packetPos = blockPos;
         startPacket = true;
-        stopAutoblock = true;
         isBreaking = true;
         breakTick = true;
         if (mc.thePlayer.motionY > -0.5) {
@@ -389,7 +399,6 @@ public class BedAura extends Module {
         setRots(e);
         packetPos = blockPos;
         stopPacket = true;
-        stopAutoblock = true;
         isBreaking = false;
         breakTick = true;
         if (ignoreSlow) {
@@ -430,12 +439,9 @@ public class BedAura extends Module {
         }
         currentBlock = blockPos;
         Block block = BlockUtils.getBlock(blockPos);
-        if (!stopAutoblock && breakProgress <= 0 && mode.getInput() == 2 && ModuleManager.killAura.autoBlockOverride() && !firstStop) {
+        if ((breakProgress <= 0 || breakProgress >= 1) && mode.getInput() == 2 && !firstStop) {
             firstStop = true;
-            stopAutoblock = true;
-            if (Raven.debug) {
-                Utils.sendModuleMessage(this, "&7stopping autoblock on &3start &7(&b" + mc.thePlayer.ticksExisted + "&7)");
-            }
+            stopAutoblock = delayStop = true;
             return;
         }
         if (mode.getInput() == 2 || mode.getInput() == 0) {
