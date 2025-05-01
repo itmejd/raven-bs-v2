@@ -139,7 +139,6 @@ public class BedAura extends Module {
         }
         if (currentBlock != null && !RotationUtils.inRange(currentBlock, 15)) {
             reset(true, true);
-            previousBlockBroken = null;
         }
         if (Utils.isBedwarsPracticeOrReplay()) {
             return;
@@ -198,6 +197,9 @@ public class BedAura extends Module {
             if (Raven.debug) {
                 Utils.sendModuleMessage(this, "sending c07 &cstop &7break &7(&b" + mc.thePlayer.ticksExisted + "&7)");
             }
+        }
+        if (isBreaking && !startPacket && !stopPacket) {
+            swing();
         }
 
         if (groundSpoof.isToggled() && !mc.thePlayer.isInWater() && spoofGround) {
@@ -354,7 +356,6 @@ public class BedAura extends Module {
             resetSlot();
         }
         breakProgress = 0;
-        currentBlock = null;
         breakProgressMap.clear();
         lastSlot = -1;
         vanillaProgress = 0;
@@ -373,6 +374,7 @@ public class BedAura extends Module {
         bedPos = null;
         ignoreSlow = false;
         delayStop = false;
+        previousBlockBroken = null;
     }
 
     public void setPacketSlot(int slot) {
@@ -442,6 +444,7 @@ public class BedAura extends Module {
         if ((breakProgress <= 0 || breakProgress >= 1) && mode.getInput() == 2 && !firstStop) {
             firstStop = true;
             stopAutoblock = delayStop = true;
+            setRots(e);
             return;
         }
         if (mode.getInput() == 2 || mode.getInput() == 0) {
@@ -479,11 +482,6 @@ public class BedAura extends Module {
             }
             double progress = vanillaProgress = (float) (BlockUtils.getBlockHardness(block, (mode.getInput() == 2 && Utils.getTool(block) != -1) ? mc.thePlayer.inventory.getStackInSlot(Utils.getTool(block)) : mc.thePlayer.getHeldItem(), false, ignoreSlow) * breakSpeed.getInput());
             if (lastProgress != 0 && breakProgress >= lastProgress - vanillaProgress) {
-                if (mode.getInput() == 2 && ModuleManager.killAura.autoBlockOverride()) {
-                    if (Raven.debug) {
-                        Utils.sendModuleMessage(this, "&7stopping autoblock &7(&b" + mc.thePlayer.ticksExisted + "&7)");
-                    }
-                }
                 if (breakProgress >= lastProgress) {
                     if (mode.getInput() == 2) {
                         if (Raven.debug) {

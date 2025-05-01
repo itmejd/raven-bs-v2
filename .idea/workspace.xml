@@ -12,10 +12,15 @@
       <change beforePath="$PROJECT_DIR$/.gradle/8.8/fileHashes/resourceHashesCache.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.8/fileHashes/resourceHashesCache.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/KillAura$KillAuraTarget.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/KillAura$KillAuraTarget.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/KillAura.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/KillAura.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/other/ViewPackets.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/other/ViewPackets.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/BedAura.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/BedAura.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/intermediates/raven-bS-13-non-obfuscated-with-deps.jar" beforeDir="false" afterPath="$PROJECT_DIR$/build/intermediates/raven-bS-13-non-obfuscated-with-deps.jar" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/intermediates/raven-bS-13-without-deps.jar" beforeDir="false" afterPath="$PROJECT_DIR$/build/intermediates/raven-bS-13-without-deps.jar" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/tmp/compileJava/previous-compilation-data.bin" beforeDir="false" afterPath="$PROJECT_DIR$/build/tmp/compileJava/previous-compilation-data.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/combat/KillAura.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/combat/KillAura.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/other/ViewPackets.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/other/ViewPackets.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/BedAura.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/BedAura.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -174,14 +179,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1736536952705</updated>
-    </task>
-    <task id="LOCAL-00013" summary="recoded scaffold rotations (10000x better) and fixed some other issues">
-      <option name="closed" value="true" />
-      <created>1737272894776</created>
-      <option name="number" value="00013" />
-      <option name="presentableId" value="LOCAL-00013" />
-      <option name="project" value="LOCAL" />
-      <updated>1737272894776</updated>
     </task>
     <task id="LOCAL-00014" summary="t">
       <option name="closed" value="true" />
@@ -567,7 +564,15 @@
       <option name="project" value="LOCAL" />
       <updated>1746079552603</updated>
     </task>
-    <option name="localTasksCounter" value="62" />
+    <task id="LOCAL-00062" summary="Latest release">
+      <option name="closed" value="true" />
+      <created>1746081489494</created>
+      <option name="number" value="00062" />
+      <option name="presentableId" value="LOCAL-00062" />
+      <option name="project" value="LOCAL" />
+      <updated>1746081489494</updated>
+    </task>
+    <option name="localTasksCounter" value="63" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

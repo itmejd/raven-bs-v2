@@ -330,6 +330,12 @@ public class KillAura extends Module {
             }
             return;
         }
+        if (ModuleManager.bedAura.stopAutoblock) {
+            if (rotated) {
+                resetYaw(e);
+            }
+            return;
+        }
         if (rotationMode.getInput() != 2) {
             if (rotateMode.getInput() == 0 && inRange(target, attackRange.getInput() - 0.005) || rotateMode.getInput() == 1 && inRange(target, swingRange.getInput())) {
                 float[] rotations = RotationUtils.getRotations(target, RotationUtils.prevRenderYaw, RotationUtils.prevRenderPitch);
