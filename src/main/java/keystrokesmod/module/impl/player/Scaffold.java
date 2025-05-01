@@ -408,8 +408,8 @@ public class Scaffold extends Module {
 
                 long strokeDelay = 250;
 
-                float first = 74.5F;
-                float sec = 78.5F;
+                float first = 73.5F;
+                float sec = 77.5F;
 
                 if (quad <= 5 || quad >= 85) {
                     yawAngle = 124.425F;

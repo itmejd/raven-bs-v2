@@ -42,7 +42,6 @@ public class BedAura extends Module {
     private ButtonSetting cancelKnockback;
     private ButtonSetting disableBreakEffects;
     public ButtonSetting groundSpoof;
-    public ButtonSetting ignoreSlow;
     private ButtonSetting onlyWhileVisible;
     private ButtonSetting renderOutline;
     private ButtonSetting sendAnimations;
@@ -65,7 +64,7 @@ public class BedAura extends Module {
     private BlockPos previousBlockBroken;
     private BlockPos rotateLastBlock;
     private boolean spoofGround, firstStop;
-    private boolean isBreaking, startPacket, stopPacket;
+    private boolean isBreaking, startPacket, stopPacket, ignoreSlow;
 
     public BedAura() {
         super("BedAura", category.player, 0);
@@ -79,7 +78,6 @@ public class BedAura extends Module {
         this.registerSetting(cancelKnockback = new ButtonSetting("Cancel knockback", false));
         this.registerSetting(disableBreakEffects = new ButtonSetting("Disable break effects", false));
         this.registerSetting(groundSpoof = new ButtonSetting("Ground spoof", false));
-        this.registerSetting(ignoreSlow = new ButtonSetting("Ignore slow", false));
         this.registerSetting(onlyWhileVisible = new ButtonSetting("Only while visible", false));
         this.registerSetting(renderOutline = new ButtonSetting("Render block outline", true));
         this.registerSetting(sendAnimations = new ButtonSetting("Send animations", false));
@@ -176,13 +174,6 @@ public class BedAura extends Module {
 
     @SubscribeEvent
     public void onPreMotion(PreMotionEvent e) {
-        if (groundSpoof.isToggled() && !mc.thePlayer.isInWater() && spoofGround) {
-            e.setOnGround(true);
-            if (Raven.debug) {
-                Utils.sendModuleMessage(this, "&7ground spoof (&3" + mc.thePlayer.ticksExisted + "&7).");
-            }
-        }
-        spoofGround = false;
 
         if (startPacket) {
             mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.START_DESTROY_BLOCK, packetPos, EnumFacing.UP));
@@ -199,7 +190,14 @@ public class BedAura extends Module {
             }
         }
 
-        startPacket = stopPacket = false;
+        if (groundSpoof.isToggled() && !mc.thePlayer.isInWater() && spoofGround) {
+            e.setOnGround(true);
+            if (Raven.debug) {
+                Utils.sendModuleMessage(this, "&7ground spoof (&3" + mc.thePlayer.ticksExisted + "&7).");
+            }
+        }
+
+        startPacket = stopPacket = spoofGround = false;
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -332,7 +330,7 @@ public class BedAura extends Module {
     private double getEfficiency(BlockPos pos) {
         Block block = BlockUtils.getBlock(pos);
         ItemStack tool = (mode.getInput() == 2 && Utils.getTool(block) != -1) ? mc.thePlayer.inventory.getStackInSlot(Utils.getTool(block)) : mc.thePlayer.getHeldItem();
-        double efficiency = BlockUtils.getBlockHardness(block, tool, false, ignoreSlow.isToggled() || groundSpoof.isToggled());
+        double efficiency = BlockUtils.getBlockHardness(block, tool, false, ignoreSlow);
 
         if (breakProgressMap.get(pos) != null) {
             efficiency = breakProgressMap.get(pos);
@@ -363,6 +361,7 @@ public class BedAura extends Module {
         breakTick = false;
         currentBlock = null;
         bedPos = null;
+        ignoreSlow = false;
     }
 
     public void setPacketSlot(int slot) {
@@ -380,7 +379,10 @@ public class BedAura extends Module {
         stopAutoblock = true;
         isBreaking = true;
         breakTick = true;
-        spoofGround = true;
+        if (mc.thePlayer.motionY > -0.5) {
+            ignoreSlow = true;
+            spoofGround = true;
+        }
     }
 
     private void stopBreak(ClientRotationEvent e, BlockPos blockPos) {
@@ -390,7 +392,10 @@ public class BedAura extends Module {
         stopAutoblock = true;
         isBreaking = false;
         breakTick = true;
-        spoofGround = true;
+        if (ignoreSlow) {
+            spoofGround = true;
+        }
+        ignoreSlow = false;
     }
 
     private void swing() {
@@ -466,7 +471,7 @@ public class BedAura extends Module {
 
                 }
             }
-            double progress = vanillaProgress = (float) (BlockUtils.getBlockHardness(block, (mode.getInput() == 2 && Utils.getTool(block) != -1) ? mc.thePlayer.inventory.getStackInSlot(Utils.getTool(block)) : mc.thePlayer.getHeldItem(), false, ignoreSlow.isToggled() || groundSpoof.isToggled()) * breakSpeed.getInput());
+            double progress = vanillaProgress = (float) (BlockUtils.getBlockHardness(block, (mode.getInput() == 2 && Utils.getTool(block) != -1) ? mc.thePlayer.inventory.getStackInSlot(Utils.getTool(block)) : mc.thePlayer.getHeldItem(), false, ignoreSlow) * breakSpeed.getInput());
             if (lastProgress != 0 && breakProgress >= lastProgress - vanillaProgress) {
                 if (mode.getInput() == 2 && ModuleManager.killAura.autoBlockOverride()) {
                     if (Raven.debug) {
