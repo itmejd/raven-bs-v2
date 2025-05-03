@@ -192,11 +192,11 @@ public class NoSlow extends Module {
             canFloat = true;
         }
         else if (canFloat && canFloat() && !requireJump && (!jumped || ++offsetDelay > 1)) {
-            if (Utils.fallDistZ() > 0.01) {
-                if (mc.thePlayer.motionY <= -0.0784000015258789) {
-                    e.setPosY(e.getPosY() + 0.0015);
+            if (!mc.thePlayer.onGround) {
+                if (mc.thePlayer.motionY <= -0.0784000015258789 && !(mc.thePlayer.posY % 1 == 0)) {
+                    e.setPosY(e.getPosY() + 1e-3);
                 } else {
-                    e.setPosY(e.getPosY() - 0.0015);
+                    e.setPosY(e.getPosY() - 1e-3);
                 }
             }
             else {

@@ -261,11 +261,11 @@ public class Scaffold extends Module {
                 if (moduleEnabled && mc.thePlayer.posY % 1 == 0) {
                     ++floatTicks;
                     if (floatTicks > 1) {
-                        e.setPosY(e.getPosY() + 1e-4);
+                        e.setPosY(e.getPosY() + 1e-3);
                         floatTicks = 0;
                     }
                     else {
-                        e.setPosY(e.getPosY() + 1e-3);
+                        e.setPosY(e.getPosY() + 1e-4);
                     }
                     if (sprint.getInput() == 2 && Utils.isMoving() && !ModuleManager.invmove.active()) Utils.setSpeed(getFloatSpeed(getSpeedLevel()));
                     ModuleUtils.groundTicks = 0;
@@ -710,9 +710,6 @@ public class Scaffold extends Module {
             startYPos = -1;
         }
         if (LongJump.stopModules) {
-            stopUpdate2 = true;
-        }
-        if (ModuleManager.killAura.stoppedTargeting) {
             stopUpdate2 = true;
         }
         if (!stopUpdate2) {

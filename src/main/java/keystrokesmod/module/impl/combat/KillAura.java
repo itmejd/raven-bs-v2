@@ -310,6 +310,7 @@ public class KillAura extends Module {
     @SubscribeEvent(priority = EventPriority.LOW)
     public void onClientRotation(ClientRotationEvent e) {
         rotating = false;
+        handleTarget();
         if (delayTicks >= 0) {
             if (rotated) {
                 resetYaw(e);
@@ -323,7 +324,6 @@ public class KillAura extends Module {
             }
             return;
         }
-        handleTarget();
         if (target == null) {
             if (rotated) {
                 resetYaw(e);
@@ -790,9 +790,9 @@ public class KillAura extends Module {
             }
             return;
         }
-        if (this.blockingClient == blockState && autoBlockMode.getInput() != 3) {
+        /*if (this.blockingClient == blockState && autoBlockMode.getInput() != 3) {
             return;
-        }
+        }*/
         if (autoBlockMode.getInput() != previousAutoBlockMode) {
             if (previousAutoBlockMode >= 3) { // if == interact
                 resetBlinkState(true);
@@ -877,12 +877,6 @@ public class KillAura extends Module {
             attackingEntity = target;
         }
         boolean swung = false;
-        if (ModuleManager.bedAura.stopAutoblock) {
-            resetBlinkState(false);
-            blinking.set(false);
-            blockingServer = false;
-            return;
-        }
         switch ((int) autoBlockMode.getInput()) {
             case 3: // blink
                 interactTicks++;

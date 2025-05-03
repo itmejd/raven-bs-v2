@@ -92,7 +92,7 @@ public class BedAura extends Module {
     @Override
     public void onDisable() {
         reset(true, true);
-        previousBlockBroken = null;
+        bedPos = null;
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST) // takes priority over ka & antifireball
@@ -103,7 +103,8 @@ public class BedAura extends Module {
     @SubscribeEvent
     public void onWorldJoin(EntityJoinWorldEvent e) {
         if (e.entity == mc.thePlayer) {
-            currentBlock = null;
+            reset(true, true);
+            bedPos = null;
         }
     }
 
@@ -124,23 +125,24 @@ public class BedAura extends Module {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onClientRotation(ClientRotationEvent e) {
+        if (!Utils.nullCheck()) {
+            return;
+        }
         if (delayStop) {
             delayStop = false;
         } else {
             stopAutoblock = false;
         }
         breakTick = false;
-        if (!Utils.nullCheck()) {
+        if (currentBlock == null || !RotationUtils.inRange(currentBlock, range.getInput())) {
+            reset(true, true);
+            bedPos = null;
+        }
+        if (Utils.isBedwarsPracticeOrReplay()) {
             return;
         }
         if (ModuleManager.bedwars != null && ModuleManager.bedwars.isEnabled() && BedWars.whitelistOwnBed.isToggled() && !BedWars.outsideSpawn) {
             reset(true, true);
-            return;
-        }
-        if (currentBlock != null && !RotationUtils.inRange(currentBlock, 15)) {
-            reset(true, true);
-        }
-        if (Utils.isBedwarsPracticeOrReplay()) {
             return;
         }
         if (!mc.thePlayer.capabilities.allowEdit || mc.thePlayer.isSpectator()) {
@@ -371,10 +373,9 @@ public class BedAura extends Module {
         }
         breakTick = false;
         currentBlock = null;
-        bedPos = null;
+        nearestBlock = null;
         ignoreSlow = false;
         delayStop = false;
-        previousBlockBroken = null;
     }
 
     public void setPacketSlot(int slot) {
@@ -428,10 +429,6 @@ public class BedAura extends Module {
         if (fov != 360 && !Utils.inFov(fov, blockPos)) {
             return;
         }
-        if (!RotationUtils.inRange(blockPos, range.getInput())) {
-            reset(true, true);
-            return;
-        }
         if (onlyWhileVisible.isToggled() && (mc.objectMouseOver == null || mc.objectMouseOver.typeOfHit != MovingObjectPosition.MovingObjectType.BLOCK || !mc.objectMouseOver.getBlockPos().equals(blockPos))) {
             return;
         }
@@ -439,8 +436,8 @@ public class BedAura extends Module {
             reset(true, true);
             return;
         }
-        currentBlock = blockPos;
         Block block = BlockUtils.getBlock(blockPos);
+        currentBlock = blockPos;
         if ((breakProgress <= 0 || breakProgress >= 1) && mode.getInput() == 2 && !firstStop) {
             firstStop = true;
             stopAutoblock = delayStop = true;
