@@ -133,7 +133,9 @@ public class Tower extends Module {
                     }
                     break;
                 case 5:
-
+                    if (mc.thePlayer.onGround) {
+                        ModuleManager.scaffold.rotateForward();
+                    }
                     break;
                 case 6:
 

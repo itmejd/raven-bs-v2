@@ -32,7 +32,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 
 public class NoSlow extends Module {
-    public static SliderSetting sword, mode, blinkMode;
+    public static SliderSetting sword, mode, blinkMode, vanillaMode;
     public static SliderSetting slowed;
     public static ButtonSetting disableBow;
     public static ButtonSetting disablePotions;
@@ -42,6 +42,7 @@ public class NoSlow extends Module {
     private String[] swordMode = new String[] { "Vanilla", "Item mode", "Fake" };
     private String[] modes = new String[] { "Vanilla", "Pre", "Post", "Alpha", "Float", "Blink" };
     private String[] blinkModes = new String[] { "Default", "Begin off ground" };
+    private String[] vanillaModes = new String[] { "Default", "Only on ground" };
 
     private boolean postPlace;
     private boolean canFloat;
@@ -52,7 +53,7 @@ public class NoSlow extends Module {
     private boolean blink, wentOffGround;
     private ConcurrentLinkedQueue<Packet> blinkedPackets = new ConcurrentLinkedQueue<>();
     private int color = new Color(0, 187, 255, 255).getRGB();
-    private int blinkTicks;
+    private int blinkTicks, floatTicks;
     private boolean requireJump;
     private static boolean fix;
     private boolean didC;
@@ -63,6 +64,7 @@ public class NoSlow extends Module {
         this.registerSetting(new DescriptionSetting("Default is 80% motion reduction."));
         this.registerSetting(sword = new SliderSetting("Sword", 0, swordMode));
         this.registerSetting(mode = new SliderSetting("Item", 0, modes));
+        this.registerSetting(vanillaMode = new SliderSetting("Vanilla mode", 0, vanillaModes));
         this.registerSetting(blinkMode = new SliderSetting("Blink Mode", 0, blinkModes));
         this.registerSetting(renderTimer = new ButtonSetting("Render timer", false));
         this.registerSetting(slowed = new SliderSetting("Slow %", 80.0D, 0.0D, 80.0D, 1.0D));
@@ -74,6 +76,7 @@ public class NoSlow extends Module {
     public void guiUpdate() {
         this.renderTimer.setVisible(mode.getInput() == 5, this);
         this.blinkMode.setVisible(mode.getInput() == 5, this);
+        this.vanillaMode.setVisible(mode.getInput() == 0, this);
     }
 
     @Override
@@ -193,7 +196,7 @@ public class NoSlow extends Module {
         }
         else if (canFloat && canFloat() && !requireJump && (!jumped || ++offsetDelay > 1)) {
             if (!mc.thePlayer.onGround) {
-                if (mc.thePlayer.motionY <= -0.0784000015258789 && !(mc.thePlayer.posY % 1 == 0)) {
+                if (mc.thePlayer.motionY < -0.0784000015258789 && !(mc.thePlayer.posY % 1 == 0)) {
                     e.setPosY(e.getPosY() + 1e-3);
                 } else {
                     e.setPosY(e.getPosY() - 1e-3);
@@ -331,7 +334,10 @@ public class NoSlow extends Module {
             else if (mc.thePlayer.getHeldItem().getItem() instanceof ItemPotion && !ItemPotion.isSplash(mc.thePlayer.getHeldItem().getItemDamage()) && disablePotions.isToggled()) {
                 return 0.2f;
             }
-            else if (fix) {
+            else if (fix && !(mc.thePlayer.getHeldItem().getItem() instanceof ItemSword)) {
+                return 0.2f;
+            }
+            else if (mode.getInput() == 0 && vanillaMode.getInput() == 1 && (!mc.thePlayer.onGround || Utils.jumpDown() || ModuleManager.bhop.isEnabled()) && !(mc.thePlayer.getHeldItem().getItem() instanceof ItemSword)) {
                 return 0.2f;
             }
         }
@@ -349,6 +355,7 @@ public class NoSlow extends Module {
         canFloat = false;
         setJump = false;
         offsetDelay = 0;
+        floatTicks = 0;
     }
 
     private boolean holdingUsable(ItemStack itemStack) {

@@ -265,7 +265,7 @@ public class Scaffold extends Module {
                         floatTicks = 0;
                     }
                     else {
-                        e.setPosY(e.getPosY() + 1e-4);
+                        e.setPosY(e.getPosY() + 1e-6);
                     }
                     if (sprint.getInput() == 2 && Utils.isMoving() && !ModuleManager.invmove.active()) Utils.setSpeed(getFloatSpeed(getSpeedLevel()));
                     ModuleUtils.groundTicks = 0;

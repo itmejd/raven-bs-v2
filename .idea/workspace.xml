@@ -14,20 +14,17 @@
       <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/file-system.probe" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/file-system.probe" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/KillAura$KillAuraTarget.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/KillAura$KillAuraTarget.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/KillAura.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/KillAura.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/ModuleManager.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/ModuleManager.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/movement/NoSlow.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/movement/NoSlow.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/BedAura.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/BedAura.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Scaffold$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Scaffold$1.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Scaffold$PlaceData.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Scaffold$PlaceData.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Scaffold.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Scaffold.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Tower.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Tower.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/intermediates/raven-bS-13-non-obfuscated-with-deps.jar" beforeDir="false" afterPath="$PROJECT_DIR$/build/intermediates/raven-bS-13-non-obfuscated-with-deps.jar" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/intermediates/raven-bS-13-without-deps.jar" beforeDir="false" afterPath="$PROJECT_DIR$/build/intermediates/raven-bS-13-without-deps.jar" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/tmp/compileJava/previous-compilation-data.bin" beforeDir="false" afterPath="$PROJECT_DIR$/build/tmp/compileJava/previous-compilation-data.bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/combat/KillAura.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/combat/KillAura.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/ModuleManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/ModuleManager.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/movement/NoSlow.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/movement/NoSlow.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/BedAura.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/BedAura.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/Scaffold.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/Scaffold.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/Tower.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/Tower.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -185,14 +182,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1736536952705</updated>
-    </task>
-    <task id="LOCAL-00015" summary="t">
-      <option name="closed" value="true" />
-      <created>1737406991964</created>
-      <option name="number" value="00015" />
-      <option name="presentableId" value="LOCAL-00015" />
-      <option name="project" value="LOCAL" />
-      <updated>1737406991964</updated>
     </task>
     <task id="LOCAL-00016" summary="t">
       <option name="closed" value="true" />
@@ -578,7 +567,15 @@
       <option name="project" value="LOCAL" />
       <updated>1746087366224</updated>
     </task>
-    <option name="localTasksCounter" value="64" />
+    <task id="LOCAL-00064" summary="Latest release">
+      <option name="closed" value="true" />
+      <created>1746241615818</created>
+      <option name="number" value="00064" />
+      <option name="presentableId" value="LOCAL-00064" />
+      <option name="project" value="LOCAL" />
+      <updated>1746241615818</updated>
+    </task>
+    <option name="localTasksCounter" value="65" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

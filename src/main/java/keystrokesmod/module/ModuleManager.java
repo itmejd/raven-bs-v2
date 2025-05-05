@@ -51,6 +51,7 @@ public class ModuleManager {
     public static Disabler disabler;
     public static NoRotate noRotate;
     public static PlayerESP playerESP;
+    public static Module chrisESP;
     public static Module reduce;
     public static Safewalk safeWalk;
     public static Module keepSprint;
