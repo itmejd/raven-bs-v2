@@ -3,10 +3,11 @@ package keystrokesmod.module.impl.render;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.impl.world.AntiBot;
 import keystrokesmod.module.setting.impl.ButtonSetting;
-import keystrokesmod.utility.RenderUtils;
 import keystrokesmod.utility.Utils;
+import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.*;
 import net.minecraft.util.*;
@@ -14,207 +15,217 @@ import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.lwjgl.opengl.GL11;
 
-import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Trajectories extends Module {
     private ButtonSetting autoScale;
-    private ButtonSetting disableUncharged;
-    private ButtonSetting highlightOnEntity;
-    private int highlightColor = new Color(234, 38, 38).getRGB();
-    private int topColor = new Color(46, 255, 22).getRGB();
+    private ButtonSetting disableUnchargedBow;
+    private ButtonSetting highlightEntities;
+    private ButtonSetting shortenLine;
+
     public Trajectories() {
         super("Trajectories", category.render);
         this.registerSetting(autoScale = new ButtonSetting("Auto-scale", true));
-        this.registerSetting(disableUncharged = new ButtonSetting("Disable uncharged bow", true));
-        this.registerSetting(highlightOnEntity = new ButtonSetting("Highlight on entity", true));
+        this.registerSetting(disableUnchargedBow = new ButtonSetting("Disable uncharged bow", true));
+        this.registerSetting(highlightEntities = new ButtonSetting("Highlight on entity", true));
+        this.registerSetting(shortenLine = new ButtonSetting("Shorten line", false));
     }
 
     @SubscribeEvent
-    public void onRenderWorldLast(RenderWorldLastEvent e) {
+    public void onRenderWorld(RenderWorldLastEvent e) {
         if (!Utils.nullCheck() || mc.thePlayer.getHeldItem() == null) {
             return;
         }
-        ItemStack heldItem = mc.thePlayer.getHeldItem();
-        if (!(heldItem.getItem() instanceof ItemBow) && !(heldItem.getItem() instanceof ItemSnowball) && !(heldItem.getItem() instanceof ItemEgg) && !(heldItem.getItem() instanceof ItemEnderPearl)) {
+        Item item = mc.thePlayer.getHeldItem().getItem();
+        boolean usingBow = item instanceof ItemBow;
+        if (!usingBow && !(item instanceof ItemSnowball) && !(item instanceof ItemEgg) && !(item instanceof ItemEnderPearl)) {
             return;
         }
-        if (heldItem.getItem() instanceof ItemBow && !mc.thePlayer.isUsingItem() && disableUncharged.isToggled()) {
+        if (usingBow && disableUnchargedBow.isToggled() && !mc.thePlayer.isUsingItem()) {
             return;
         }
-        boolean bow = heldItem.getItem() instanceof ItemBow;
-
-        float playerYaw = mc.thePlayer.rotationYaw;
-        float playerPitch = mc.thePlayer.rotationPitch;
-
-        double posX = mc.getRenderManager().viewerPosX - (double)(MathHelper.cos(playerYaw / 180.0f * (float)Math.PI) * 0.16f);
-        double posY = mc.getRenderManager().viewerPosY + (double)mc.thePlayer.getEyeHeight() - (double)0.1f;
-        double posZ = mc.getRenderManager().viewerPosZ - (double)(MathHelper.sin(playerYaw / 180.0f * (float)Math.PI) * 0.16f);
-
-        double motionX = (double)(-MathHelper.sin(playerYaw / 180.0f * (float)Math.PI) * MathHelper.cos(playerPitch / 180.0f * (float)Math.PI)) * (bow ? 1.0 : 0.4);
-        double motionY = (double)(-MathHelper.sin(playerPitch / 180.0f * (float)Math.PI)) * (bow ? 1.0 : 0.4);
-        double motionZ = (double)(MathHelper.cos(playerYaw / 180.0f * (float)Math.PI) * MathHelper.cos(playerPitch / 180.0f * (float)Math.PI)) * (bow ? 1.0 : 0.4);
-
-        int itemInUse = 40;
-        if (mc.thePlayer.getItemInUseCount() > 0 && bow) {
-            itemInUse = mc.thePlayer.getItemInUseCount();
+        float yaw = (float)Math.toRadians(mc.thePlayer.rotationYaw);
+        float pitch = (float)Math.toRadians(mc.thePlayer.rotationPitch);
+        double arrowPosX = mc.thePlayer.lastTickPosX + (mc.thePlayer.posX - mc.thePlayer.lastTickPosX) * e.partialTicks - MathHelper.cos(yaw) * 0.16f;
+        double arrowPosY = mc.thePlayer.lastTickPosY + (mc.thePlayer.posY - mc.thePlayer.lastTickPosY) * e.partialTicks + mc.thePlayer.getEyeHeight() - 0.1;
+        double arrowPosZ = mc.thePlayer.lastTickPosZ + (mc.thePlayer.posZ - mc.thePlayer.lastTickPosZ) * e.partialTicks - MathHelper.sin(yaw) * 0.16f;
+        float arrowMotionFactor = usingBow ? 1.0f : 0.4f;
+        float arrowMotionX = -MathHelper.sin(yaw) * MathHelper.cos(pitch) * arrowMotionFactor;
+        float arrowMotionY = -MathHelper.sin(pitch) * arrowMotionFactor;
+        float arrowMotionZ = MathHelper.cos(yaw) * MathHelper.cos(pitch) * arrowMotionFactor;
+        double arrowMotion = Math.sqrt(arrowMotionX * arrowMotionX + arrowMotionY * arrowMotionY + arrowMotionZ * arrowMotionZ);
+        arrowMotionX /= arrowMotion;
+        arrowMotionY /= arrowMotion;
+        arrowMotionZ /= arrowMotion;
+        if (usingBow) {
+            float bowPower = (72000 - mc.thePlayer.getItemInUseCount()) / 20.0f;
+            bowPower = (bowPower * bowPower + bowPower * 2.0f) / 3.0f;
+            if (bowPower > 1.0f) {
+                bowPower = 1.0f;
+            }
+            bowPower *= 3.0f;
+            arrowMotionX *= bowPower;
+            arrowMotionY *= bowPower;
+            arrowMotionZ *= bowPower;
         }
-        int timeInUse = 72000 - itemInUse;
-        float strength = (float)timeInUse / 20.0f;
-        if ((double)(strength = (strength * strength + strength * 2.0f) / 3.0f) < 0.1) {
-            return;
+        else {
+            arrowMotionX *= 1.5;
+            arrowMotionY *= 1.5;
+            arrowMotionZ *= 1.5;
         }
-        if (strength > 1.0f) {
-            strength = 1.0f;
-        }
-
-        RenderUtils.glColor(-1);
         GL11.glPushMatrix();
-
-        boolean depthTest = GL11.glIsEnabled(GL11.GL_DEPTH_TEST);
-        boolean textureTwoD = GL11.glIsEnabled(GL11.GL_TEXTURE_2D);
-        boolean blend = GL11.glIsEnabled(GL11.GL_BLEND);
-
-        if (depthTest) {
-            GL11.glDisable(GL11.GL_DEPTH_TEST);
-        }
-        if (textureTwoD) {
-            GL11.glDisable(GL11.GL_TEXTURE_2D);
-        }
-        if (!blend) {
-            GL11.glEnable(GL11.GL_BLEND);
-        }
-        GL11.glEnable(GL11.GL_LINE_SMOOTH);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-
-        float velocity = MathHelper.sqrt_double(motionX * motionX + motionY * motionY + motionZ * motionZ);
-        motionX /= velocity;
-        motionY /= velocity;
-        motionZ /= velocity;
-        motionX *= (double)(bow ? strength * 2.0f : 1.0f) * 1.5;
-        motionY *= (double)(bow ? strength * 2.0f : 1.0f) * 1.5;
-        motionZ *= (double)(bow ? strength * 2.0f : 1.0f) * 1.5;
-
-        GL11.glLineWidth(1.5f);
-        GL11.glBegin(GL11.GL_LINE_STRIP);
-
-        boolean ground = false;
-        MovingObjectPosition target = null;
-        boolean highlight = false;
-        boolean isTop = false;
-        double[] transform = new double[]{posX, posY, posZ, motionX, motionY, motionZ};
-
-        for (int k = 0; k <= 100 && !ground; ++k) {
-            Vec3 start = new Vec3(transform[0], transform[1], transform[2]);
-            Vec3 predicted = new Vec3(transform[0] + transform[3], transform[1] + transform[4], transform[2] + transform[5]);
-            MovingObjectPosition rayTraced = mc.theWorld.rayTraceBlocks(start, predicted, false, true, false);
-            if (rayTraced == null) {
-                rayTraced = getEntityHit(start, predicted);
-                if (rayTraced != null) {
-                    highlight = true;
-                    break;
+        GL11.glEnable(2848);
+        GL11.glBlendFunc(770, 771);
+        GL11.glEnable(3042);
+        GL11.glDisable(3553);
+        GL11.glDisable(2929);
+        GL11.glEnable(32925);
+        GL11.glDepthMask(false);
+        RenderManager renderManager = mc.getRenderManager();
+        double gravity = usingBow ? 0.05 : 0.03;
+        List<double[]> posList = new ArrayList<>();
+        MovingObjectPosition block = null;
+        Entity entity = null;
+        EnumFacing facingEntity = null;
+        EnumFacing facingBlock = null;
+        for (int i = 0; i < 750; ++i) {
+            posList.add(new double[] { arrowPosX - renderManager.viewerPosX, arrowPosY - renderManager.viewerPosY, arrowPosZ - renderManager.viewerPosZ });
+            Vec3 arrowVec = new Vec3(arrowPosX, arrowPosY, arrowPosZ);
+            Vec3 arrowVecNext = new Vec3(arrowPosX + arrowMotionX, arrowPosY + arrowMotionY, arrowPosZ + arrowMotionZ);
+            arrowPosX = arrowVecNext.xCoord;
+            arrowPosY = arrowVecNext.yCoord;
+            arrowPosZ = arrowVecNext.zCoord;
+            arrowMotionX *= 0.99;
+            arrowMotionY *= 0.99;
+            arrowMotionZ *= 0.99;
+            arrowMotionY -= gravity;
+            double size = 0.5;
+            AxisAlignedBB arrowBox = new AxisAlignedBB(arrowPosX - size, arrowPosY - size, arrowPosZ - size, arrowPosX + size, arrowPosY + size, arrowPosZ + size).addCoord((double)arrowMotionX, (double)arrowMotionY, (double)arrowMotionZ).expand(1.0, 1.0, 1.0);
+            List<Entity> list = mc.theWorld.getEntitiesWithinAABBExcludingEntity(mc.getRenderViewEntity(), arrowBox);
+            double minDistSq = 0.0;
+            for (final Entity en : list) {
+                if (en instanceof EntityLivingBase && !(en instanceof EntityArmorStand) && en.canBeCollidedWith()) {
+                    if (((EntityLivingBase)en).deathTime != 0) {
+                        continue;
+                    }
+                    if (en instanceof EntityPlayer && AntiBot.isBot(en)) {
+                        continue;
+                    }
+                    AxisAlignedBB axis = en.getEntityBoundingBox().expand(0.30000001192092896, 0.30000001192092896, 0.30000001192092896);
+                    MovingObjectPosition mop = axis.calculateIntercept(arrowVec, arrowVecNext);
+                    if (mop == null) {
+                        continue;
+                    }
+                    if (minDistSq == 0.0) {
+                        entity = en;
+                        facingEntity = mop.sideHit;
+                    }
+                    else {
+                        double distSq = arrowVec.squareDistanceTo(mop.hitVec);
+                        if (distSq >= minDistSq) {
+                            continue;
+                        }
+                        entity = en;
+                        facingEntity = mop.sideHit;
+                        minDistSq = distSq;
+                    }
                 }
-
-                float f14 = 0.99f;
-                transform[4] *= f14;
-                transform[0] += (transform[3] *= f14);
-                transform[1] += (transform[4] -= bow ? 0.05 : 0.03);
-                transform[2] += (transform[5] *= f14);
-            } 
-            else if (rayTraced.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK && rayTraced.sideHit == EnumFacing.UP) {
-                isTop = true;
+            }
+            block = mc.theWorld.rayTraceBlocks(arrowVec, arrowVecNext);
+            if (block != null) {
+                facingBlock = block.sideHit;
+            }
+            if (entity != null) {
+                break;
+            }
+            if (block != null) {
+                break;
             }
         }
-
-        for (int k = 0; k <= 100 && !ground; ++k) {
-            Vec3 start = new Vec3(posX, posY, posZ);
-            Vec3 predicted = new Vec3(posX + motionX, posY + motionY, posZ + motionZ);
-            MovingObjectPosition rayTraced = mc.theWorld.rayTraceBlocks(start, predicted, false, true, false);
-            if (rayTraced != null) {
-                ground = true;
-                target = rayTraced;
-            } 
+        if (entity != null && block != null) {
+            if (mc.thePlayer.getDistanceSqToEntity(entity) >= mc.thePlayer.getDistanceSqToCenter(block.getBlockPos())) {
+                entity = null;
+                facingEntity = null;
+            }
             else {
-                MovingObjectPosition entityHit = getEntityHit(start, predicted);
-                if (entityHit != null) {
-                    target = entityHit;
-                    ground = true;
+                block = null;
+                facingBlock = null;
+            }
+        }
+        EnumFacing facing = (facingEntity == null) ? facingBlock : facingEntity;
+        if (entity != null && highlightEntities.isToggled()) {
+            GL11.glColor3d(1.0, 0.0, 0.0);
+            GL11.glLineWidth(2.5f);
+        }
+        else {
+            if (facingBlock == EnumFacing.UP) {
+                GL11.glColor3d(0, 1.0, 0);
+            }
+            else {
+                GL11.glColor3d(1.0, 1.0, 1.0);
+            }
+            GL11.glLineWidth(1.8f);
+        }
+        GL11.glBegin(3);
+        for (int j = 0; j < posList.size(); ++j) {
+            if (j != 0 || !shortenLine.isToggled()) {
+                double[] pos = posList.get(j);
+                GL11.glVertex3d(pos[0], pos[1], pos[2]);
+            }
+        }
+        double renderX = arrowPosX - renderManager.viewerPosX;
+        double renderY = arrowPosY - renderManager.viewerPosY;
+        double renderZ = arrowPosZ - renderManager.viewerPosZ;
+        double distSq2 = 0.0;
+        if (entity != null) {
+            distSq2 = mc.thePlayer.getDistanceSq(entity.getPosition());
+        }
+        else if (block != null) {
+            distSq2 = mc.thePlayer.getDistanceSq(block.getBlockPos());
+        }
+        if (facing != null) {
+            double size2 = autoScale.isToggled() ? Math.min(0.1 * (1.0 + distSq2 / 500.0), 0.5) : 0.1;
+            switch (facing) {
+                case WEST:
+                case EAST: {
+                    GL11.glVertex3d(renderX, renderY, renderZ);
+                    GL11.glVertex3d(renderX, renderY - size2, renderZ - size2);
+                    GL11.glVertex3d(renderX, renderY + size2, renderZ + size2);
+                    GL11.glVertex3d(renderX, renderY, renderZ);
+                    GL11.glVertex3d(renderX, renderY - size2, renderZ + size2);
+                    GL11.glVertex3d(renderX, renderY + size2, renderZ - size2);
+                    break;
+                }
+                case NORTH:
+                case SOUTH: {
+                    GL11.glVertex3d(renderX, renderY, renderZ);
+                    GL11.glVertex3d(renderX - size2, renderY - size2, renderZ);
+                    GL11.glVertex3d(renderX + size2, renderY + size2, renderZ);
+                    GL11.glVertex3d(renderX, renderY, renderZ);
+                    GL11.glVertex3d(renderX + size2, renderY - size2, renderZ);
+                    GL11.glVertex3d(renderX - size2, renderY + size2, renderZ);
+                    break;
+                }
+                case DOWN:
+                case UP: {
+                    GL11.glVertex3d(renderX, renderY, renderZ);
+                    GL11.glVertex3d(renderX - size2, renderY, renderZ - size2);
+                    GL11.glVertex3d(renderX + size2, renderY, renderZ + size2);
+                    GL11.glVertex3d(renderX, renderY, renderZ);
+                    GL11.glVertex3d(renderX + size2, renderY, renderZ - size2);
+                    GL11.glVertex3d(renderX - size2, renderY, renderZ + size2);
+                    break;
                 }
             }
-
-            if (highlight && highlightOnEntity.isToggled()) {
-                RenderUtils.glColor(highlightColor);
-            } 
-            else if (isTop) {
-                RenderUtils.glColor(topColor);
-            }
-
-            float airResistance = 0.99f;
-            motionY *= airResistance;
-            GL11.glVertex3d((posX += (motionX *= airResistance)) - mc.getRenderManager().viewerPosX, (posY += (motionY -= bow ? 0.05 : 0.03)) - mc.getRenderManager().viewerPosY, (posZ += (motionZ *= airResistance)) - mc.getRenderManager().viewerPosZ);
         }
         GL11.glEnd();
-
-        GL11.glTranslated(posX - mc.getRenderManager().viewerPosX, posY - mc.getRenderManager().viewerPosY, posZ - mc.getRenderManager().viewerPosZ);
-        if (target != null && target.sideHit != null) {
-            switch (target.sideHit.getIndex()) {
-                case 2:
-                case 3:
-                    GL11.glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
-                    break;
-                case 4:
-                case 5:
-                    GL11.glRotatef(90.0f, 0.0f, 0.0f, 1.0f);
-                    break;
-            }
-        }
-        if (autoScale.isToggled()) {
-            double distance = Math.max(mc.thePlayer.getDistance(posX + motionX, posY + motionY, posZ + motionZ) * 0.042830285, 1);
-            GL11.glScaled(distance, distance, distance);
-        }
-        this.drawX();
-
-        GL11.glDisable(GL11.GL_LINE_SMOOTH);
-        if (depthTest) {
-            GL11.glEnable(GL11.GL_DEPTH_TEST);
-        }
-        if (textureTwoD) {
-            GL11.glEnable(GL11.GL_TEXTURE_2D);
-        }
-        if (!blend) {
-            GL11.glDisable(GL11.GL_BLEND);
-        }
-        GL11.glPopMatrix();
-    }
-
-    public MovingObjectPosition getEntityHit(Vec3 origin, Vec3 destination) {
-        for (Entity e : mc.theWorld.loadedEntityList) {
-            if (!(e instanceof EntityLivingBase)) {
-                continue;
-            }
-            if (e instanceof EntityPlayer && AntiBot.isBot(e)) {
-                continue;
-            }
-            if (e != mc.thePlayer) {
-                float expand = 0.3f;
-                AxisAlignedBB boundingBox = e.getEntityBoundingBox().expand(expand, expand, expand);
-                MovingObjectPosition possibleHit = boundingBox.calculateIntercept(origin, destination);
-                if (possibleHit != null) {
-                    return possibleHit;
-                }
-            }
-        }
-        return null;
-    }
-
-    public void drawX() {
-        GL11.glPushMatrix();
-        GL11.glScalef(0.95f, 0.95f, 0.95f);
-        GL11.glBegin(GL11.GL_LINES);
-        GL11.glVertex3d(-0.25, 0.0, 0.25);
-        GL11.glVertex3d(0.25, 0.0, -0.25);
-        GL11.glVertex3d(-0.25, 0.0, -0.25);
-        GL11.glVertex3d(0.25, 0.0, 0.25);
-        GL11.glEnd();
+        GL11.glDisable(3042);
+        GL11.glEnable(3553);
+        GL11.glEnable(2929);
+        GL11.glDisable(32925);
+        GL11.glDepthMask(true);
+        GL11.glDisable(2848);
         GL11.glPopMatrix();
     }
 }

@@ -25,6 +25,7 @@ import java.util.Objects;
 public class Disabler extends Module {
     private SliderSetting disablerTicks;
     private SliderSetting activationDelay;
+    private ButtonSetting resetDisabler;
 
     int tickCounter = 0;
     boolean waitingForGround = false;
@@ -48,6 +49,7 @@ public class Disabler extends Module {
     private boolean reset;
     private float savedYaw, savedPitch;
     private boolean worldJoin;
+    private int wDelay;
 
     public boolean disablerLoaded, running;
 
@@ -55,6 +57,7 @@ public class Disabler extends Module {
         super("Disabler", category.player);
         this.registerSetting(disablerTicks = new SliderSetting("Ticks", "", 100, 85, 150, 5));
         this.registerSetting(activationDelay = new SliderSetting("Activation delay", " seconds", 0, 0, 4, 0.5));
+        this.registerSetting(resetDisabler = new ButtonSetting("§cReset", false));
     }
 
     public void onEnable() {
@@ -96,6 +99,12 @@ public class Disabler extends Module {
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onPreMotion(PreMotionEvent e) {
+        if (resetDisabler.isToggled()) {
+            Utils.print("&7[&dR&7] &cdisabler resetting...");
+            resetState();
+            disablerLoaded = false;
+            resetDisabler.disable();
+        }
         if (Utils.getLobbyStatus() == 1 || Utils.hypixelStatus() != 1 || Utils.isReplay()) {
             return;
         }
@@ -114,12 +123,13 @@ public class Disabler extends Module {
             return;
         }
         running = true;
-        e.setRotations(savedYaw, savedPitch);
+        e.setRotations(0, savedPitch);
 
         if (waitingForGround) {
             /*if (mc.thePlayer.ticksExisted <= 3) {
                 waitingForGround = false;
                 worldJoin = true;
+                wDelay = 0;
             }
             else */if (mc.thePlayer.onGround) {
                 mc.thePlayer.motionY = 0.42f;
@@ -129,7 +139,7 @@ public class Disabler extends Module {
             return;
         }
 
-        if (ModuleUtils.inAirTicks >= 10 || worldJoin) {
+        if (ModuleUtils.inAirTicks >= 10 || worldJoin && ++wDelay >= 3) {
             if (!applyingMotion) {
                 applyingMotion = true;
                 firstY = mc.thePlayer.posY;
@@ -145,9 +155,9 @@ public class Disabler extends Module {
                 if (mc.thePlayer.posY != firstY) {
                     if (!reset) {
                         resetState();
-                        activationDelayMillis = 5000;
+                        activationDelayMillis = 2000;
                         reset = true;
-                        Utils.print("&7[&dR&7] &adisabler reset, wait 5s");
+                        Utils.print("&7[&dR&7] &adisabler reset, wait 2s");
                     }
                     else {
                         shouldRun = false;

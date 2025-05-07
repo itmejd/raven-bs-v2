@@ -165,7 +165,7 @@ public class AntiVoid extends Module {
     }
 
     public boolean dist() {
-        double minMotion = 0.08;
+        double minMotion = 0.1;
         int dist1 = 4;
         int dist2 = 6;
         int dist3 = 7;

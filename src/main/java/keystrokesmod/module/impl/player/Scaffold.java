@@ -125,6 +125,7 @@ public class Scaffold extends Module {
     private float VTRY;
     private float normalYaw, normalPitch;
     private int switchvl;
+    private int dt;
     //fake rotations
     private float fakeYaw, fakePitch;
     private float fakeYaw1, fakeYaw2;
@@ -174,6 +175,7 @@ public class Scaffold extends Module {
     }
 
     public void onEnable() {
+        dt = 0;
         isEnabled = true;
         moduleEnabled = true;
         ModuleUtils.fadeEdge = 0;
@@ -206,7 +208,56 @@ public class Scaffold extends Module {
         }
         normalYaw = mc.thePlayer.rotationYaw;
         normalPitch = mc.thePlayer.rotationPitch;
+        if (dt > 0) {
+            return;
+        }
+        //Fake rotations
+        if (fakeRotation.getInput() > 0) {
+            if (fakeRotation.getInput() == 1) {
+                fakeYaw = normalYaw;
+                fakePitch = normalPitch;
+            } else if (fakeRotation.getInput() == 2) {
+                fakeYaw = fakeYaw1;
+                if (blockRotations != null) {
+                    fakePitch = blockRotations[1] + 5;
+                } else {
+                    fakePitch = 80f;
+                }
+            } else if (fakeRotation.getInput() == 3) {
+                fakeYaw2 = mc.thePlayer.rotationYaw - hardcodedYaw();
+                float yawDifference = getAngleDifference(lastEdge2, fakeYaw2);
+                float smoothingFactor = (1.0f - (65.0f / 100.0f));
+                fakeYaw2 = (lastEdge2 + yawDifference * smoothingFactor);
+                lastEdge2 = fakeYaw2;
+
+                fakeYaw = fakeYaw2;
+                if (blockRotations != null) {
+                    fakePitch = blockRotations[1] + 5;
+                } else {
+                    fakePitch = 80f;
+                }
+            } else if (fakeRotation.getInput() == 4) {
+                fakeYaw += 25.71428571428571F;
+                fakePitch = 90F;
+            } else if (fakeRotation.getInput() == 5) {
+                if (blockRotations != null) {
+                    fakeYaw2 = blockRotations[0];
+                    fakePitch = blockRotations[1];
+                } else {
+                    fakeYaw2 = mc.thePlayer.rotationYaw - hardcodedYaw() - 180;
+                    fakePitch = 88F;
+                }
+                float yawDifference = getAngleDifference(lastEdge2, fakeYaw2);
+                float smoothingFactor = (1.0f - (65.0f / 100.0f));
+                fakeYaw2 = (lastEdge2 + yawDifference * smoothingFactor);
+                lastEdge2 = fakeYaw2;
+
+                fakeYaw = fakeYaw2;
+            }
+            RotationUtils.setFakeRotations(fakeYaw, fakePitch);
+        }
         if (!isEnabled) {
+            dt++;
             return;
         }
         if (Utils.isMoving()) {
@@ -319,50 +370,6 @@ public class Scaffold extends Module {
             dynamic++;
         }
         randomF = 0;
-
-        //Fake rotations
-        if (fakeRotation.getInput() > 0) {
-            if (fakeRotation.getInput() == 1) {
-                RotationUtils.setFakeRotations(normalYaw, normalPitch);
-            }
-            else if (fakeRotation.getInput() == 2) {
-                fakeYaw = fakeYaw1;
-                if (blockRotations != null) {
-                    fakePitch = blockRotations[1] + 5;
-                } else {
-                    fakePitch = 80f;
-                }
-            }
-            else if (fakeRotation.getInput() == 3) {
-                fakeYaw2 = mc.thePlayer.rotationYaw - hardcodedYaw();
-                float yawDifference = getAngleDifference(lastEdge2, fakeYaw2);
-                float smoothingFactor = (1.0f - (65.0f / 100.0f));
-                fakeYaw2 = (lastEdge2 + yawDifference * smoothingFactor);
-                lastEdge2 = fakeYaw2;
-
-                fakeYaw = fakeYaw2;
-                if (blockRotations != null) {
-                    fakePitch = blockRotations[1] + 5;
-                } else {
-                    fakePitch = 80f;
-                }
-            }
-            else if (fakeRotation.getInput() == 4) {
-                fakeYaw += 25.71428571428571F;
-                fakePitch = 90F;
-            }
-            else if (fakeRotation.getInput() == 5) {
-                if (blockRotations != null) {
-                    fakeYaw = blockRotations[0];
-                    fakePitch = blockRotations[1];
-                }
-                else {
-                    fakeYaw = mc.thePlayer.rotationYaw - hardcodedYaw() - 45;
-                    fakePitch = 80F;
-                }
-            }
-            RotationUtils.setFakeRotations(fakeYaw, fakePitch);
-        }
     }
 
     @SubscribeEvent
@@ -408,7 +415,7 @@ public class Scaffold extends Module {
 
                 long strokeDelay = 250;
 
-                float first = 73.5F;
+                float first = 77.5F;
                 float sec = 77.5F;
 
                 if (quad <= 5 || quad >= 85) {
@@ -1040,10 +1047,13 @@ public class Scaffold extends Module {
         int x = (int) Math.floor(mc.thePlayer.posX + xOffset);
         int y = (int) Math.floor(((startYPos != -1) ? startYPos : mc.thePlayer.posY) + yOffset);
         int z = (int) Math.floor(mc.thePlayer.posZ);
+
         BlockPos base = new BlockPos(x, y - 1, z);
+
         if (!BlockUtils.replaceable(base)) {
             return null;
         }
+
         EnumFacing[] allFacings = getFacingsSorted();
         List<EnumFacing> validFacings = new ArrayList<>(5);
         for (EnumFacing facing : allFacings) {
@@ -1051,11 +1061,9 @@ public class Scaffold extends Module {
                 validFacings.add(facing);
             }
         }
+        int maxLayer = 1;
         List<PlaceData> possibleBlocks = new ArrayList<>();
 
-        int maxLayer = 2;
-
-        main:
         for (int dy = 1; dy <= maxLayer; dy++) {
             BlockPos layerBase = new BlockPos(x, y - dy, z);
             if (dy == 1) {
@@ -1073,6 +1081,22 @@ public class Scaffold extends Module {
                         BlockPos nestedNeighbor = adjacent.offset(nestedFacing);
                         if (!BlockUtils.replaceable(nestedNeighbor) && !BlockUtils.isInteractable(BlockUtils.getBlock(nestedNeighbor))) {
                             possibleBlocks.add(new PlaceData(nestedNeighbor, nestedFacing.getOpposite()));
+                        }
+                    }
+                }
+            }
+            for (EnumFacing facing : validFacings) {
+                BlockPos adjacent = layerBase.offset(facing);
+                if (BlockUtils.replaceable(adjacent)) {
+                    for (EnumFacing nestedFacing : validFacings) {
+                        BlockPos nestedNeighbor = adjacent.offset(nestedFacing);
+                        if (BlockUtils.replaceable(nestedNeighbor)) {
+                            for (EnumFacing thirdFacing : validFacings) {
+                                BlockPos thirdNeighbor = nestedNeighbor.offset(thirdFacing);
+                                if (!BlockUtils.replaceable(thirdNeighbor) && !BlockUtils.isInteractable(BlockUtils.getBlock(thirdNeighbor))) {
+                                    possibleBlocks.add(new PlaceData(thirdNeighbor, thirdFacing.getOpposite()));
+                                }
+                            }
                         }
                     }
                 }

@@ -66,6 +66,8 @@ public class ModuleUtils {
 
     private float yaw;
 
+    private boolean ldmg;
+
     @SubscribeEvent
     public void onWorldJoin(EntityJoinWorldEvent e) {
         if (e.entity == mc.thePlayer) {
@@ -156,31 +158,15 @@ public class ModuleUtils {
                 }
                 dontCheckFD = false;
 
+                ldmg = true;
+
             }
         }
     }
 
     @SubscribeEvent
     public void onPostMotion(PostMotionEvent e) {
-        if (bhopBoostConditions()) {
-            if (firstDamage) {
-                Utils.setSpeed(Utils.getHorizontalSpeed());
-                firstDamage = false;
-            }
-        }
-        if (veloBoostConditions()) {
-            if (firstDamage) {
-                double added = 0;
-                if (Utils.getHorizontalSpeed() <= Velocity.minExtraSpeed.getInput()) {
-                    added = Velocity.extraSpeedBoost.getInput() / 100;
-                    if (Velocity.reverseDebug.isToggled()) {
-                        Utils.print("&7[&dR&7] Applied extra boost | Original speed: " + Utils.getHorizontalSpeed());
-                    }
-                }
-                Utils.setSpeed((Utils.getHorizontalSpeed() * (Velocity.reverseHorizontal.getInput() / 100)) * (1 + added));
-                firstDamage = false;
-            }
-        }
+
     }
 
     private boolean bhopBoostConditions() {
@@ -200,7 +186,29 @@ public class ModuleUtils {
     @SubscribeEvent
     public void onPreUpdate(PreUpdateEvent e) {
 
+        if (bhopBoostConditions()) {
+            if (firstDamage) {
+                Utils.setSpeed(Utils.getHorizontalSpeed());
+                firstDamage = false;
+            }
+        }
+        if (veloBoostConditions()) {
+            if (firstDamage) {
+                double added = 0;
+                if (Utils.getHorizontalSpeed() <= Velocity.minExtraSpeed.getInput()) {
+                    added = Velocity.extraSpeedBoost.getInput() / 100;
+                    if (Velocity.reverseDebug.isToggled()) {
+                        Utils.print("&7[&dR&7] Applied extra boost | Original speed: " + Utils.getHorizontalSpeed());
+                    }
+                }
+                Utils.setSpeed((Utils.getHorizontalSpeed() * (Velocity.reverseHorizontal.getInput() / 100)) * (1 + added));
+                firstDamage = false;
+            }
+        }
+
         //-0.0784000015258789 = ground value
+
+        //§
 
         double ed = Math.toDegrees(Math.atan2(mc.thePlayer.motionZ, mc.thePlayer.motionX));
         //Utils.print("" + ed);
@@ -312,123 +320,7 @@ public class ModuleUtils {
         groundTicks = !mc.thePlayer.onGround ? 0 : ++groundTicks;
         stillTicks = Utils.isMoving() ? 0 : ++stillTicks;
 
-        Block blockAbove = BlockUtils.getBlock(new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY + 2, mc.thePlayer.posZ));
-        Block blockBelow = BlockUtils.getBlock(new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY - 1, mc.thePlayer.posZ));
-        Block blockBelow2 = BlockUtils.getBlock(new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY - 2, mc.thePlayer.posZ));
-        Block block = BlockUtils.getBlock(new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ));
-
-
-        if ((ModuleManager.bhop.didMove || ModuleManager.scaffold.lowhop) && (!ModuleManager.bhop.disablerOnly.isToggled() || ModuleManager.bhop.disablerOnly.isToggled() && ModuleManager.disabler.disablerLoaded)) {
-            if (ModuleUtils.damage && Velocity.vertical.getInput() != 0 || block instanceof BlockSlab) {
-                resetLowhop();
-            }
-            if (!ModuleUtils.damage || Velocity.vertical.getInput() == 0) {
-
-                if (ModuleManager.scaffold.lowhop) {
-                    switch (simpleY) {
-                        case 4200:
-                            mc.thePlayer.motionY = 0.39;
-                            break;
-                        case 1138:
-                            mc.thePlayer.motionY = mc.thePlayer.motionY - 0.13;
-                            break;
-                        case 2031:
-                            mc.thePlayer.motionY = mc.thePlayer.motionY - 0.2;
-                            resetLowhop();
-                            break;
-                    }
-                }
-                else if (ModuleManager.bhop.didMove) {
-                    if (mc.thePlayer.isCollidedVertically || ModuleUtils.damage && Velocity.vertical.getInput() != 0) {// || !ModuleManager.bhop.lowhop && (!(block instanceof BlockAir) || !(blockAbove instanceof BlockAir) || blockBelow instanceof BlockSlab || (blockBelow instanceof BlockAir && blockBelow2 instanceof BlockAir))) {
-                        resetLowhop();
-                    }
-                    switch ((int) ModuleManager.bhop.mode.getInput()) {
-                        case 2: // 9 tick
-                            switch (simpleY) {
-                                case 13:
-                                    mc.thePlayer.motionY = mc.thePlayer.motionY - 0.02483;
-                                    ModuleManager.bhop.lowhop = true;
-                                    break;
-                                case 2000:
-                                    mc.thePlayer.motionY = mc.thePlayer.motionY - 0.1913;
-                                    break;
-                                case 7016:
-                                    mc.thePlayer.motionY = mc.thePlayer.motionY + 0.08;
-                                    break;
-                            }
-                            if (ModuleUtils.inAirTicks >= 7 && Utils.isMoving()) {
-                                Utils.setSpeed(Utils.getHorizontalSpeed(mc.thePlayer));
-                            }
-                            if (ModuleUtils.inAirTicks >= 9) {
-                                resetLowhop();
-                            }
-                            break;
-                        case 3: // 8 tick
-                            if (!ModuleManager.bhop.isNormalPos || (block instanceof BlockStairs)) {
-                                resetLowhop();
-                                break;
-                            }
-                            boolean g1 = Utils.distanceToGround(mc.thePlayer) <= 1.2;
-                            //disable
-                            if (inAirTicks >= 9 || inAirTicks >= 5 && !g1) {
-                                resetLowhop();
-                                break;
-                            }
-                            if (inAirTicks == 1) {
-                                mc.thePlayer.motionY = 0.38999998569488;
-                                ModuleManager.bhop.lowhop = true;
-                            }
-                            if (inAirTicks == 2) {
-                                mc.thePlayer.motionY = 0.30379999189377;
-                            }
-                            if (inAirTicks == 3) {
-                                mc.thePlayer.motionY = 0.08842400075912;
-                            }
-                            if (inAirTicks == 4) {
-                                mc.thePlayer.motionY = -0.19174457909538;
-                            }
-                            if (inAirTicks == 5 && g1) {
-                                mc.thePlayer.motionY = -0.26630949469659;
-                            }
-                            if (inAirTicks == 6 && g1) {
-                                mc.thePlayer.motionY = -0.26438340940798;
-                            }
-                            if (inAirTicks == 7 && g1) {
-                                mc.thePlayer.motionY = -0.33749574778843;
-                            }
-                            //strafe
-                            if (inAirTicks >= 6 && Utils.isMoving()) {
-                                Utils.setSpeed(Utils.getHorizontalSpeed(mc.thePlayer));
-                            }
-                            break;
-                        case 4: // 7 tick
-                            switch (simpleY) {
-                                case 4200:
-                                    mc.thePlayer.motionY = 0.39;
-                                    ModuleManager.bhop.lowhop = true;
-                                    break;
-                                case 1138:
-                                    mc.thePlayer.motionY = mc.thePlayer.motionY - 0.13;
-                                    break;
-                                case 2031:
-                                    mc.thePlayer.motionY = mc.thePlayer.motionY - 0.2;
-                                    resetLowhop();
-                                    break;
-                            }
-                            break;
-                    }
-                }
-            }
-        }
-        if (!mc.thePlayer.onGround) {
-            lowhopAir = true;
-        }
-        else if (lowhopAir) {
-            resetLowhop();
-            if (!ModuleManager.bhop.isEnabled()) {
-                ModuleManager.bhop.isNormalPos = false;
-            }
-        }
+        handleLowhop();
 
         if (ModuleManager.bhop.setRotation) {
             if (!ModuleManager.killAura.rotating && !ModuleManager.scaffold.isEnabled) {
@@ -448,6 +340,8 @@ public class ModuleUtils {
             fadeEdge = 0;
             ModuleManager.scaffold.highlight.clear();
         }
+
+        ldmg = false;
     }
 
     private void resetLowhop() {
@@ -543,4 +437,120 @@ public class ModuleUtils {
             e.setCanceled(true);
         }
     }
+
+    private void handleLowhop() {
+        Block blockAbove = BlockUtils.getBlock(new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY + 2, mc.thePlayer.posZ));
+        Block blockBelow = BlockUtils.getBlock(new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY - 1, mc.thePlayer.posZ));
+        Block blockBelow2 = BlockUtils.getBlock(new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY - 2, mc.thePlayer.posZ));
+        Block block = BlockUtils.getBlock(new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ));
+        int simpleY = (int) Math.round((mc.thePlayer.posY % 1) * 10000);
+
+        if ((ModuleManager.bhop.didMove || ModuleManager.scaffold.lowhop) && (!ModuleManager.bhop.disablerOnly.isToggled() || ModuleManager.bhop.disablerOnly.isToggled() && ModuleManager.disabler.disablerLoaded)) {
+            if (ModuleManager.scaffold.lowhop) {
+                switch (simpleY) {
+                    case 4200:
+                        mc.thePlayer.motionY = 0.39;
+                        break;
+                    case 1138:
+                        mc.thePlayer.motionY = mc.thePlayer.motionY - 0.13;
+                        break;
+                    case 2031:
+                        mc.thePlayer.motionY = mc.thePlayer.motionY - 0.2;
+                        resetLowhop();
+                        break;
+                }
+            }
+            else if (ModuleManager.bhop.didMove) {
+                if (mc.thePlayer.isCollidedVertically || ldmg && Velocity.vertical.getInput() != 0 && !ModuleManager.velocity.dontEditMotion() || block instanceof BlockSlab) {// || !ModuleManager.bhop.lowhop && (!(block instanceof BlockAir) || !(blockAbove instanceof BlockAir) || blockBelow instanceof BlockSlab || (blockBelow instanceof BlockAir && blockBelow2 instanceof BlockAir))) {
+                    resetLowhop();
+                    return;
+                }
+                switch ((int) ModuleManager.bhop.mode.getInput()) {
+                    case 2: // 9 tick
+                        switch (simpleY) {
+                            case 13:
+                                mc.thePlayer.motionY = mc.thePlayer.motionY - 0.02483;
+                                ModuleManager.bhop.lowhop = true;
+                                break;
+                            case 2000:
+                                mc.thePlayer.motionY = mc.thePlayer.motionY - 0.1913;
+                                break;
+                            case 7016:
+                                mc.thePlayer.motionY = mc.thePlayer.motionY + 0.08;
+                                break;
+                        }
+                        if (ModuleUtils.inAirTicks >= 7 && Utils.isMoving()) {
+                            Utils.setSpeed(Utils.getHorizontalSpeed(mc.thePlayer));
+                        }
+                        if (ModuleUtils.inAirTicks >= 9) {
+                            resetLowhop();
+                        }
+                        break;
+                    case 3: // 8 tick
+                        if (!ModuleManager.bhop.isNormalPos || (block instanceof BlockStairs)) {
+                            resetLowhop();
+                            break;
+                        }
+                        boolean g1 = Utils.distanceToGround(mc.thePlayer) <= 1.2;
+                        //disable
+                        if (inAirTicks >= 9 || inAirTicks >= 5 && !g1) {
+                            resetLowhop();
+                            break;
+                        }
+                        if (inAirTicks == 1) {
+                            mc.thePlayer.motionY = 0.38999998569488;
+                            ModuleManager.bhop.lowhop = true;
+                        }
+                        if (inAirTicks == 2) {
+                            mc.thePlayer.motionY = 0.30379999189377;
+                        }
+                        if (inAirTicks == 3) {
+                            mc.thePlayer.motionY = 0.08842400075912;
+                        }
+                        if (inAirTicks == 4) {
+                            mc.thePlayer.motionY = -0.19174457909538;
+                        }
+                        if (inAirTicks == 5 && g1) {
+                            mc.thePlayer.motionY = -0.26630949469659;
+                        }
+                        if (inAirTicks == 6 && g1) {
+                            mc.thePlayer.motionY = -0.26438340940798;
+                        }
+                        if (inAirTicks == 7 && g1) {
+                            mc.thePlayer.motionY = -0.33749574778843;
+                        }
+                        //strafe
+                        if (inAirTicks >= 6 && Utils.isMoving()) {
+                            Utils.setSpeed(Utils.getHorizontalSpeed(mc.thePlayer));
+                        }
+                        break;
+                    case 4: // 7 tick
+                        switch (simpleY) {
+                            case 4200:
+                                mc.thePlayer.motionY = 0.39;
+                                ModuleManager.bhop.lowhop = true;
+                                break;
+                            case 1138:
+                                mc.thePlayer.motionY = mc.thePlayer.motionY - 0.13;
+                                break;
+                            case 2031:
+                                mc.thePlayer.motionY = mc.thePlayer.motionY - 0.2;
+                                resetLowhop();
+                                break;
+                        }
+                        break;
+                }
+            }
+        }
+        if (!mc.thePlayer.onGround) {
+            lowhopAir = true;
+        }
+        else if (lowhopAir) {
+            resetLowhop();
+            if (!ModuleManager.bhop.isEnabled()) {
+                ModuleManager.bhop.isNormalPos = false;
+            }
+        }
+    }
+
 }

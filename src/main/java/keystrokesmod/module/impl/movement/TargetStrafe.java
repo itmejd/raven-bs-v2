@@ -16,18 +16,22 @@ import keystrokesmod.utility.Utils;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import org.lwjgl.input.Mouse;
 
 public class TargetStrafe extends Module {
     private ButtonSetting requireBhop;
     private ButtonSetting requireJump;
+    private ButtonSetting requireRMB;
+    private SliderSetting radius;
 
     private double angle;
-    private float radius = 0.6f;
 
     public TargetStrafe() {
         super("TargetStrafe", category.movement);
         this.registerSetting(requireBhop = new ButtonSetting("Require bhop", false));
         this.registerSetting(requireJump = new ButtonSetting("Require jump key", false));
+        this.registerSetting(requireRMB = new ButtonSetting("Require RMB", false));
+        this.registerSetting(radius = new SliderSetting("Radius", 0.6, 0, 3, 0.1));
     }
 
     public void guiUpdate() {
@@ -47,6 +51,9 @@ public class TargetStrafe extends Module {
         if (requireJump.isToggled() && !Utils.jumpDown()) {
             return;
         }
+        if (requireRMB.isToggled() && !Mouse.isButtonDown(1)) {
+            return;
+        }
         if (ModuleManager.scaffold.isEnabled) {
             return;
         }
@@ -56,8 +63,8 @@ public class TargetStrafe extends Module {
         EntityLivingBase targetPosition = KillAura.target;
         angle += 1;
 
-        double offsetX = radius * Math.cos(angle);
-        double offsetZ = radius * Math.sin(angle);
+        double offsetX = ((float) radius.getInput()) * Math.cos(angle);
+        double offsetZ = ((float) radius.getInput()) * Math.sin(angle);
         double directionX = targetPosition.getPosition().getX() + offsetX - mc.thePlayer.posX;
         double directionZ = targetPosition.getPosition().getZ() + offsetZ - mc.thePlayer.posZ;
         double magnitude = Math.sqrt(directionX * directionX + directionZ * directionZ);

@@ -186,6 +186,13 @@ public class BedAura extends Module {
             }
         }
 
+        if (groundSpoof.isToggled() && !mc.thePlayer.isInWater() && spoofGround) {
+            e.setOnGround(true);
+            if (Raven.debug) {
+                Utils.sendModuleMessage(this, "&7ground spoof (&3" + mc.thePlayer.ticksExisted + "&7).");
+            }
+        }
+
         if (startPacket) {
             mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.START_DESTROY_BLOCK, packetPos, EnumFacing.UP));
             swing();
@@ -202,13 +209,6 @@ public class BedAura extends Module {
         }
         if (isBreaking && !startPacket && !stopPacket) {
             swing();
-        }
-
-        if (groundSpoof.isToggled() && !mc.thePlayer.isInWater() && spoofGround) {
-            e.setOnGround(true);
-            if (Raven.debug) {
-                Utils.sendModuleMessage(this, "&7ground spoof (&3" + mc.thePlayer.ticksExisted + "&7).");
-            }
         }
 
         startPacket = stopPacket = spoofGround = false;
@@ -392,10 +392,8 @@ public class BedAura extends Module {
         startPacket = true;
         isBreaking = true;
         breakTick = true;
-        if (mc.thePlayer.motionY > -0.5) {
-            ignoreSlow = true;
-            spoofGround = true;
-        }
+
+        ignoreSlow = true;
     }
 
     private void stopBreak(ClientRotationEvent e, BlockPos blockPos) {

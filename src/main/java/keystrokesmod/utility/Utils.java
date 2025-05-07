@@ -692,7 +692,7 @@ public class Utils {
     }
 
     public static boolean isHypixel() {
-        return !mc.isSingleplayer() && mc.getCurrentServerData() != null && mc.getCurrentServerData().serverIP.contains("hypixel.net");
+        return !mc.isSingleplayer() && mc.getCurrentServerData() != null && (mc.getCurrentServerData().serverIP.equals("hypixel.net") || mc.getCurrentServerData().serverIP.contains(".hypixel.net"));
     }
 
     public static String getHitsToKillStr(final EntityPlayer entityPlayer, final ItemStack itemStack) {

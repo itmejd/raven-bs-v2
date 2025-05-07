@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Velocity extends Module {
     public SliderSetting velocityModes;
-    public static SliderSetting vertical, horizontal, reverseHorizontal, explosionsHorizontal, explosionsVertical;
+    public static SliderSetting vertical, horizontal, reverseHorizontal, explosionsHorizontal, explosionsVertical, verticalM;
     public static SliderSetting minExtraSpeed, extraSpeedBoost;
     private SliderSetting chance;
     private ButtonSetting onlyWhileAttacking;
@@ -49,6 +49,7 @@ public class Velocity extends Module {
         this.registerSetting(velocityModes = new SliderSetting("Mode", 0, velocityModesString));
         this.registerSetting(horizontal = new SliderSetting("Horizontal", 0.0, 0.0, 100.0, 1.0));
         this.registerSetting(vertical = new SliderSetting("Vertical", 0.0, 0.0, 100.0, 1.0));
+        this.registerSetting(verticalM = new SliderSetting("Vertical Motion Limit", 1.0, -1.0, 1, 0.1));
 
         this.registerSetting(reverseHorizontal = new SliderSetting("-Horizontal", 0.0, 0.0, 100.0, 1.0));
 
@@ -87,6 +88,7 @@ public class Velocity extends Module {
 
         this.horizontal.setVisible(velocityModes.getInput() != 2, this);
         this.vertical.setVisible(velocityModes.getInput() != 2, this);
+        this.verticalM.setVisible(velocityModes.getInput() == 1, this);
         this.chance.setVisible(velocityModes.getInput() != 2, this);
         this.reverseHorizontal.setVisible(velocityModes.getInput() == 2, this);
 
@@ -242,8 +244,8 @@ public class Velocity extends Module {
         }
     }
 
-    private boolean dontEditMotion() {
-        if (velocityModes.getInput() == 1 && zzWhileNotTargeting.isToggled() && KillAura.attackingEntity != null || ModuleManager.noFall.start || ModuleManager.blink.isEnabled() && ModuleManager.blink.cancelKnockback.isToggled() || ModuleManager.bedAura.cancelKnockback() || ModuleManager.tower.cancelKnockback()) {
+    public boolean dontEditMotion() {
+        if (mc.thePlayer.motionY >= verticalM.getInput() && !mc.thePlayer.onGround || velocityModes.getInput() == 1 && zzWhileNotTargeting.isToggled() && KillAura.attackingEntity != null || ModuleManager.noFall.start || ModuleManager.blink.isEnabled() && ModuleManager.blink.cancelKnockback.isToggled() || ModuleManager.bedAura.cancelKnockback() || ModuleManager.tower.cancelKnockback()) {
             return true;
         }
         return false;
