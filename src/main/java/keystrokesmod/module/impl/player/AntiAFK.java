@@ -1,5 +1,6 @@
 package keystrokesmod.module.impl.player;
 
+import keystrokesmod.event.PreUpdateEvent;
 import keystrokesmod.mixin.impl.accessor.IAccessorMinecraft;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.setting.impl.ButtonSetting;
@@ -8,6 +9,7 @@ import keystrokesmod.utility.RotationUtils;
 import keystrokesmod.utility.Utils;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public class AntiAFK extends Module {
     private SliderSetting afk;
@@ -20,9 +22,9 @@ public class AntiAFK extends Module {
     private ButtonSetting randomizePitch;
     private SliderSetting minDelay;
     private SliderSetting maxDelay;
-    private String[] afkModes = new String[]{"None", "Wander", "Lateral shuffle", "Forward", "Backward"};
+    private String[] afkModes = new String[]{"None", "Wander", "Lateral shuffle", "Forward", "Backward", "Lobby"};
     private String[] spinModes = new String[]{"None", "Random", "Right", "Left"};
-    private int ticks;
+    private int ticks, afkTicks;
     private boolean c;
     public boolean stop = false;
     public AntiAFK() {
@@ -42,6 +44,16 @@ public class AntiAFK extends Module {
     public void onEnable() {
         this.ticks = this.h();
         this.c = Utils.getRandom().nextBoolean();
+    }
+
+    @SubscribeEvent
+    public void onPreUpdate(PreUpdateEvent e) {
+        if (!Utils.isMoving()) {
+            ++afkTicks;
+        }
+        else {
+            afkTicks = 0;
+        }
     }
 
     public void onUpdate() {
@@ -74,6 +86,16 @@ public class AntiAFK extends Module {
             }
             case 4: {
                 KeyBinding.setKeyBindState(mc.gameSettings.keyBindBack.getKeyCode(), true);
+                break;
+            }
+            case 5: {
+                if (afkTicks >= 1000) {
+                    mc.thePlayer.capabilities.isFlying = false;
+                    if (mc.thePlayer.onGround) {
+                        mc.thePlayer.jump();
+                    }
+                    afkTicks = 0;
+                }
                 break;
             }
         }

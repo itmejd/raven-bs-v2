@@ -486,7 +486,10 @@ public class Scaffold extends Module {
                 if (firstStroke > 0 && (System.currentTimeMillis() - firstStroke) > strokeDelay) {
                     firstStroke = 0;
                 }
-                if (enabledOffGround && Utils.fallDist() > 2) {
+                if (Utils.fallDist() <= 2 && Utils.getHorizontalSpeed() > 0.1) {
+                    enabledOffGround = false;
+                }
+                if (enabledOffGround) {
                     if (blockRotations != null) {
                         yaw = blockRotations[0];
                         pitch = blockRotations[1];
@@ -496,9 +499,6 @@ public class Scaffold extends Module {
                     }
                     e.setRotations(yaw, pitch);
                     break;
-                }
-                else {
-                    enabledOffGround = false;
                 }
 
                 if (blockRotations != null) {

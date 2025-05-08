@@ -50,6 +50,7 @@ public class ModuleUtils {
     public static boolean lastTickOnGround, lastTickPos1, lastYDif;
     private boolean thisTickOnGround, thisTickPos1;
     public static boolean firstDamage;
+    private int ft;
 
     public static boolean isBlocked;
 
@@ -187,13 +188,14 @@ public class ModuleUtils {
     public void onPreUpdate(PreUpdateEvent e) {
 
         if (bhopBoostConditions()) {
-            if (firstDamage) {
+            if (firstDamage && ++ft >= 2) {
                 Utils.setSpeed(Utils.getHorizontalSpeed());
                 firstDamage = false;
+                ft = 0;
             }
         }
         if (veloBoostConditions()) {
-            if (firstDamage) {
+            if (firstDamage && ++ft >= 2) {
                 double added = 0;
                 if (Utils.getHorizontalSpeed() <= Velocity.minExtraSpeed.getInput()) {
                     added = Velocity.extraSpeedBoost.getInput() / 100;
@@ -203,6 +205,7 @@ public class ModuleUtils {
                 }
                 Utils.setSpeed((Utils.getHorizontalSpeed() * (Velocity.reverseHorizontal.getInput() / 100)) * (1 + added));
                 firstDamage = false;
+                ft = 0;
             }
         }
 
