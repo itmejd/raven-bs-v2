@@ -117,6 +117,8 @@ public class KillAura extends Module {
     public static boolean blinkOn, blinkChecked;
     public boolean targeting, rotating;
     private int cycle;
+    public int sAttacked;
+    private int lastSet;
 
     public ConcurrentLinkedQueue<Packet<?>> delayedKnockBackPackets = new ConcurrentLinkedQueue<>();
 
@@ -167,6 +169,7 @@ public class KillAura extends Module {
     public void onDisable() {
         handleBlocking(false);
         hitMap.clear();
+        lastSet = 0;
         if (blinkAutoBlock()) { // interact autoblock
             resetBlinkState(true);
         }
@@ -180,6 +183,7 @@ public class KillAura extends Module {
         swapped = false;
         partialTicks = 0;
         delayTicks = 0;
+        sAttacked = 0;
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
@@ -536,6 +540,7 @@ public class KillAura extends Module {
     public void onWorldJoin(EntityJoinWorldEvent e) {
         if (e.entity == mc.thePlayer) {
             hitMap.clear();
+            lastSet = 0;
             hostileMobs.clear();
             golems.clear();
         }
@@ -561,9 +566,11 @@ public class KillAura extends Module {
             }
             target = null;
             attackingEntity = null;
+            sAttacked = 0;
         }
         else {
             target = (EntityLivingBase) entity;
+            sAttacked++;
         }
     }
 
@@ -663,8 +670,13 @@ public class KillAura extends Module {
         }
 
         if (!attackTargets.isEmpty()) {
+
+            if (sAttacked == 0) {
+                ++lastSet;
+            }
+
             // Switch aura
-            int ticksExisted = mc.thePlayer.ticksExisted;
+            int ticksExisted = lastSet;
             int switchDelayTicks = (int) (switchDelay.getInput() / 50);
             long noHitTicks = (long) Math.min(attackTargets.size(), targets.getInput()) * switchDelayTicks;
             for (KillAuraTarget auraTarget : attackTargets) {
@@ -681,7 +693,7 @@ public class KillAura extends Module {
             for (KillAuraTarget auraTarget : attackTargets) {
                 Integer firstHit = hitMap.get(auraTarget.entityId);
                 if (firstHit == null || ticksExisted >= firstHit + noHitTicks) {
-                    hitMap.put(auraTarget.entityId, ticksExisted);
+                    hitMap.put(auraTarget.entityId, lastSet);
                     setTarget(mc.theWorld.getEntityByID(auraTarget.entityId));
                     return;
                 }
@@ -715,6 +727,7 @@ public class KillAura extends Module {
                 }
                 if (!mc.thePlayer.isBlocking() || !disableWhileBlocking.isToggled()) {
                     mc.playerController.attackEntity(mc.thePlayer, target);
+                    sAttacked = 0;
                 }
             }
         }

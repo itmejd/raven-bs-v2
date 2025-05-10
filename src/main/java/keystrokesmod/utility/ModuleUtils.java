@@ -1,6 +1,7 @@
 package keystrokesmod.utility;
 
 import keystrokesmod.event.*;
+import keystrokesmod.module.Module;
 import keystrokesmod.module.impl.combat.Velocity;
 import keystrokesmod.module.impl.movement.Bhop;
 import keystrokesmod.module.impl.movement.LongJump;

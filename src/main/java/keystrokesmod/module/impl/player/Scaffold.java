@@ -419,37 +419,37 @@ public class Scaffold extends Module {
                 float sec = 77.5F;
 
                 if (quad <= 5 || quad >= 85) {
-                    yawAngle = 124.425F;
+                    yawAngle = 123.425F;
                     minOffset = 11;
                     minPitch = first;
                 }
                 if (quad > 5 && quad <= 15 || quad >= 75 && quad < 85) {
-                    yawAngle = 126.825F;
+                    yawAngle = 125.825F;
                     minOffset = 9;
                     minPitch = first;
                 }
                 if (quad > 15 && quad <= 25 || quad >= 65 && quad < 75) {
-                    yawAngle = 129.625F;
+                    yawAngle = 128.625F;
                     minOffset = 8;
                     minPitch = first;
                 }
                 if (quad > 25 && quad <= 32 || quad >= 58 && quad < 65) {
-                    yawAngle = 132.625F;
+                    yawAngle = 131.625F;
                     minOffset = 7;
                     minPitch = sec;
                 }
                 if (quad > 32 && quad <= 38 || quad >= 52 && quad < 58) {
-                    yawAngle = 134.825F;
+                    yawAngle = 133.825F;
                     minOffset = 6;
                     minPitch = sec;
                 }
                 if (quad > 38 && quad <= 42 || quad >= 48 && quad < 52) {
-                    yawAngle = 136.825F;
+                    yawAngle = 135.825F;
                     minOffset = 4;
                     minPitch = sec;
                 }
                 if (quad > 42 && quad <= 45 || quad >= 45 && quad < 48) {
-                    yawAngle = 139.125F;
+                    yawAngle = 138.125F;
                     minOffset = 3;
                     minPitch = sec;
                 }
@@ -1239,7 +1239,7 @@ public class Scaffold extends Module {
     }
 
     private void handleMotion() {
-        if (handleFastScaffolds() > 0 || ModuleManager.tower.canTower() || motion.getInput() == 100) {
+        if (usingFastScaffold() || usingFloat() || ModuleManager.tower.canTower() || motion.getInput() == 100 || !mc.thePlayer.onGround) {
             return;
         }
         double input = (motion.getInput() / 100);

@@ -37,6 +37,7 @@ public class NoSlow extends Module {
     public static ButtonSetting disableBow;
     public static ButtonSetting disablePotions;
     public static ButtonSetting swordOnly;
+    public static ButtonSetting disableSprintInAir;
     private ButtonSetting renderTimer;
 
     private String[] swordMode = new String[] { "Vanilla", "Item mode", "Fake" };
@@ -58,6 +59,7 @@ public class NoSlow extends Module {
     private static boolean fix;
     private boolean didC;
     private boolean jumped, setCancelled;
+    public boolean fn;
 
     public NoSlow() {
         super("NoSlow", category.movement, 0);
@@ -71,6 +73,7 @@ public class NoSlow extends Module {
         this.registerSetting(disableBow = new ButtonSetting("Disable bow", false));
         this.registerSetting(disablePotions = new ButtonSetting("Disable potions", false));
         this.registerSetting(swordOnly = new ButtonSetting("Sword only", false));
+        this.registerSetting(disableSprintInAir = new ButtonSetting("Disable sprint in air", false));
     }
 
     public void guiUpdate() {
@@ -88,6 +91,7 @@ public class NoSlow extends Module {
             bl = false;
         }
         release();
+        fn = false;
     }
 
     public void onUpdate() {
@@ -163,6 +167,7 @@ public class NoSlow extends Module {
 
     @SubscribeEvent
     public void onPreMotion(PreMotionEvent e) {
+        fn = false;
         if (sword.getInput() == 2 && !ModuleManager.killAura.blockingClient) {
             if (Utils.holdingSword() && Utils.tabbedIn() && Mouse.isButtonDown(1)) {
                 ReflectionUtils.setItemInUse(true);
@@ -195,6 +200,7 @@ public class NoSlow extends Module {
             canFloat = true;
         }
         else if (canFloat && canFloat() && !requireJump && (!jumped || ++offsetDelay > 1)) {
+            fn = true;
             if (!mc.thePlayer.onGround) {
                 if (mc.thePlayer.motionY < -0.0784000015258789 && !(mc.thePlayer.posY % 1 == 0)) {
                     e.setPosY(e.getPosY() + 1e-3);

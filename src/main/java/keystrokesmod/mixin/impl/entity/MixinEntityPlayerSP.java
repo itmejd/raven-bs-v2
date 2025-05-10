@@ -285,7 +285,7 @@ public abstract class MixinEntityPlayerSP extends AbstractClientPlayer {
             this.setSprinting(true);
         }
 
-        if (this.isSprinting() && (!ModuleManager.sprint.omniSprint() && !ModuleManager.scaffold.sprint() && (this.movementInput.moveForward < f || !flag3)) || this.isCollidedHorizontally || ModuleManager.sprint.disableBackwards() || ModuleUtils.setSlow || (this.movementInput.moveForward == 0 && this.movementInput.moveStrafe == 0) || this.mc.gameSettings.keyBindSneak.isKeyDown() || (ModuleManager.scaffold != null && ModuleManager.scaffold.isEnabled && !ModuleManager.scaffold.sprint()) || (ModuleManager.wTap.isEnabled() && WTap.stopSprint) || ModuleManager.sprint.isEnabled() && ModuleManager.sprint.omniDirectional.getInput() > 0 && !ModuleManager.sprint.omniSprint()) {
+        if (this.isSprinting() && (!ModuleManager.sprint.omniSprint() && !ModuleManager.scaffold.sprint() && (this.movementInput.moveForward < f || !flag3)) || this.isCollidedHorizontally || ModuleManager.sprint.disableBackwards() || ModuleUtils.setSlow || ModuleManager.noSlow != null && NoSlow.disableSprintInAir.isToggled() && ModuleManager.noSlow.fn && !mc.thePlayer.onGround || (this.movementInput.moveForward == 0 && this.movementInput.moveStrafe == 0) || this.mc.gameSettings.keyBindSneak.isKeyDown() || (ModuleManager.scaffold != null && ModuleManager.scaffold.isEnabled && !ModuleManager.scaffold.sprint()) || (ModuleManager.wTap.isEnabled() && WTap.stopSprint) || ModuleManager.sprint.isEnabled() && ModuleManager.sprint.omniDirectional.getInput() > 0 && !ModuleManager.sprint.omniSprint()) {
             this.setSprinting(false);
             WTap.stopSprint = false;
         }
