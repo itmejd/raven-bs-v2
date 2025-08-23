@@ -5,197 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="371fdaac-49d2-42c5-a655-54882c949de7" name="Changes" comment="Latest release">
-      <change afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/event/PlayerMoveEvent.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/event/PrePlayerMovementInputEvent.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/client/S38Logger.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/combat/LagRange.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/movement/Momentum.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/movement/Spider.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/other/Timers.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/AutoBlockIn.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/BadPacketHandler.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/BlinkHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/8.10/checksums/checksums.lock" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/8.10/dependencies-accessors/gc.properties" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/8.10/executionHistory/executionHistory.bin" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/8.10/executionHistory/executionHistory.lock" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/8.10/fileChanges/last-build.bin" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/8.10/fileHashes/fileHashes.bin" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/8.10/fileHashes/fileHashes.lock" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/8.10/gc.properties" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/8.8/checksums/checksums.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.8/checksums/checksums.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/8.8/checksums/md5-checksums.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.8/checksums/md5-checksums.bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/8.8/checksums/sha1-checksums.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.8/checksums/sha1-checksums.bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/8.8/executionHistory/executionHistory.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.8/executionHistory/executionHistory.bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/8.8/executionHistory/executionHistory.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.8/executionHistory/executionHistory.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/8.8/fileHashes/fileHashes.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.8/fileHashes/fileHashes.bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/8.8/fileHashes/fileHashes.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.8/fileHashes/fileHashes.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/8.8/fileHashes/resourceHashesCache.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.8/fileHashes/resourceHashesCache.bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/cache.properties" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/cache.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/file-system.probe" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/file-system.probe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.name" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/Raven.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/Raven.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/event/PrePlayerInputEvent.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/event/PrePlayerInputEvent.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/event/ReceiveAllPacketsEvent.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/helper/RotationHelper.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/helper/RotationHelper.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/mixin/impl/accessor/IAccessorEntityLivingBase.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/mixin/impl/accessor/IAccessorEntityLivingBase.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/mixin/impl/client/MixinGameSettings.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/mixin/impl/client/MixinGameSettings.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/mixin/impl/client/MixinMovementInputFromOptions.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/mixin/impl/client/MixinMovementInputFromOptions.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/mixin/impl/entity/MixinEntity.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/mixin/impl/entity/MixinEntity.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/mixin/impl/entity/MixinEntityLivingBase.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/mixin/impl/entity/MixinEntityLivingBase.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/mixin/impl/entity/MixinEntityPlayer.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/mixin/impl/entity/MixinEntityPlayer.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/mixin/impl/entity/MixinEntityPlayerSP.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/mixin/impl/entity/MixinEntityPlayerSP.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/mixin/impl/network/MixinNetworkManager.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/mixin/impl/network/MixinNetworkManager.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/Module$category.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/Module$category.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/Module.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/Module.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/ModuleManager.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/ModuleManager.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/client/Settings.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/client/Settings.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/AimAssist.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/AimAssist.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/AntiKnockback.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/AutoClicker.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/AutoClicker.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/JumpReset.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/KillAura$KillAuraTarget.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/KillAura$KillAuraTarget.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/KillAura.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/KillAura.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/Velocity.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/Velocity.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/WTap.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/WTap.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/minigames/BedWars.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/minigames/BedWars.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/minigames/CTWFly.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/minigames/CTWFly.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/movement/Bhop.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/movement/Bhop.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/movement/Fly.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/movement/Fly.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/movement/LongJump.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/movement/LongJump.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/movement/NoSlow.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/movement/NoSlow.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/other/Spammer.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/other/Spammer.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/other/ViewPackets.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/other/ViewPackets.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/AntiAFK.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/AntiAFK.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/AntiFireball.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/AntiFireball.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/AntiVoid.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/AntiVoid.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/AutoPlace.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/AutoPlace.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/AutoSwap.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/AutoSwap.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/AutoTool.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/AutoTool.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/BedAura.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/BedAura.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Blink.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Blink.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Disabler.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Disabler.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/NoFall.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/NoFall.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Safewalk.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Safewalk.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Scaffold$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Scaffold$1.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Scaffold$PlaceData.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Scaffold$PlaceData.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Scaffold.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Scaffold.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Tower.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Tower.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/WaterBucket.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/render/HUD$EditScreen.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/render/HUD$EditScreen.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/render/HUD.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/render/HUD.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/render/Shaders.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/render/Shaders.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/render/TargetHUD$EditScreen.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/render/TargetHUD.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/script/ScriptDefaults$client.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/script/ScriptDefaults$client.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/script/ScriptDefaults$config.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/script/ScriptDefaults$config.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/script/ScriptDefaults$gl.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/script/ScriptDefaults$gl.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/script/ScriptDefaults$inventory.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/script/ScriptDefaults$inventory.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/script/ScriptDefaults$keybinds.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/script/ScriptDefaults$keybinds.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/script/ScriptDefaults$modules.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/script/ScriptDefaults$modules.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/script/ScriptDefaults$render$EmptyGuiScreen.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/script/ScriptDefaults$render$EmptyGuiScreen.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/script/ScriptDefaults$render$bloom.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/script/ScriptDefaults$render$bloom.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/script/ScriptDefaults$render$blur.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/script/ScriptDefaults$render$blur.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/script/ScriptDefaults$render.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/script/ScriptDefaults$render.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/script/ScriptDefaults$util.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/script/ScriptDefaults$util.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/script/ScriptDefaults$world.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/script/ScriptDefaults$world.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/script/ScriptDefaults.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/script/ScriptDefaults.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/script/ScriptEvents.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/script/ScriptEvents.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/BlockUtils.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/BlockUtils.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/KnockBackHelper.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/ModuleUtils.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/ModuleUtils.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/PacketsHandler$PacketData.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/PacketsHandler$PacketData.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/PacketsHandler.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/PacketsHandler.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/ReflectionUtils.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/ReflectionUtils.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/RenderUtils.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/RenderUtils.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/RotationUtils$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/RotationUtils$1.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/RotationUtils$PLAYER_OFFSETS.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/RotationUtils$PLAYER_OFFSETS.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/RotationUtils.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/RotationUtils.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/Utils$keybinds.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/Utils$keybinds.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/Utils.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/Utils.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/command/impl/Q.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/command/impl/Q.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/command/impl/SpammerUtil.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/command/impl/SpammerUtil.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/command/impl/Status.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/command/impl/Status.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/command/impl/StopSpammer.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/command/impl/StopSpammer.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/profile/ProfileManager.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/profile/ProfileManager.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/mixins.raven.json" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/mixins.raven.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/mixins.raven.refmap.json" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/mixins.raven.refmap.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/intermediates/raven-bS-13-non-obfuscated-with-deps.jar" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/intermediates/raven-bS-13-without-deps.jar" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/tmp/compileJava/previous-compilation-data.bin" beforeDir="false" afterPath="$PROJECT_DIR$/build/tmp/compileJava/previous-compilation-data.bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gradle.properties" beforeDir="false" afterPath="$PROJECT_DIR$/gradle.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/Raven.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/Raven.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/event/PrePlayerInputEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/event/PrePlayerInputEvent.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/event/ReceiveAllPacketsEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/event/ReceivePacketNoEvent.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/helper/RotationHelper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/helper/RotationHelper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/mixin/impl/accessor/IAccessorEntityLivingBase.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/mixin/impl/accessor/IAccessorEntityLivingBase.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/mixin/impl/client/MixinGameSettings.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/mixin/impl/client/MixinGameSettings.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/mixin/impl/client/MixinMovementInputFromOptions.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/mixin/impl/client/MixinMovementInputFromOptions.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/mixin/impl/entity/MixinEntity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/mixin/impl/entity/MixinEntity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/mixin/impl/entity/MixinEntityLivingBase.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/mixin/impl/entity/MixinEntityLivingBase.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/mixin/impl/entity/MixinEntityPlayer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/mixin/impl/entity/MixinEntityPlayer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/mixin/impl/entity/MixinEntityPlayerSP.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/mixin/impl/entity/MixinEntityPlayerSP.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/mixin/impl/network/MixinNetworkManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/mixin/impl/network/MixinNetworkManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/Module.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/Module.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/ModuleManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/ModuleManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/client/Settings.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/client/Settings.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/combat/AimAssist.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/combat/AimAssist.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/combat/AntiKnockback.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/combat/AutoClicker.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/combat/AutoClicker.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/combat/JumpReset.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/combat/KillAura.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/combat/KillAura.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/combat/Velocity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/combat/Velocity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/combat/WTap.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/combat/WTap.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/minigames/BedWars.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/minigames/BedWars.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/minigames/CTWFly.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/minigames/CTWFly.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/movement/Bhop.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/movement/Bhop.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/movement/Fly.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/movement/Fly.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/movement/LongJump.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/movement/LongJump.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/movement/NoSlow.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/movement/NoSlow.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/other/Spammer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/other/Spammer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/other/ViewPackets.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/other/ViewPackets.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/AntiAFK.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/AntiAFK.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/AntiFireball.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/AntiFireball.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/AntiVoid.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/AntiVoid.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/AutoPlace.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/AutoPlace.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/AutoSwap.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/AutoSwap.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/AutoTool.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/AutoTool.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/BedAura.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/BedAura.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/Blink.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/Blink.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/Disabler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/Disabler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/NoFall.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/NoFall.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/Safewalk.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/Safewalk.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/Scaffold.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/Scaffold.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/Tower.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/Tower.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/WaterBucket.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/render/HUD.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/render/HUD.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/render/Shaders.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/render/Shaders.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/render/TargetHUD.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/render/TargetInfo.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/script/ScriptDefaults.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/script/ScriptDefaults.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/script/ScriptEvents.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/script/ScriptEvents.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/BlockUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/BlockUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/KnockBackHelper.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/ModuleUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/ModuleUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/PacketsHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/PacketsHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/ProfileUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/ProfileUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/ReflectionUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/ReflectionUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/RenderUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/RenderUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/RotationUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/RotationUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/Utils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/Utils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/command/impl/Q.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/command/impl/Q.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/command/impl/SpammerUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/command/impl/SpammerUtil.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/command/impl/Status.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/command/impl/Status.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/command/impl/StopSpammer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/command/impl/StopSpammer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/profile/ProfileManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/profile/ProfileManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/mixins.raven.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/mixins.raven.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -262,22 +72,22 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Gradle.raven-bs-alpha [:net.fabricmc.devlaunchinjector.Main.main()].executor&quot;: &quot;Run&quot;,
-    &quot;Gradle.raven-bs-alpha [build].executor&quot;: &quot;Run&quot;,
-    &quot;Gradle.raven-bs-alpha [clean].executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/jackh/Documents/GitHub/raven-bs-v2&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Facets&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;reference.settingsdialog.project.gradle&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Gradle.raven-bs-alpha [:net.fabricmc.devlaunchinjector.Main.main()].executor": "Run",
+    "Gradle.raven-bs-alpha [build].executor": "Run",
+    "Gradle.raven-bs-alpha [clean].executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "master",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/jackh/Documents/GitHub/raven-bs-v2",
+    "project.structure.last.edited": "Facets",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.2",
+    "settings.editor.selected.configurable": "preferences.keymap"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\jackh\Desktop\raven bs premium\raven-bs-alpha\src\main\java\keystrokesmod\utility" />
