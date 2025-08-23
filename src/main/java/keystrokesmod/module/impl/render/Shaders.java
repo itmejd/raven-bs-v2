@@ -31,6 +31,9 @@ public class Shaders extends Module {
 
     @SubscribeEvent
     public void onReceivePacket(ReceivePacketEvent e) {
+        if (!Utils.nullCheck()) {
+            return;
+        }
         if (mc.thePlayer != null && e.getPacket() instanceof S08PacketPlayerPosLook) {
             resetShader = true;
         }

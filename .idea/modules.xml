@@ -2,7 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/raven-bS.main.iml" filepath="$PROJECT_DIR$/.idea/modules/raven-bS.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/raven-bS.iml" filepath="$PROJECT_DIR$/.idea/modules/raven-bS.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/raven-bS.test.iml" filepath="$PROJECT_DIR$/.idea/modules/raven-bS.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/raven-bs-alpha.raven-bS.main.iml" filepath="$PROJECT_DIR$/.idea/modules/raven-bs-alpha.raven-bS.main.iml" />
     </modules>
   </component>
 </project>

@@ -1,5 +1,6 @@
 package keystrokesmod.event;
 
+import keystrokesmod.script.model.MovementInput;
 import net.minecraftforge.fml.common.eventhandler.Event;
 
 public class PrePlayerInputEvent extends Event {
@@ -53,5 +54,9 @@ public class PrePlayerInputEvent extends Event {
 
     public void setSneakSlowDownMultiplier(double sneakSlowDownMultiplier) {
         this.sneakSlowDownMultiplier = sneakSlowDownMultiplier;
+    }
+
+    public boolean isEquals(MovementInput e) {
+        return e.sneak == this.sneak && e.jump == this.jump && e.forward == this.forward && e.strafe == this.strafe;
     }
 }

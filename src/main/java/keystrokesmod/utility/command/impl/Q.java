@@ -18,7 +18,7 @@ public class Q extends Command {
             if (playCommand != null) {
                 mc.thePlayer.sendChatMessage("/play " + playCommand);
             } else {
-                Utils.print("&cQueue failed. Invalid gamemode.");
+                Utils.modulePrint("&cQueue failed. Invalid gamemode.");
             }
         }
     }

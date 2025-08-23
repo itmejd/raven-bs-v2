@@ -1,7 +1,9 @@
 package keystrokesmod.module.impl.player;
 
+import keystrokesmod.Raven;
 import keystrokesmod.event.ClientRotationEvent;
 import keystrokesmod.event.PreUpdateEvent;
+import keystrokesmod.event.ReceivePacketEvent;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.combat.KillAura;
@@ -12,6 +14,7 @@ import keystrokesmod.utility.Utils;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.projectile.EntityFireball;
 import net.minecraft.item.*;
+import net.minecraft.network.play.server.S27PacketExplosion;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -34,6 +37,9 @@ public class AntiFireball extends Module {
 
     public boolean attack;
 
+    private boolean fb;
+    private int fbTicks;
+
     public AntiFireball() {
         super("AntiFireball", category.player);
         this.registerSetting(fov = new SliderSetting("FOV", 360.0, 30.0, 360.0, 4.0));
@@ -45,9 +51,23 @@ public class AntiFireball extends Module {
         this.registerSetting(silentSwing = new ButtonSetting("Silent swing", false));
     }
 
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onReceivePacket(ReceivePacketEvent e) {
+        if (!Utils.nullCheck()) {
+            return;
+        }
+        if (e.getPacket() instanceof S27PacketExplosion) {
+            fb = true;
+            fbTicks = 0;
+        }
+    }
+
     @SubscribeEvent(priority = EventPriority.LOW)
     public void onClientRotation(ClientRotationEvent e) {
-        if (!condition() || stopAttack()) {
+        if (fb && ++fbTicks >= 20) {
+            fb = false;
+        }
+        if (!condition() || stopAttack() || fb) {
             return;
         }
         if (fireball != null) {
@@ -73,14 +93,14 @@ public class AntiFireball extends Module {
             return;
         }
         if (fireball != null) {
-            if (ModuleManager.killAura != null && ModuleManager.killAura.isEnabled() && ModuleManager.killAura.blockingServer && ModuleManager.killAura.blinkAutoBlock()) {
+            if (ModuleManager.killAura != null && ModuleManager.killAura.isEnabled() && ModuleManager.killAura.blockingServer && ModuleManager.killAura.autoBlockOverride()) {
                 if (KillAura.target != null) {
                     attack = false;
                     return;
                 }
                 attack = true;
             }
-            else {
+            else if (!Raven.packetsHandler.C08.sentCurrentTick.get()) {
                 Utils.attackEntity(fireball, !silentSwing.isToggled(), silentSwing.isToggled());
             }
         }

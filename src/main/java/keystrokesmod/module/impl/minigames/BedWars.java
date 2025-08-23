@@ -275,7 +275,7 @@ public class BedWars extends Module {
 
     private void ping() {
         if (shouldPing.isToggled()) {
-            mc.thePlayer.playSound("note.pling", 1.0f, 1.0f);
+            Utils.ping();
         }
     }
 }

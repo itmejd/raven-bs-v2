@@ -19,7 +19,7 @@ public class RotationUtils {
     public static float renderYaw;
     public static float prevRenderYaw;
     public static float[] serverRotations = new float[] { 0, 0 } ;
-    public static float finalYaw = 0;
+
     public static Float[] fakeRotations;
     public static boolean setFakeRotations;
 
@@ -292,6 +292,19 @@ public class RotationUtils {
         final float n6 = -MathHelper.cos(n5);
         final Vec3 vec3 = new Vec3(sin * n6, MathHelper.sin(n5), cos * n6);
         return mc.theWorld.rayTraceBlocks(getPositionEyes, getPositionEyes.addVector(vec3.xCoord * distance, vec3.yCoord * distance, vec3.zCoord * distance), true, collisionCheck, true);
+    }
+
+    public static Object[] raycastBlock(final double distance, final float yaw, final float pitch) {
+        final net.minecraft.util.Vec3 eyeVec = mc.thePlayer.getPositionEyes(1.0f);
+        final net.minecraft.util.Vec3 lookVec = Utils.getLookVec(yaw, pitch);
+        final net.minecraft.util.Vec3 sumVec = eyeVec.addVector(lookVec.xCoord * distance, lookVec.yCoord * distance, lookVec.zCoord * distance);
+        final MovingObjectPosition mop = mc.theWorld.rayTraceBlocks(eyeVec, sumVec, false, false, false);
+        if (mop == null || mop.typeOfHit != MovingObjectPosition.MovingObjectType.BLOCK) {
+            return null;
+        }
+        final keystrokesmod.script.model.Vec3 pos = new keystrokesmod.script.model.Vec3(mop.getBlockPos());
+        final keystrokesmod.script.model.Vec3 offset = new keystrokesmod.script.model.Vec3(mop.hitVec.xCoord - pos.x, mop.hitVec.yCoord - pos.y, mop.hitVec.zCoord - pos.z);
+        return new Object[] { pos, offset, mop.sideHit.name() };
     }
 
     public static MovingObjectPosition rayTraceCustom(double blockReachDistance, float yaw, float pitch) {

@@ -44,6 +44,7 @@
     "accessor.IAccessorGuiScreen",
     "accessor.IAccessorS14PacketEntity",
     "accessor.IAccessorRenderManager",
-    "accessor.IAccessorNetworkManager"
+    "accessor.IAccessorNetworkManager",
+    "accessor.IAccessorEntity"
   ]
 }

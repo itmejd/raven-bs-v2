@@ -25,7 +25,8 @@ public class HUD extends Module {
     public static SliderSetting theme;
     private static SliderSetting outline;
     public static ButtonSetting alphabeticalSort;
-    private static ButtonSetting drawBackground;
+    private static SliderSetting backgroundAlpha;
+    private static SliderSetting gap;
     private static ButtonSetting alignRight;
     private static ButtonSetting lowercase;
     private static ButtonSetting removeCloset;
@@ -37,7 +38,9 @@ public class HUD extends Module {
     private boolean isAlphabeticalSort;
     private boolean canShowInfo;
     private String[] outlineModes = new String[] { "None", "Full", "Side" };
-    private static int backGroundColor = new Color(0, 0, 0, 110).getRGB();
+
+    private static double gapv;
+    private static int a;
 
     public HUD() {
         super("HUD", Module.category.render);
@@ -49,7 +52,9 @@ public class HUD extends Module {
         }));
         this.registerSetting(alignRight = new ButtonSetting("Align right", false));
         this.registerSetting(alphabeticalSort = new ButtonSetting("Alphabetical sort", false));
-        this.registerSetting(drawBackground = new ButtonSetting("Draw background", false));
+        //this.registerSetting(drawBackground = new ButtonSetting("Draw background", false));
+        this.registerSetting(backgroundAlpha = new SliderSetting("Background alpha", 50, 0, 100, 1));
+        this.registerSetting(gap = new SliderSetting("Gap", 2, 0, 10, 0.5));
         this.registerSetting(lowercase = new ButtonSetting("Lowercase", false));
         this.registerSetting(removeCloset = new ButtonSetting("Remove closet modules", false));
         this.registerSetting(removeRender = new ButtonSetting("Remove render modules", false));
@@ -72,6 +77,9 @@ public class HUD extends Module {
         if (ev.phase != TickEvent.Phase.END || !Utils.nullCheck()) {
             return;
         }
+        gapv = gap.getInput();
+        a = (int) (backgroundAlpha.getInput() * 2.55);
+        int alpha = new Color(0, 0, 0, a).getRGB();
         if (isAlphabeticalSort != alphabeticalSort.isToggled()) {
             isAlphabeticalSort = alphabeticalSort.isToggled();
             ModuleManager.sort();
@@ -127,8 +135,8 @@ public class HUD extends Module {
                     if (alignRight.isToggled()) {
                         xPos -= mc.fontRendererObj.getStringWidth(moduleName);
                     }
-                    if (drawBackground.isToggled()) {
-                        RenderUtils.drawRect(xPos - 1, yPos - 1, xPos + mc.fontRendererObj.getStringWidth(moduleName) + 0.5, yPos + mc.fontRendererObj.FONT_HEIGHT + 1, backGroundColor);
+                    if (backgroundAlpha.getInput() != 0) {
+                        RenderUtils.drawRect(xPos - 1, yPos - 1, xPos + mc.fontRendererObj.getStringWidth(moduleName) + 0.5, yPos + mc.fontRendererObj.FONT_HEIGHT + 1, alpha);
                     }
                     if (outline.getInput() == 1 && n2 == 0.0) { // top
                         RenderUtils.drawRect(xPos - 2, yPos - 2, xPos + mc.fontRendererObj.getStringWidth(moduleName) + 1.5, yPos - 1, color);
@@ -163,13 +171,13 @@ public class HUD extends Module {
                             RenderUtils.drawRect(xPos - 2, yPos - 1, xPos - 1, yPos + mc.fontRendererObj.FONT_HEIGHT + 1, color);
                         }
                         else {
-                            RenderUtils.drawRect(xPos + mc.fontRendererObj.getStringWidth(moduleName) + 0.5, yPos - 1, xPos + mc.fontRendererObj.getStringWidth(moduleName) + 1.5, yPos + mc.fontRendererObj.FONT_HEIGHT + 1, color);
+                            RenderUtils.drawRect(xPos + mc.fontRendererObj.getStringWidth(moduleName) + 0.5, yPos - 1, xPos + mc.fontRendererObj.getStringWidth(moduleName) + 1.5, yPos + mc.fontRendererObj.FONT_HEIGHT + (gapv / 2), color);
                         }
                     }
                     mc.fontRendererObj.drawString(moduleName, xPos, (float) yPos, color, true);
                     previousModule = moduleName;
                     lastXPos = xPos;
-                    yPos += mc.fontRendererObj.FONT_HEIGHT + 2;
+                    yPos += mc.fontRendererObj.FONT_HEIGHT + gapv;
                 }
             }
         }
@@ -321,8 +329,8 @@ public class HUD extends Module {
                             } else {
                                 n2 -= 12;
                             }
-                            if (drawBackground.isToggled()) {
-                                RenderUtils.drawRect(xPos - 1, n - 1, xPos + mc.fontRendererObj.getStringWidth(moduleName) + 0.5, n + mc.fontRendererObj.FONT_HEIGHT + 1, backGroundColor);
+                            if (backgroundAlpha.getInput() != 0) {
+                                RenderUtils.drawRect(xPos - 1, n - 1, xPos + mc.fontRendererObj.getStringWidth(moduleName) + 0.5, n + mc.fontRendererObj.FONT_HEIGHT + (gapv / 2), a);
                             }
                             if (n2 != 0 && outline.getInput() == 1) { // between
                                 double difference = mc.fontRendererObj.getStringWidth(previousModule) - mc.fontRendererObj.getStringWidth(moduleName);

@@ -1,7 +1,6 @@
 package keystrokesmod.module;
 
 import keystrokesmod.Raven;
-import keystrokesmod.module.impl.combat.AntiKnockback;
 import keystrokesmod.module.setting.Setting;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
@@ -188,9 +187,6 @@ public class Module {
     }
 
     public String getNameInHud() {
-        if (this instanceof AntiKnockback) {
-            return "Velocity";
-        }
         return this.moduleName;
     }
 

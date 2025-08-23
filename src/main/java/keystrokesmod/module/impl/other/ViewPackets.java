@@ -60,7 +60,7 @@ public class ViewPackets extends Module {
         mc.thePlayer.addChatMessage(chatComponentText);
     }
 
-    @SubscribeEvent
+    /*@SubscribeEvent
     public void onSendPacket(SendPacketEvent e) {
         if (!sent.isToggled()) {
             return;
@@ -81,7 +81,7 @@ public class ViewPackets extends Module {
             return;
         }
         sendMessage(packet = e.getPacket(), false);
-    }
+    }*/
 
     @SubscribeEvent
     public void onSendAllPacketsEvent(SendAllPacketsEvent e) {
@@ -108,6 +108,9 @@ public class ViewPackets extends Module {
 
     @SubscribeEvent
     public void onReceivePacket(ReceivePacketEvent e) {
+        if (!Utils.nullCheck()) {
+            return;
+        }
         if (!received.isToggled()) {
             return;
         }

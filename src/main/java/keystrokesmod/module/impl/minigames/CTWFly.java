@@ -61,6 +61,9 @@ public class CTWFly extends Module {
 
     @SubscribeEvent
     public void onReceivePacket(ReceivePacketEvent e) {
+        if (!Utils.nullCheck()) {
+            return;
+        }
         Packet packet = e.getPacket();
 
         if (packet instanceof S29PacketSoundEffect) {

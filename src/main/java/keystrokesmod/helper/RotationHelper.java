@@ -1,7 +1,10 @@
 package keystrokesmod.helper;
 
 import keystrokesmod.event.*;
+import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.client.Settings;
+import keystrokesmod.module.impl.player.Scaffold;
+import keystrokesmod.utility.ModuleUtils;
 import keystrokesmod.utility.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.MathHelper;
@@ -22,6 +25,8 @@ public class RotationHelper {
 
     private Minecraft mc = Minecraft.getMinecraft();
 
+    public float yawOffset = 0F;
+
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onPreUpdate(PreUpdateEvent e) {
         ClientRotationEvent event = new ClientRotationEvent(this.serverYaw, this.serverPitch);
@@ -29,22 +34,13 @@ public class RotationHelper {
         MinecraftForge.EVENT_BUS.post(event);
 
         if (event.yaw != null && !event.yaw.isNaN()) {
-            this.serverYaw = event.yaw;
+            this.serverYaw = event.yaw + yawOffset;
             this.setRotations = true;
         }
         if (event.pitch != null && !event.pitch.isNaN()) {
             this.serverPitch = event.pitch;
             this.setRotations = true;
         }
-    }
-
-    @SubscribeEvent
-    public void onPreMotion(PreMotionEvent e) {
-        if (!this.setRotations) {
-            return;
-        }
-        if (this.serverYaw != null && !this.serverYaw.isNaN()) e.setYaw(this.serverYaw);
-        if (this.serverPitch != null && !this.serverPitch.isNaN()) e.setPitch(this.serverPitch);
     }
 
     @SubscribeEvent
@@ -69,7 +65,7 @@ public class RotationHelper {
             return;
         }
 
-        double angle = MathHelper.wrapAngleTo180_double(Math.toDegrees(getDirection(mc.thePlayer.rotationYaw, forward, strafe)));
+        double angle = MathHelper.wrapAngleTo180_double(Math.toDegrees(getDirection(mc.thePlayer.rotationYaw + yawOffset, forward, strafe)));
 
         float closestForward = 0, closestStrafe = 0, closestDifference = Float.MAX_VALUE;
 
@@ -94,7 +90,9 @@ public class RotationHelper {
         }
 
         mc.thePlayer.movementInput.moveForward = closestForward;
-        mc.thePlayer.movementInput.moveStrafe  = closestStrafe;
+        mc.thePlayer.movementInput.moveStrafe = closestStrafe;
+        Settings.fixedForward = closestForward;
+        Settings.fixedStrafe = closestStrafe;
     }
 
     @SubscribeEvent
@@ -111,8 +109,21 @@ public class RotationHelper {
         }
     }
 
+    @SubscribeEvent
+    public void onPreMotion(PreMotionEvent e) {
+        if (!this.setRotations) {
+            return;
+        }
+        if (this.serverYaw != null && !this.serverYaw.isNaN()) e.setYaw(this.serverYaw);
+        if (this.serverPitch != null && !this.serverPitch.isNaN()) e.setPitch(this.serverPitch);
+    }
+
     private boolean fixMovement() {
         return ((Settings.movementFix != null && Settings.movementFix.isToggled()) || this.forceMovementFix) && this.setRotations;
+    }
+
+    private boolean fixOn() {
+        return ((Settings.movementFix != null && Settings.movementFix.isToggled()) || this.forceMovementFix);
     }
 
     public static double getDirection(float rotationYaw, double moveForward, double moveStrafing) {

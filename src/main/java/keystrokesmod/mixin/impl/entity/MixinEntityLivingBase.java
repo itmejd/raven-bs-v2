@@ -3,6 +3,7 @@ package keystrokesmod.mixin.impl.entity;
 import com.google.common.collect.Maps;
 import keystrokesmod.event.JumpEvent;
 import keystrokesmod.event.PreMotionEvent;
+import keystrokesmod.event.PrePlayerMovementInputEvent;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.client.Settings;
 import keystrokesmod.utility.RotationUtils;
@@ -14,11 +15,13 @@ import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.MathHelper;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.common.MinecraftForge;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Map;
@@ -122,6 +125,20 @@ public abstract class MixinEntityLivingBase extends Entity {
             if (ModuleManager.antiDebuff.removeSideEffects.isToggled()) {
                 callbackInfoReturnable.setReturnValue(false);
             }
+        }
+    }
+
+    @Redirect(method = "onLivingUpdate", at = @At(value  = "INVOKE", target = "Lnet/minecraft/entity/EntityLivingBase;moveEntityWithHeading(FF)V"))
+    private void onMoveEntityWithHeadingRedirect(EntityLivingBase self, float originalStrafing, float originalForward) {
+        if (self instanceof EntityPlayerSP) {
+            PrePlayerMovementInputEvent event = new PrePlayerMovementInputEvent(originalForward, originalStrafing);
+
+            MinecraftForge.EVENT_BUS.post(event);
+
+            self.moveEntityWithHeading(event.strafe, event.forward);
+        }
+        else {
+            self.moveEntityWithHeading(originalStrafing, originalForward);
         }
     }
 }

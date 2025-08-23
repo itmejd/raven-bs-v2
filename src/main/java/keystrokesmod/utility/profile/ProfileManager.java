@@ -11,7 +11,7 @@ import keystrokesmod.module.impl.client.Gui;
 import keystrokesmod.module.impl.client.Settings;
 import keystrokesmod.module.impl.movement.Sprint;
 import keystrokesmod.module.impl.render.HUD;
-import keystrokesmod.module.impl.render.TargetHUD;
+import keystrokesmod.module.impl.render.TargetInfo;
 import keystrokesmod.module.setting.Setting;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.KeySetting;
@@ -87,9 +87,9 @@ public class ProfileManager {
             moduleInformation.addProperty("posX", HUD.posX);
             moduleInformation.addProperty("posY", HUD.posY);
         }
-        else if (module instanceof TargetHUD) {
-            moduleInformation.addProperty("posX", ModuleManager.targetHUD.posX);
-            moduleInformation.addProperty("posY", ModuleManager.targetHUD.posY);
+        else if (module instanceof TargetInfo) {
+            moduleInformation.addProperty("posX", ModuleManager.targetInfo.posX);
+            moduleInformation.addProperty("posY", ModuleManager.targetInfo.posY);
         }
         else if (module instanceof Sprint) {
             moduleInformation.addProperty("posX", ModuleManager.sprint.posX);
@@ -202,14 +202,14 @@ public class ProfileManager {
                             HUD.posY = hudY;
                         }
                     }
-                    else if (module.getName().equals("TargetHUD")) {
+                    else if (module.getName().equals("TargetInfo")) {
                         if (moduleInformation.has("posX")) {
                             int posX = moduleInformation.get("posX").getAsInt();
-                            ModuleManager.targetHUD.posX = posX;
+                            ModuleManager.targetInfo.posX = posX;
                         }
                         if (moduleInformation.has("posY")) {
                             int posY = moduleInformation.get("posY").getAsInt();
-                            ModuleManager.targetHUD.posY = posY;
+                            ModuleManager.targetInfo.posY = posY;
                         }
                     }
                     else if (module.getName().equals("Sprint")) {

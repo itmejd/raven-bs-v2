@@ -1,9 +1,6 @@
 package keystrokesmod.module;
 
-import keystrokesmod.module.impl.client.ChatCommands;
-import keystrokesmod.module.impl.client.CommandLine;
-import keystrokesmod.module.impl.client.Gui;
-import keystrokesmod.module.impl.client.Settings;
+import keystrokesmod.module.impl.client.*;
 import keystrokesmod.module.impl.combat.*;
 import keystrokesmod.module.impl.fun.Fun;
 import keystrokesmod.module.impl.minigames.*;
@@ -46,7 +43,7 @@ public class ModuleManager {
     public static Module timer;
     public static Fly fly;
     public static Module wTap;
-    public static TargetHUD targetHUD;
+    public static TargetInfo targetInfo;
     public static NoFall noFall;
     public static Disabler disabler;
     public static NoRotate noRotate;
@@ -77,6 +74,11 @@ public class ModuleManager {
     public static AntiVoid antiVoid;
     public static Spammer spammer;
     public static AntiDebuff antiDebuff;
+    public static Timers timers;
+    public static LagRange lagRange;
+    public static Momentum momentum;
+    public static S38Logger S38Logger;
+    public static AutoBlockIn autoBlockIn;
 
     public void register() {
         this.addModule(autoClicker = new AutoClicker());
@@ -141,7 +143,7 @@ public class ModuleManager {
         this.addModule(wTap = new WTap());
         this.addModule(new Xray());
         this.addModule(new BridgeInfo());
-        this.addModule(targetHUD = new TargetHUD());
+        this.addModule(targetInfo = new TargetInfo());
         this.addModule(new DuelsStats());
         this.addModule(antiFireball = new AntiFireball());
         this.addModule(bedESP = new BedESP());
@@ -160,12 +162,10 @@ public class ModuleManager {
         this.addModule(nameHider = new NameHider());
         this.addModule(new FakeLag());
         this.addModule(new Test());
-        this.addModule(new WaterBucket());
         this.addModule(commandLine = new CommandLine());
         this.addModule(bedwars = new BedWars());
         this.addModule(fastMine = new FastMine());
         this.addModule(arrows = new Arrows());
-        this.addModule(new JumpReset());
         this.addModule(new Manager());
         this.addModule(new ViewPackets());
         this.addModule(new AutoWho());
@@ -177,6 +177,11 @@ public class ModuleManager {
         this.addModule(antiVoid = new AntiVoid());
         this.addModule(spammer = new Spammer());
         this.addModule(antiDebuff = new AntiDebuff());
+        this.addModule(timers = new Timers());
+        this.addModule(lagRange = new LagRange());
+        this.addModule(momentum = new Momentum());
+        this.addModule(S38Logger = new S38Logger());
+        this.addModule(autoBlockIn = new AutoBlockIn());
         antiBot.enable();
         Collections.sort(this.modules, Comparator.comparing(Module::getName));
     }

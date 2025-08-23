@@ -20,9 +20,9 @@ public class Spammer extends Module {
 
     private SliderSetting delay;
 
-    public String message;
+    public String message = "";
     private String bypass;
-    private int delayTicks, half, uses;
+    private int delayTicks, uses;
 
     public Spammer() {
         super("Spammer", category.other);
@@ -68,14 +68,10 @@ public class Spammer extends Module {
 
         if (!message.isEmpty()) {
             ++delayTicks;
-            if (delayTicks >= 10) {
-                half++;
-                delayTicks = 0;
-            }
 
-            if (half >= delay.getInput()) {
+            if (delayTicks >= (delay.getInput() * 20)) {
                 mc.thePlayer.sendChatMessage(message + " " + bypass);
-                half = delayTicks = 0;
+                delayTicks = 0;
                 uses++;
             }
 
@@ -84,8 +80,7 @@ public class Spammer extends Module {
     }
 
     public void reset() {
-        message = "";
-        delayTicks = half = 0;
+        delayTicks = 0;
     }
 
 }

@@ -1,11 +1,13 @@
 package keystrokesmod.mixin.impl.entity;
 
 import keystrokesmod.event.ClientLookEvent;
+import keystrokesmod.event.PlayerMoveEvent;
 import keystrokesmod.event.StepHeightEvent;
 import keystrokesmod.event.StrafeEvent;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.player.Safewalk;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.Vec3;
@@ -15,8 +17,10 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Entity.class)
 public abstract class MixinEntity {
@@ -93,5 +97,12 @@ public abstract class MixinEntity {
         float f3 = MathHelper.sin(-pitch * ((float)Math.PI / 180F));
 
         return new Vec3(f1 * f2, f3, f * f2);
+    }
+
+    @Inject(method = "moveEntity", at = @At("HEAD"))
+    private void injectPlayerMoveEvent(double x, double y, double z, CallbackInfo ci) {
+        if (((Object) this) instanceof EntityPlayerSP) {
+            MinecraftForge.EVENT_BUS.post(new PlayerMoveEvent(x, y, z));
+        }
     }
 }

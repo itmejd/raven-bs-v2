@@ -1,6 +1,7 @@
 package keystrokesmod.utility;
 
 import keystrokesmod.mixin.impl.accessor.IAccessorEntityPlayer;
+import keystrokesmod.module.ModuleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiEnchantment;
 import net.minecraft.client.gui.inventory.GuiBrewingStand;
@@ -88,7 +89,10 @@ public class ReflectionUtils {
     }
 
     public static boolean setItemInUse(boolean blocking) {
-        ((IAccessorEntityPlayer) Minecraft.getMinecraft().thePlayer).setItemInUseCount(blocking ? 1 : 0);
+        if (!blocking && (ModuleManager.killAura.blockingClient || ModuleManager.noSlow.blockingClient)) {
+            return blocking;
+        }
+        ((IAccessorEntityPlayer) Minecraft.getMinecraft().thePlayer).setItemInUseCount(blocking ? 999999999 : -1);
         return blocking;
     }
 

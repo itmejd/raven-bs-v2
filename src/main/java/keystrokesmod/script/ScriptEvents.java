@@ -4,7 +4,9 @@ import keystrokesmod.Raven;
 import keystrokesmod.event.*;
 import keystrokesmod.module.Module;
 import keystrokesmod.script.model.Entity;
+import keystrokesmod.script.model.MovementInput;
 import keystrokesmod.script.model.PlayerState;
+import keystrokesmod.script.model.Vec3;
 import keystrokesmod.script.packet.clientbound.SPacket;
 import keystrokesmod.script.packet.serverbound.CPacket;
 import keystrokesmod.script.packet.serverbound.PacketHandler;
@@ -87,6 +89,19 @@ public class ScriptEvents {
         if (rotations.length == 2 && rotations[1] != null) {
             e.pitch = rotations[1];
         }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onPrePlayerMovementInput(PrePlayerInputEvent e) {
+        MovementInput input = new MovementInput(e, (byte) 0);
+        Raven.scriptManager.invoke("onPrePlayerInput", module, input);
+        if (e.isEquals(input)) {
+            return;
+        }
+        e.setForward(input.forward);
+        e.setSneak(input.sneak);
+        e.setJump(input.jump);
+        e.setStrafe(input.strafe);
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -186,4 +201,10 @@ public class ScriptEvents {
             e.setCanceled(true);
         }
     }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onPlayerMove(PlayerMoveEvent e) {
+        Raven.scriptManager.invoke("onPlayerMove", module, new Vec3(e.x, e.y, e.z));
+    }
+
 }

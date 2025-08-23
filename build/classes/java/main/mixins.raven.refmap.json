@@ -109,7 +109,9 @@
     },
     "keystrokesmod/mixin/impl/entity/MixinEntityLivingBase": {
       "updateDistance": "Lnet/minecraft/entity/EntityLivingBase;func_110146_f(FF)F",
-      "isPotionActive(Lnet/minecraft/potion/Potion;)Z": "Lnet/minecraft/entity/EntityLivingBase;func_70644_a(Lnet/minecraft/potion/Potion;)Z"
+      "isPotionActive(Lnet/minecraft/potion/Potion;)Z": "Lnet/minecraft/entity/EntityLivingBase;func_70644_a(Lnet/minecraft/potion/Potion;)Z",
+      "onLivingUpdate": "Lnet/minecraft/entity/EntityLivingBase;func_70636_d()V",
+      "Lnet/minecraft/entity/EntityLivingBase;moveEntityWithHeading(FF)V": "Lnet/minecraft/entity/EntityLivingBase;func_70612_e(FF)V"
     },
     "keystrokesmod/mixin/impl/accessor/IAccessorEntityRenderer": {
       "useShader": "field_175083_ad:Z",
@@ -128,6 +130,11 @@
     "keystrokesmod/mixin/impl/render/MixinGuiChat": {
       "sendAutocompleteRequest": "Lnet/minecraft/client/gui/GuiChat;func_146405_a(Ljava/lang/String;Ljava/lang/String;)V",
       "keyTyped": "Lnet/minecraft/client/gui/GuiChat;func_73869_a(CI)V"
+    },
+    "keystrokesmod/mixin/impl/accessor/IAccessorEntity": {
+      "isInWeb": "field_70134_J:Z",
+      "nextStepDistance": "field_70150_b:I",
+      "fire": "field_70151_c:I"
     },
     "keystrokesmod/mixin/impl/accessor/IAccessorEntityPlayerSP": {
       "lastReportedPitch": "field_175165_bM:F",
@@ -278,7 +285,9 @@
       },
       "keystrokesmod/mixin/impl/entity/MixinEntityLivingBase": {
         "updateDistance": "Lnet/minecraft/entity/EntityLivingBase;func_110146_f(FF)F",
-        "isPotionActive(Lnet/minecraft/potion/Potion;)Z": "Lnet/minecraft/entity/EntityLivingBase;func_70644_a(Lnet/minecraft/potion/Potion;)Z"
+        "isPotionActive(Lnet/minecraft/potion/Potion;)Z": "Lnet/minecraft/entity/EntityLivingBase;func_70644_a(Lnet/minecraft/potion/Potion;)Z",
+        "onLivingUpdate": "Lnet/minecraft/entity/EntityLivingBase;func_70636_d()V",
+        "Lnet/minecraft/entity/EntityLivingBase;moveEntityWithHeading(FF)V": "Lnet/minecraft/entity/EntityLivingBase;func_70612_e(FF)V"
       },
       "keystrokesmod/mixin/impl/accessor/IAccessorEntityRenderer": {
         "useShader": "field_175083_ad:Z",
@@ -297,6 +306,11 @@
       "keystrokesmod/mixin/impl/render/MixinGuiChat": {
         "sendAutocompleteRequest": "Lnet/minecraft/client/gui/GuiChat;func_146405_a(Ljava/lang/String;Ljava/lang/String;)V",
         "keyTyped": "Lnet/minecraft/client/gui/GuiChat;func_73869_a(CI)V"
+      },
+      "keystrokesmod/mixin/impl/accessor/IAccessorEntity": {
+        "isInWeb": "field_70134_J:Z",
+        "nextStepDistance": "field_70150_b:I",
+        "fire": "field_70151_c:I"
       },
       "keystrokesmod/mixin/impl/accessor/IAccessorEntityPlayerSP": {
         "lastReportedPitch": "field_175165_bM:F",

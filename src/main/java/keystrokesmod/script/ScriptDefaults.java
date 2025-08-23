@@ -37,6 +37,7 @@ import net.minecraft.inventory.ContainerChest;
 import net.minecraft.inventory.ContainerWorkbench;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.InventoryCrafting;
+import net.minecraft.item.ItemBlock;
 import net.minecraft.network.Packet;
 import net.minecraft.realms.RealmsBridge;
 import net.minecraft.scoreboard.Team;
@@ -142,6 +143,11 @@ public class ScriptDefaults {
 
         public static void processPacket(SPacket packet) {
             packet.packet.processPacket((((IAccessorNetworkManager) (mc.getNetHandler().getNetworkManager())).getPacketListener()));
+        }
+
+        public static void multiplyMotion(double factor) {
+            mc.thePlayer.motionZ *= factor;
+            mc.thePlayer.motionX *= factor;
         }
 
         public static void processPacketNoEvent(SPacket packet) {
@@ -350,28 +356,6 @@ public class ScriptDefaults {
             }
         }
 
-        public static String getTabHeader() {
-            if (mc == null || mc.ingameGUI == null || mc.ingameGUI.getTabList() == null) {
-                return "";
-            }
-            IChatComponent header = ((IAccessorGuiPlayerTabOverlay) mc.ingameGUI.getTabList()).getHeader();
-            if (header != null) {
-                return header.getUnformattedText();
-            }
-            return "";
-        }
-
-        public static String getTabFooter() {
-            if (mc == null || mc.ingameGUI == null || mc.ingameGUI.getTabList() == null) {
-                return "";
-            }
-            IChatComponent footer = ((IAccessorGuiPlayerTabOverlay) mc.ingameGUI.getTabList()).getFooter();
-            if (footer != null) {
-                return footer.getUnformattedText();
-            }
-            return "";
-        }
-
         public static float getForward() {
             return mc.thePlayer.movementInput.moveForward;
         }
@@ -521,6 +505,13 @@ public class ScriptDefaults {
             return null;
         }
 
+        public static boolean canPlaceBlock(ItemStack stack, Vec3 pos, String side) {
+            if (stack == null || stack.itemStack == null || stack.itemStack.getItem() == null || !stack.isBlock) {
+                return false;
+            }
+            return ((ItemBlock) stack.itemStack.getItem()).canPlaceBlockOnSide(mc.theWorld, Vec3.getBlockPos(pos), Utils.getEnum(EnumFacing.class, side), mc.thePlayer, stack.itemStack);
+        }
+
         public static boolean placeBlock(Vec3 targetPos, String side, Vec3 hitVec) {
             return mc.playerController.onPlayerRightClick(mc.thePlayer, mc.theWorld, mc.thePlayer.getHeldItem(), Vec3.getBlockPos(targetPos), Utils.getEnum(EnumFacing.class, side), Vec3.getVec3(hitVec));
         }
@@ -618,6 +609,28 @@ public class ScriptDefaults {
                 return null;
             }
             return sidebarLines;
+        }
+
+        public static String getTabHeader() {
+            if (mc == null || mc.ingameGUI == null || mc.ingameGUI.getTabList() == null) {
+                return "";
+            }
+            IChatComponent header = ((IAccessorGuiPlayerTabOverlay) mc.ingameGUI.getTabList()).getHeader();
+            if (header != null) {
+                return header.getUnformattedText();
+            }
+            return "";
+        }
+
+        public static String getTabFooter() {
+            if (mc == null || mc.ingameGUI == null || mc.ingameGUI.getTabList() == null) {
+                return "";
+            }
+            IChatComponent footer = ((IAccessorGuiPlayerTabOverlay) mc.ingameGUI.getTabList()).getFooter();
+            if (footer != null) {
+                return footer.getUnformattedText();
+            }
+            return "";
         }
 
         public static Map<String, List<String>> getTeams() {
@@ -945,6 +958,10 @@ public class ScriptDefaults {
             }
         }
 
+        public static void resetColor() {
+            GlStateManager.resetColor();
+        }
+
         public static void end() {
             GL11.glEnd();
         }
@@ -1158,8 +1175,8 @@ public class ScriptDefaults {
         }
 
         public static void item(ItemStack item, float x, float y, float scale) {
-            mc.entityRenderer.setupOverlayRendering();
             GlStateManager.pushMatrix();
+            mc.entityRenderer.setupOverlayRendering();
             if (scale != 1.0f) {
                 GlStateManager.scale(scale, scale, scale);
             }

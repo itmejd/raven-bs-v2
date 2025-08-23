@@ -14,6 +14,7 @@ import keystrokesmod.module.impl.player.Freecam;
 import keystrokesmod.module.impl.render.HUD;
 import keystrokesmod.module.impl.world.AntiBot;
 import keystrokesmod.module.setting.impl.SliderSetting;
+import keystrokesmod.script.ScriptDefaults;
 import net.minecraft.block.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
@@ -30,6 +31,7 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.entity.projectile.EntityFireball;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.ContainerPlayer;
 import net.minecraft.item.*;
@@ -76,6 +78,58 @@ public class Utils {
     private static int gray = new Color(190, 190, 190).getRGB();
     private static int darkGray = new Color(63, 63, 63).getRGB();
     private static int black = new Color(17, 17, 17).getRGB();
+
+    public static boolean sneakState;
+
+    public static void setSneak(boolean state) {
+        KeyBinding.setKeyBindState(mc.gameSettings.keyBindSneak.getKeyCode(), state);
+        mc.thePlayer.setSneaking(state);
+        sneakState = state;
+    }
+
+    public static boolean isMining() {
+        return tabbedIn() && Mouse.isButtonDown(0) && mc.objectMouseOver != null && mc.objectMouseOver.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK && mc.objectMouseOver.getBlockPos() != null;
+    }
+
+    public static void print(Object s) {
+        sendRawMessage(String.valueOf(s));
+    }
+
+    public static void modulePrint(Object s) {
+        sendRawMessage(String.valueOf(s));
+    }
+
+    public static void ping() {
+        mc.thePlayer.playSound("note.pling", 1.0f, 1.0f);
+    }
+
+    public static boolean holdingTNT() {
+        if (mc.thePlayer.getHeldItem() == null) {
+            return false;
+        }
+        return mc.thePlayer.getHeldItem().getDisplayName().contains("TNT");
+    }
+
+    public static float toPositive(float val) {
+        if (val < 0.0F) {
+            return (((-val) * (-2)) - val);
+        }
+        return val;
+    }
+
+    public static boolean sneakDown() {
+        return Keyboard.isKeyDown(mc.gameSettings.keyBindSneak.getKeyCode());
+    }
+
+    public static void rsa() {
+        EntityPlayerSP p = mc.thePlayer;
+        int armSwingEnd = p.isPotionActive(Potion.digSpeed) ? 6 - (1 + p.getActivePotionEffect(Potion.digSpeed).getAmplifier()) : (p.isPotionActive(Potion.digSlowdown) ? 6 + (1 + p.getActivePotionEffect(Potion.digSlowdown).getAmplifier()) * 2 : 6);
+        if (!p.isSwingInProgress || p.swingProgressInt >= armSwingEnd / 2 || p.swingProgressInt < 0) {
+            p.swingProgressInt = -1;
+            p.isSwingInProgress = true;
+        }
+
+    }
 
     public static boolean addEnemy(String name) {
         if (enemies.add(name.toLowerCase())) {
@@ -159,17 +213,17 @@ public class Utils {
         Utils.sendMessage("&eattacking: &r" + ent.getName());
         Utils.sendMessage("&7type: &b" + ent.getClass().getSimpleName());
         Utils.sendMessage("&7bot: &r" + (ModuleManager.antiBot.isEnabled() ? AntiBot.isBot(ent) : "&cantibot disabled"));
-        final boolean isPlayer = ent instanceof EntityPlayer;
+        boolean isPlayer = ent instanceof EntityPlayer;
         Utils.sendMessage("&7player: &r" + isPlayer);
         Utils.sendMessage("&7dist eye: &d" + round(getDistanceToEye(ent), 2));
         Utils.sendMessage("&7min dist: &d" + round(Math.sqrt(raycastDistanceSq(ent, 12.0, false)), 2));
-        final IChatComponent displayName = ent.getDisplayName();
-        final boolean hasDisplayName = displayName != null;
+        IChatComponent displayName = ent.getDisplayName();
+        boolean hasDisplayName = displayName != null;
         if (isPlayer) {
-            final EntityPlayer p = (EntityPlayer)ent;
-            final UUID uuid = p.getUniqueID();
+            EntityPlayer p = (EntityPlayer)ent;
+            UUID uuid = p.getUniqueID();
             Utils.sendMessage("&7uuid: &d" + uuid.toString() + " &b" + uuid.variant() + " " + uuid.version());
-            final NetworkPlayerInfo clientPlayer = mc.getNetHandler().getPlayerInfo(p.getUniqueID());
+            NetworkPlayerInfo clientPlayer = mc.getNetHandler().getPlayerInfo(p.getUniqueID());
             Utils.sendMessage("&7ping: &d" + ((clientPlayer == null) ? "&cnot found" : clientPlayer.getResponseTime()));
             Utils.sendMessage("&7teammate: &r" + isTeammate(p));
             Utils.sendMessage("&7tablist: &r" + isInTabList(p));
@@ -189,12 +243,12 @@ public class Utils {
         Utils.sendMessage("&7dead: &r" + ent.isDead);
     }
 
-    public static double raycastDistanceSq(final Entity en, final double max_reach, final boolean calc_rot) {
-        final Vec3 eyeVec = mc.thePlayer.getPositionEyes(1.0f);
+    public static double raycastDistanceSq(Entity en, double max_reach, boolean calc_rot) {
+        Vec3 eyeVec = mc.thePlayer.getPositionEyes(1.0f);
         float yaw;
         float pitch;
         if (calc_rot) {
-            final float[] rot = RotationUtils.getRotations(en);
+            float[] rot = RotationUtils.getRotations(en);
             yaw = rot[0];
             pitch = rot[1];
         }
@@ -202,23 +256,23 @@ public class Utils {
             yaw = mc.thePlayer.rotationYaw;
             pitch = mc.thePlayer.rotationPitch;
         }
-        final float ff = MathHelper.cos(-yaw * 0.017453292f - 3.1415927f);
-        final float ff2 = MathHelper.sin(-yaw * 0.017453292f - 3.1415927f);
-        final float ff3 = -MathHelper.cos(-pitch * 0.017453292f);
-        final float ff4 = MathHelper.sin(-pitch * 0.017453292f);
-        final Vec3 lookVec = new Vec3((double)(ff2 * ff3), (double)ff4, (double)(ff * ff3));
-        final double lookVecX = lookVec.xCoord * max_reach;
-        final double lookVecY = lookVec.yCoord * max_reach;
-        final double lookVecZ = lookVec.zCoord * max_reach;
-        final Vec3 sumVec = eyeVec.addVector(lookVecX, lookVecY, lookVecZ);
-        final List list = mc.theWorld.getEntitiesWithinAABBExcludingEntity(mc.getRenderViewEntity(), mc.getRenderViewEntity().getEntityBoundingBox().addCoord(lookVecX, lookVecY, lookVecZ).expand(1.0, 1.0, 1.0));
+        float ff = MathHelper.cos(-yaw * 0.017453292f - 3.1415927f);
+        float ff2 = MathHelper.sin(-yaw * 0.017453292f - 3.1415927f);
+        float ff3 = -MathHelper.cos(-pitch * 0.017453292f);
+        float ff4 = MathHelper.sin(-pitch * 0.017453292f);
+        Vec3 lookVec = new Vec3((double)(ff2 * ff3), (double)ff4, (double)(ff * ff3));
+        double lookVecX = lookVec.xCoord * max_reach;
+        double lookVecY = lookVec.yCoord * max_reach;
+        double lookVecZ = lookVec.zCoord * max_reach;
+        Vec3 sumVec = eyeVec.addVector(lookVecX, lookVecY, lookVecZ);
+        List list = mc.theWorld.getEntitiesWithinAABBExcludingEntity(mc.getRenderViewEntity(), mc.getRenderViewEntity().getEntityBoundingBox().addCoord(lookVecX, lookVecY, lookVecZ).expand(1.0, 1.0, 1.0));
         for (int i = 0; i < list.size(); ++i) {
-            final Entity entity = (Entity)list.get(i);
+            Entity entity = (Entity)list.get(i);
             if (entity == en) {
                 if (entity.canBeCollidedWith()) {
-                    final float cbs = entity.getCollisionBorderSize();
-                    final AxisAlignedBB axis = entity.getEntityBoundingBox().expand((double)cbs, (double)cbs, (double)cbs);
-                    final MovingObjectPosition mop = axis.calculateIntercept(eyeVec, sumVec);
+                    float cbs = entity.getCollisionBorderSize();
+                    AxisAlignedBB axis = entity.getEntityBoundingBox().expand((double)cbs, (double)cbs, (double)cbs);
+                    MovingObjectPosition mop = axis.calculateIntercept(eyeVec, sumVec);
                     if (mop != null) {
                         return eyeVec.squareDistanceTo(mop.hitVec);
                     }
@@ -228,11 +282,11 @@ public class Utils {
         return -1.0;
     }
 
-    public static double getDistanceToEye(final Entity en) {
+    public static double getDistanceToEye(Entity en) {
         return mc.thePlayer.getPositionEyes(1.0f).distanceTo(en.getPositionEyes(1.0f));
     }
 
-    public static boolean isInTabList(final EntityPlayer p) {
+    public static boolean isInTabList(EntityPlayer p) {
         for (NetworkPlayerInfo playerInfo : mc.getNetHandler().getPlayerInfoMap()) {
             if (playerInfo.getGameProfile().equals(p.getGameProfile())) {
                 return true;
@@ -325,18 +379,25 @@ public class Utils {
         return -1;
     }
 
-    public static boolean overVoid(double posX, double posY, double posZ) {
-        for (int i = (int) posY; i > -1; i--) {
-            if (!(mc.theWorld.getBlockState(new BlockPos(posX, i, posZ)).getBlock() instanceof BlockAir)) {
+    public static int getHurttime(Entity entity) {
+        if (!(entity instanceof EntityLivingBase)) {
+            return -1;
+        }
+        return ((EntityLivingBase) entity).hurtTime;
+    }
+
+    public static boolean overVoid() {
+        for (int i = (int) mc.thePlayer.posY; i > -1; i--) {
+            if (!(mc.theWorld.getBlockState(new BlockPos(mc.thePlayer.posX, i, mc.thePlayer.posZ)).getBlock() instanceof BlockAir)) {
                 return false;
             }
         }
         return true;
     }
 
-    public static boolean overVoid() {
-        for (int i = (int) mc.thePlayer.posY; i > -1; i--) {
-            if (!(mc.theWorld.getBlockState(new BlockPos(mc.thePlayer.posX, i, mc.thePlayer.posZ)).getBlock() instanceof BlockAir)) {
+    public static boolean overVoid(double posX, double posY, double posZ) {
+        for (int i = (int) posY; i > -1; i--) {
+            if (!(mc.theWorld.getBlockState(new BlockPos(posX, i, posZ)).getBlock() instanceof BlockAir)) {
                 return false;
             }
         }
@@ -387,7 +448,7 @@ public class Utils {
     }
 
     public static List<NetworkPlayerInfo> getTablist(boolean removeSelf) {
-        final ArrayList<NetworkPlayerInfo> list = new ArrayList<>(mc.getNetHandler().getPlayerInfoMap());
+        ArrayList<NetworkPlayerInfo> list = new ArrayList<>(mc.getNetHandler().getPlayerInfoMap());
         removeDuplicates(list);
         if (removeSelf) {
             list.remove(mc.getNetHandler().getPlayerInfo(mc.thePlayer.getUniqueID()));
@@ -528,6 +589,13 @@ public class Utils {
         if (nullCheck()) {
             mc.thePlayer.addChatMessage(new ChatComponentText("§7[§dR§7]§r " + message));
         }
+    }
+
+    public static double getDistanceSqToEntity(Vec3 pos, Entity entityIn) {
+        double d0 = pos.xCoord - entityIn.posX;
+        double d1 = pos.yCoord - entityIn.posY;
+        double d2 = pos.zCoord - entityIn.posZ;
+        return d0 * d0 + d1 * d1 + d2 * d2;
     }
 
     public static void attackEntity(Entity e, boolean clientSwing, boolean silentSwing) {
@@ -692,7 +760,7 @@ public class Utils {
     }
 
     public static boolean isHypixel() {
-        return !mc.isSingleplayer() && mc.getCurrentServerData() != null && (mc.getCurrentServerData().serverIP.equals("hypixel.net") || mc.getCurrentServerData().serverIP.contains(".hypixel.net"));
+        return !mc.isSingleplayer() && mc.getCurrentServerData() != null && mc.getCurrentServerData().serverIP.contains("hypixel.net");
     }
 
     public static String getHitsToKillStr(final EntityPlayer entityPlayer, final ItemStack itemStack) {
@@ -792,13 +860,6 @@ public class Utils {
         return false;
     }
 
-    public static boolean usingBedAura() {
-        if (ModuleManager.bedAura != null && ModuleManager.bedAura.currentBlock != null && RotationUtils.inRange(ModuleManager.bedAura.currentBlock, ModuleManager.bedAura.range.getInput())) {
-            return true;
-        }
-        return false;
-    }
-
     public static String getNetworkDisplayName() {
         try {
             NetworkPlayerInfo playerInfo = mc.getNetHandler().getPlayerInfo(mc.thePlayer.getUniqueID());
@@ -806,14 +867,6 @@ public class Utils {
         }
         catch (Exception ignored) {}
         return "";
-    }
-
-    public static float getLastReportedYaw() {
-        return ((IAccessorEntityPlayerSP) mc.thePlayer).getLastReportedYaw();
-    }
-
-    public static float getLastReportedPitch() {
-        return ((IAccessorEntityPlayerSP) mc.thePlayer).getLastReportedPitch();
     }
 
     public static void setSpeed(double n) {
@@ -827,10 +880,6 @@ public class Utils {
         mc.thePlayer.motionZ = Math.cos(n3) * n;
     }
 
-    public static net.minecraft.util.Timer getTimer() {
-        return ObfuscationReflectionHelper.getPrivateValue(Minecraft.class, Minecraft.getMinecraft(), "timer", "field_71428_T");
-    }
-
     public static void resetTimer() {
         ((IAccessorMinecraft) mc).getTimer().timerSpeed = 1.0F;
     }
@@ -840,10 +889,6 @@ public class Utils {
             return false;
         }
         return (mc.currentScreen != null) && (mc.thePlayer.inventoryContainer != null) && (mc.thePlayer.inventoryContainer instanceof ContainerPlayer) && (mc.currentScreen instanceof GuiInventory);
-    }
-
-    public static boolean safeWalkBackwards() {
-        return ModuleManager.safeWalk.canSafeWalk() && mc.thePlayer.moveForward <= -0.5 && mc.thePlayer.moveStrafing == 0;
     }
 
     public static int getSkyWarsStatus() {
@@ -916,14 +961,6 @@ public class Utils {
         return validated.toString();
     }
 
-    public static void print(String s) {
-        sendRawMessage(s);
-    }
-
-    public static long time() {
-        return System.currentTimeMillis();
-    }
-
     public static List<String> getSidebarLines() {
         final List<String> lines = new ArrayList<>();
         if (mc.theWorld == null) {
@@ -984,8 +1021,21 @@ public class Utils {
                     mc.thePlayer.rotationPitch = p;
                 }
             }
-
         }
+    }
+
+    public static float getAngleDifference(float from, float to) {
+        float difference = (to - from) % 360.0F;
+        if (difference < -180.0F) {
+            difference += 360.0F;
+        } else if (difference >= 180.0F) {
+            difference -= 360.0F;
+        }
+        return difference;
+    }
+
+    public static float getPitchDifference(float from, float to) {
+        return (to - from) % 90.0F;
     }
 
     public static float[] getRotationsOld(Entity q) {
@@ -1071,13 +1121,6 @@ public class Utils {
         }
     }
 
-    public static boolean holdingTNT() {
-        if (mc.thePlayer.getHeldItem() == null) {
-            return false;
-        }
-        return mc.thePlayer.getHeldItem().getDisplayName().contains("TNT");
-    }
-
     public static boolean keysDown() {
         return Keyboard.isKeyDown(mc.gameSettings.keyBindForward.getKeyCode()) || Keyboard.isKeyDown(mc.gameSettings.keyBindBack.getKeyCode()) || Keyboard.isKeyDown(mc.gameSettings.keyBindLeft.getKeyCode()) || Keyboard.isKeyDown(mc.gameSettings.keyBindRight.getKeyCode());
     }
@@ -1086,45 +1129,17 @@ public class Utils {
         return Keyboard.isKeyDown(mc.gameSettings.keyBindJump.getKeyCode());
     }
 
-    public static void handleTimer(int color, int ticks) {
-        color = Theme.getGradient((int) HUD.theme.getInput(), 0);
-        int widthOffset = (ticks < 10) ? 4 : (ticks >= 10 && ticks < 100) ? 7 : (ticks >= 100 && ticks < 1000) ? 10 : (ticks >= 1000) ? 13 : 16;
-        String text = ("" + ticks);
-        int width = mc.fontRendererObj.getStringWidth(text) + Utils.getBoldWidth(text) / 2;
-        final ScaledResolution scaledResolution = new ScaledResolution(mc);
-        int[] display = {scaledResolution.getScaledWidth(), scaledResolution.getScaledHeight(), scaledResolution.getScaleFactor()};
-        mc.fontRendererObj.drawString(text, display[0] / 2 - width + widthOffset, display[1] / 2 + 8, color, true);
+    public static boolean usingBedAura() {
+        if (ModuleManager.bedAura != null && ModuleManager.bedAura.currentBlock != null && RotationUtils.inRange(ModuleManager.bedAura.currentBlock, ModuleManager.bedAura.range.getInput())) {
+            return true;
+        }
+        return false;
     }
 
-    public static boolean sneakDown() {
-        return Keyboard.isKeyDown(mc.gameSettings.keyBindSneak.getKeyCode());
-    }
-
-    public static double fallDist() {
-        if (overVoid()) {
-            return 9999;
-        }
-        double fallDistance = -1;
-        double y = mc.thePlayer.posY;
-        if (mc.thePlayer.posY % 1 == 0) {
-            y--;
-        }
-        for (int i = (int) Math.floor(y); i > -1; i--) {
-            if (!isPlaceable(new BlockPos(mc.thePlayer.posX, i, mc.thePlayer.posZ))) {
-                fallDistance = y - i;
-                break;
-            }
-        }
-        return fallDistance - 1;
-    }
-
-    public static double fallDistZ() {
+    public static double distanceToGround() {
         if (mc.thePlayer.onGround) {
             return 0;
         }
-        if (overVoid()) {
-            return 9999;
-        }
         double fallDistance = -1;
         double y = mc.thePlayer.posY;
         if (mc.thePlayer.posY % 1 == 0) {
@@ -1138,7 +1153,6 @@ public class Utils {
         }
         return fallDistance - 1;
     }
-
 
     public static double distanceToGround(Entity entity) {
         if (entity.onGround) {
@@ -1201,10 +1215,6 @@ public class Utils {
 
         yw *= 0.017453292F;
         return yw;
-    }
-
-    public static boolean isMining() {
-        return tabbedIn() && Mouse.isButtonDown(0) && mc.objectMouseOver != null && mc.objectMouseOver.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK && mc.objectMouseOver.getBlockPos() != null;
     }
 
     public static float ae(float n, float n2, float n3) {
@@ -1324,6 +1334,18 @@ public class Utils {
         return sb.toString();
     }
 
+    public static Vec3 offsetVec3(Vec3 pos1, Vec3 pos2) {
+        return new Vec3((pos1.xCoord + pos2.xCoord), (pos1.yCoord + pos2.yCoord), (pos1.zCoord + pos2.zCoord));
+    }
+
+    public static boolean hasJump() {
+        String p = mc.thePlayer.getActivePotionEffects().toString();
+        if (p.contains("potion.jump")) {
+            return true;
+        }
+        return false;
+    }
+
     public static boolean blockAbove() {
         return !(BlockUtils.getBlock(new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY + 2, mc.thePlayer.posZ)) instanceof BlockAir);
     }
@@ -1338,6 +1360,32 @@ public class Utils {
 
     public static boolean lookingAtBlock() {
         return mc.objectMouseOver != null && mc.objectMouseOver.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK && mc.objectMouseOver.getBlockPos() != null;
+    }
+
+    public static class keybinds {
+        public static int[] getMousePosition() {
+            return new int[] { Mouse.getX(), Mouse.getY() };
+        }
+
+        public static int getKeyCode(String key) {
+            return Keyboard.getKeyIndex(key);
+        }
+
+        public static boolean isMouseDown(int mouseButton) {
+            return Mouse.isButtonDown(mouseButton);
+        }
+
+        public static boolean isKeyDown(int key) {
+            return Keyboard.isKeyDown(key);
+        }
+
+        public static void rightClick() {
+            ((IAccessorMinecraft) mc).callRightClickMouse();
+        }
+
+        public static void leftClick() {
+            ((IAccessorMinecraft) mc).callClickMouse();
+        }
     }
 
     public static boolean isDiagonal(boolean strict) {
@@ -1378,6 +1426,63 @@ public class Utils {
         }
     }
 
+    public static double fallDist() {
+        if (overVoid()) {
+            return 9999;
+        }
+        double fallDistance = -1;
+        double y = mc.thePlayer.posY;
+        if (mc.thePlayer.posY % 1 == 0) {
+            y--;
+        }
+        for (int i = (int) Math.floor(y); i > -1; i--) {
+            if (!isPlaceable(new BlockPos(mc.thePlayer.posX, i, mc.thePlayer.posZ))) {
+                fallDistance = y - i;
+                break;
+            }
+        }
+        return fallDistance - 1;
+    }
+
+    public static double fallDistZ() {
+        if (mc.thePlayer.onGround) {
+            return 0;
+        }
+        if (overVoid()) {
+            return 9999;
+        }
+        double fallDistance = -1;
+        double y = mc.thePlayer.posY;
+        if (mc.thePlayer.posY % 1 == 0) {
+            y--;
+        }
+        for (int i = (int) Math.floor(y); i > -1; i--) {
+            if (!isPlaceable(new BlockPos(mc.thePlayer.posX, i, mc.thePlayer.posZ))) {
+                fallDistance = y - i;
+                break;
+            }
+        }
+        return fallDistance - 1;
+    }
+
+    public static boolean waterBelow() {
+        double fallDistance = -1;
+        double y = mc.thePlayer.posY;
+        if (mc.thePlayer.posY % 1 == 0) {
+            y--;
+        }
+        for (int i = (int) Math.floor(y); i > -1; i--) {
+            if (BlockUtils.isFluid(BlockUtils.getBlock(new BlockPos(mc.thePlayer.posX, i, mc.thePlayer.posZ)))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static long time() {
+        return System.currentTimeMillis();
+    }
+
     public static boolean isEdgeOfBlock() {
         BlockPos pos = new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY - ((mc.thePlayer.posY % 1.0 == 0.0) ? 1 : 0), mc.thePlayer.posZ);
         return mc.theWorld.isAirBlock(pos);
@@ -1389,6 +1494,51 @@ public class Utils {
 
     public static void sendModuleMessage(Module module, String s) {
         sendRawMessage("&3" + module.getName() + "&7: &r" + s);
+    }
+
+    public static int getLobbyStatus() {
+        if (!Utils.nullCheck()) {
+            return -1;
+        }
+        final Scoreboard scoreboard = mc.theWorld.getScoreboard();
+        if (scoreboard == null) {
+            return -1;
+        }
+        final ScoreObjective objective = scoreboard.getObjectiveInDisplaySlot(1);
+        if (objective == null) {
+            return -1;
+        }
+        for (String line : getSidebarLines()) {
+            line = stripString(line);
+            String[] parts = line.split("  ");
+            if (parts.length > 1) {
+                if (parts[1].startsWith("L")) {
+                    return 1;
+                }
+            }
+        }
+        return -1;
+    }
+
+    public static int hypixelStatus() {
+        if (!Utils.nullCheck()) {
+            return -1;
+        }
+        final Scoreboard scoreboard = mc.theWorld.getScoreboard();
+        if (scoreboard == null) {
+            return -2;
+        }
+        final ScoreObjective objective = scoreboard.getObjectiveInDisplaySlot(1);
+        if (objective == null) {
+            return -1;
+        }
+        for (String line : getSidebarLines()) {
+            line = stripString(line);
+            if (line.startsWith("0") || line.startsWith("1")) {
+                return 1;
+            }
+        }
+        return -1;
     }
 
     public static EntityLivingBase raytrace(int range) {
@@ -1531,12 +1681,11 @@ public class Utils {
         }
     }
 
-    public static void rsa() {
-        EntityPlayerSP p = mc.thePlayer;
-        int armSwingEnd = p.isPotionActive(Potion.digSpeed) ? 6 - (1 + p.getActivePotionEffect(Potion.digSpeed).getAmplifier()) : (p.isPotionActive(Potion.digSlowdown) ? 6 + (1 + p.getActivePotionEffect(Potion.digSlowdown).getAmplifier()) * 2 : 6);
-        if (!p.isSwingInProgress || p.swingProgressInt >= armSwingEnd / 2 || p.swingProgressInt < 0) {
-            p.swingProgressInt = -1;
-            p.isSwingInProgress = true;
+    public static void setSwinging() {
+        int armSwingEnd = mc.thePlayer.isPotionActive(Potion.digSpeed) ? 6 - (1 + mc.thePlayer.getActivePotionEffect(Potion.digSpeed).getAmplifier()) : (mc.thePlayer.isPotionActive(Potion.digSlowdown) ? 6 + (1 + mc.thePlayer.getActivePotionEffect(Potion.digSlowdown).getAmplifier()) * 2 : 6);
+        if (!mc.thePlayer.isSwingInProgress || mc.thePlayer.swingProgressInt >= armSwingEnd / 2 || mc.thePlayer.swingProgressInt < 0) {
+            mc.thePlayer.swingProgressInt = -1;
+            mc.thePlayer.isSwingInProgress = true;
         }
 
     }
@@ -1572,6 +1721,13 @@ public class Utils {
         return mc.thePlayer.getHeldItem().getItem() instanceof ItemSword;
     }
 
+    public static boolean holdingFishingRod() {
+        if (mc.thePlayer.getHeldItem() == null) {
+            return false;
+        }
+        return mc.thePlayer.getHeldItem().getItem() instanceof ItemFishingRod;
+    }
+
     public static double getDamageLevel(ItemStack itemStack) {
         double baseDamage = 0.0;
         if (itemStack != null) {
@@ -1587,38 +1743,34 @@ public class Utils {
         return baseDamage + sharp_level * 1.25 + (fire_level * 4 - 1);
     }
 
-    public static class keybinds {
-        public static int[] getMousePosition() {
-            return new int[] { Mouse.getX(), Mouse.getY() };
-        }
-
-        public static int getKeyCode(String key) {
-            return Keyboard.getKeyIndex(key);
-        }
-
-        public static boolean isMouseDown(int mouseButton) {
-            return Mouse.isButtonDown(mouseButton);
-        }
-
-        public static boolean isKeyDown(int key) {
-            return Keyboard.isKeyDown(key);
-        }
-
-        public static void rightClick() {
-            ((IAccessorMinecraft) mc).callRightClickMouse();
-        }
-
-        public static void leftClick() {
-            ((IAccessorMinecraft) mc).callClickMouse();
-        }
-    }
-
     public static float getDirection() {
         return getCustomDirection(mc.thePlayer.rotationYaw, mc.thePlayer.movementInput.moveForward, mc.thePlayer.movementInput.moveStrafe);
     }
 
     public static boolean isUserMoving() {
         return mc.thePlayer.movementInput.moveForward != 0.0f || mc.thePlayer.movementInput.moveStrafe != 0.0f;
+    }
+
+    public static net.minecraft.util.Timer getTimer() {
+        return ObfuscationReflectionHelper.getPrivateValue(Minecraft.class, Minecraft.getMinecraft(), "timer", "field_71428_T");
+    }
+
+    public static void handleTimer(int color, int ticks) {
+        color = Theme.getGradient((int) HUD.theme.getInput(), 0);
+        int widthOffset = (ticks < 10) ? 4 : (ticks >= 10 && ticks < 100) ? 7 : (ticks >= 100 && ticks < 1000) ? 10 : (ticks >= 1000) ? 13 : 16;
+        String text = ("" + ticks);
+        int width = mc.fontRendererObj.getStringWidth(text) + Utils.getBoldWidth(text) / 2;
+        final ScaledResolution scaledResolution = new ScaledResolution(mc);
+        int[] display = {scaledResolution.getScaledWidth(), scaledResolution.getScaledHeight(), scaledResolution.getScaleFactor()};
+        mc.fontRendererObj.drawString(text, display[0] / 2 - width + widthOffset, display[1] / 2 + 8, color, true);
+    }
+
+    public static float getLastReportedYaw() {
+        return ((IAccessorEntityPlayerSP) mc.thePlayer).getLastReportedYaw();
+    }
+
+    public static boolean safeWalkBackwards() {
+        return ModuleManager.safeWalk.canSafeWalk() && mc.thePlayer.moveForward <= -0.5 && mc.thePlayer.moveStrafing == 0;
     }
 
     public static float getCustomDirection(float yaw, final float moveForward, final float moveStrafe) {
@@ -1637,69 +1789,6 @@ public class Utils {
             yaw += 90.0f * forward;
         }
         return yaw * 0.017453292f;
-    }
-
-    public static int getLobbyStatus() {
-        if (!Utils.nullCheck()) {
-            return -1;
-        }
-        final Scoreboard scoreboard = mc.theWorld.getScoreboard();
-        if (scoreboard == null) {
-            return -1;
-        }
-        final ScoreObjective objective = scoreboard.getObjectiveInDisplaySlot(1);
-        if (objective == null) {
-            return -1;
-        }
-        for (String line : getSidebarLines()) {
-            line = stripString(line);
-            String[] parts = line.split("  ");
-            if (parts.length > 1) {
-                if (parts[1].startsWith("L")) {
-                    return 1;
-                }
-            }
-        }
-        return -1;
-    }
-
-    public static int hypixelStatus() {
-        if (!Utils.nullCheck()) {
-            return -1;
-        }
-        final Scoreboard scoreboard = mc.theWorld.getScoreboard();
-        if (scoreboard == null) {
-            return -2;
-        }
-        final ScoreObjective objective = scoreboard.getObjectiveInDisplaySlot(1);
-        if (objective == null) {
-            return -1;
-        }
-        for (String line : getSidebarLines()) {
-            line = stripString(line);
-            if (line.startsWith("0") || line.startsWith("1")) {
-                return 1;
-            }
-        }
-        return -1;
-    }
-
-    public static boolean isReplay() {
-        if (Utils.isHypixel()) {
-            if (!Utils.nullCheck()) {
-                return false;
-            }
-            final Scoreboard scoreboard = mc.theWorld.getScoreboard();
-            if (scoreboard == null) {
-                return false;
-            }
-            final ScoreObjective objective = scoreboard.getObjectiveInDisplaySlot(1);
-            if (objective == null || !stripString(objective.getDisplayName()).contains("REPLAY")) {
-                return false;
-            }
-            return true;
-        }
-        return false;
     }
 
     public static boolean canBePlaced(ItemBlock itemBlock) {
@@ -1733,17 +1822,21 @@ public class Utils {
         if (ModuleManager.scaffold != null && ModuleManager.scaffold.isEnabled && ModuleManager.scaffold.autoSwap.isToggled() && ModuleManager.autoSwap.spoofItem.isToggled() && mc.thePlayer != null) {
             return mc.thePlayer.inventory.getStackInSlot(ModuleManager.scaffold.lastSlot.get() == -1 ? mc.thePlayer.inventory.currentItem : ModuleManager.scaffold.lastSlot.get());
         }
-        if (ModuleManager.LongJump != null && ModuleManager.LongJump.isEnabled() && ModuleManager.LongJump.spoofItem.isToggled() && mc.thePlayer != null) {
-            return mc.thePlayer.inventory.getStackInSlot(ModuleManager.LongJump.spoofSlot == -1 ? mc.thePlayer.inventory.currentItem : ModuleManager.LongJump.lastSlot);
+        if (ModuleManager.autoBlockIn != null && ModuleManager.autoBlockIn.isEnabled() && ModuleManager.autoBlockIn.spoofItem.isToggled() && mc.thePlayer != null && ModuleManager.autoBlockIn.active) {
+            return mc.thePlayer.inventory.getStackInSlot(ModuleManager.autoBlockIn.origSlot == -1 ? mc.thePlayer.inventory.currentItem : ModuleManager.autoBlockIn.origSlot);
         }
-        if (ModuleManager.autoTool != null && ModuleManager.autoTool.isEnabled() && ModuleManager.autoTool.spoofItem.isToggled() && mc.thePlayer != null) {
+        if (ModuleManager.autoTool != null && ModuleManager.autoTool.isEnabled() && ModuleManager.autoTool.spoofItem.isToggled() && mc.thePlayer != null && ModuleManager.autoTool.active) {
             return mc.thePlayer.inventory.getStackInSlot(ModuleManager.autoTool.previousSlot == -1 ? mc.thePlayer.inventory.currentItem : ModuleManager.autoTool.previousSlot);
         }
         return original;
     }
 
+    public static BlockPos getBlockPos(Vec3 blockPos) {
+        return new BlockPos(blockPos.xCoord, blockPos.yCoord, blockPos.zCoord);
+    }
+
     public static boolean scaffoldDiagonal(boolean strict) {
-        float back = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - ModuleManager.scaffold.hardcodedYaw();
+        float back = MathHelper.wrapAngleTo180_float(MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - ModuleManager.scaffold.hardcodedYaw());
         float yaw = ((back % 360) + 360) % 360;
         yaw = yaw > 180 ? yaw - 360 : yaw;
         boolean isYawDiagonal = inBetween(-170, 170, yaw) && !inBetween(-10, 10, yaw) && !inBetween(80, 100, yaw) && !inBetween(-100, -80, yaw);
@@ -1781,24 +1874,6 @@ public class Utils {
         return false;
     }
 
-    public static boolean isBedwarsPractice() {
-        if (Utils.isHypixel()) {
-            if (!Utils.nullCheck()) {
-                return false;
-            }
-            final Scoreboard scoreboard = mc.theWorld.getScoreboard();
-            if (scoreboard == null) {
-                return false;
-            }
-            final ScoreObjective objective = scoreboard.getObjectiveInDisplaySlot(1);
-            if (objective == null || !stripString(objective.getDisplayName()).contains("BED WARS PRACTICE")) {
-                return false;
-            }
-            return true;
-        }
-        return false;
-    }
-
     public static boolean isBedwarsPracticeOrReplay() {
         if (Utils.isHypixel()) {
             if (!Utils.nullCheck()) {
@@ -1817,6 +1892,42 @@ public class Utils {
                 return true;
             }
             return false;
+        }
+        return false;
+    }
+
+    public static boolean isReplay() {
+        if (Utils.isHypixel()) {
+            if (!Utils.nullCheck()) {
+                return false;
+            }
+            final Scoreboard scoreboard = mc.theWorld.getScoreboard();
+            if (scoreboard == null) {
+                return false;
+            }
+            final ScoreObjective objective = scoreboard.getObjectiveInDisplaySlot(1);
+            if (objective == null || !stripString(objective.getDisplayName()).contains("REPLAY")) {
+                return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean isBedwarsPractice() {
+        if (Utils.isHypixel()) {
+            if (!Utils.nullCheck()) {
+                return false;
+            }
+            final Scoreboard scoreboard = mc.theWorld.getScoreboard();
+            if (scoreboard == null) {
+                return false;
+            }
+            final ScoreObjective objective = scoreboard.getObjectiveInDisplaySlot(1);
+            if (objective == null || !stripString(objective.getDisplayName()).contains("BED WARS PRACTICE")) {
+                return false;
+            }
+            return true;
         }
         return false;
     }

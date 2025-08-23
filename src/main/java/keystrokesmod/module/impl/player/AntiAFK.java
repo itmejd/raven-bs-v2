@@ -27,6 +27,8 @@ public class AntiAFK extends Module {
     private int ticks, afkTicks;
     private boolean c;
     public boolean stop = false;
+    private boolean stopFlying;
+    private int sfTicks, randomDelay;
     public AntiAFK() {
         super("AntiAFK", category.player);
         this.registerSetting(afk = new SliderSetting("AFK", 0, afkModes));
@@ -44,16 +46,6 @@ public class AntiAFK extends Module {
     public void onEnable() {
         this.ticks = this.h();
         this.c = Utils.getRandom().nextBoolean();
-    }
-
-    @SubscribeEvent
-    public void onPreUpdate(PreUpdateEvent e) {
-        if (!Utils.isMoving()) {
-            ++afkTicks;
-        }
-        else {
-            afkTicks = 0;
-        }
     }
 
     public void onUpdate() {
@@ -89,12 +81,39 @@ public class AntiAFK extends Module {
                 break;
             }
             case 5: {
+                if (Utils.isMoving() || Utils.jumpDown()) {
+                    if (sfTicks > 0 && !Utils.jumpDown()) {
+                        KeyBinding.setKeyBindState(mc.gameSettings.keyBindJump.getKeyCode(), false);
+                    }
+                    afkTicks = sfTicks = 0;
+                }
+                else {
+                    ++afkTicks;
+                }
                 if (afkTicks >= 1000) {
-                    mc.thePlayer.capabilities.isFlying = false;
-                    if (mc.thePlayer.onGround) {
+                    if (mc.thePlayer.capabilities.isFlying) {
+                        stopFlying = true;
+                    }
+                    else if (mc.thePlayer.onGround) {
                         mc.thePlayer.jump();
                     }
                     afkTicks = 0;
+                }
+                if (stopFlying && ++sfTicks > -1) {
+                    if (sfTicks == 1) {
+                        KeyBinding.setKeyBindState(mc.gameSettings.keyBindJump.getKeyCode(), true);
+                    }
+                    else if (sfTicks == 2) {
+                        KeyBinding.setKeyBindState(mc.gameSettings.keyBindJump.getKeyCode(), false);
+                    }
+                    else if (sfTicks == 4) {
+                        KeyBinding.setKeyBindState(mc.gameSettings.keyBindJump.getKeyCode(), true);
+                    }
+                    else if (sfTicks == 5) {
+                        KeyBinding.setKeyBindState(mc.gameSettings.keyBindJump.getKeyCode(), false);
+                        sfTicks = 0;
+                        stopFlying = false;
+                    }
                 }
                 break;
             }

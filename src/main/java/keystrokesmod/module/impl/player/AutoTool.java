@@ -3,6 +3,7 @@ package keystrokesmod.module.impl.player;
 import keystrokesmod.Raven;
 import keystrokesmod.mixin.interfaces.IMixinItemRenderer;
 import keystrokesmod.module.Module;
+import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
 import keystrokesmod.utility.BlockUtils;
@@ -16,9 +17,12 @@ public class AutoTool extends Module {
 
     private ButtonSetting rightDisable;
     private ButtonSetting requireCrouch;
+    private ButtonSetting ignoreInteractables;
     private ButtonSetting requireMouse;
     public ButtonSetting spoofItem;
     private ButtonSetting swapBack;
+
+    public boolean active;
 
     private boolean hasSwapped = false;
     private int swapDelayTick = 0;
@@ -31,6 +35,7 @@ public class AutoTool extends Module {
         this.registerSetting(swapDelay = new SliderSetting("Swap delay", 0, 0, 20, 1));
         this.registerSetting(rightDisable = new ButtonSetting("Disable while right click", true));
         this.registerSetting(requireCrouch = new ButtonSetting("Only while crouching", false));
+        this.registerSetting(ignoreInteractables = new ButtonSetting("Ignore interactables", true));
         this.registerSetting(requireMouse = new ButtonSetting("Require mouse down", true));
         this.registerSetting(spoofItem = new ButtonSetting("Spoof item", false));
         this.registerSetting(swapBack = new ButtonSetting("Swap to previous slot", true));
@@ -52,6 +57,7 @@ public class AutoTool extends Module {
 
 
     public void onUpdate() {
+        MovingObjectPosition over = mc.objectMouseOver;
         if (spoofItem.isToggled() && previousSlot != mc.thePlayer.inventory.currentItem && previousSlot != -1) {
             if (Raven.debug) {
                 Utils.sendModuleMessage(this, "&7Modifying held item renderer");
@@ -59,7 +65,7 @@ public class AutoTool extends Module {
             ((IMixinItemRenderer) mc.getItemRenderer()).setCancelUpdate(true);
             ((IMixinItemRenderer) mc.getItemRenderer()).setCancelReset(true);
         }
-        if (!mc.inGameHasFocus || mc.currentScreen != null || (rightDisable.isToggled() && Mouse.isButtonDown(1)) || !mc.thePlayer.capabilities.allowEdit || (requireCrouch.isToggled() && !mc.thePlayer.isSneaking())) {
+        if (ModuleManager.autoBlockIn.active || BlockUtils.isInteractable(over) && ignoreInteractables.isToggled() || !mc.inGameHasFocus || mc.currentScreen != null || (rightDisable.isToggled() && Mouse.isButtonDown(1)) || !mc.thePlayer.capabilities.allowEdit || (requireCrouch.isToggled() && !mc.thePlayer.isSneaking())) {
             resetVariables(false);
             return;
         }
@@ -67,7 +73,6 @@ public class AutoTool extends Module {
             resetSlot();
             return;
         }
-        MovingObjectPosition over = mc.objectMouseOver;
         if (over == null || over.typeOfHit != MovingObjectPosition.MovingObjectType.BLOCK) {
             resetSlot();
             resetVariables(true);
@@ -93,6 +98,7 @@ public class AutoTool extends Module {
         else if (slot != mc.thePlayer.inventory.currentItem) {
             if (swapDelayTick-- <= 0) {
                 if (mc.thePlayer.inventory.currentItem != slot) {
+                    active = true;
                     setSlot(slot);
                     swapDelayTick = (int) swapDelay.getInput();
                 }
@@ -108,6 +114,7 @@ public class AutoTool extends Module {
         previousSlot = -1;
         hasSwapped = false;
         swapDelayTick = 0;
+        active = false;
     }
 
     private void resetSlot() {

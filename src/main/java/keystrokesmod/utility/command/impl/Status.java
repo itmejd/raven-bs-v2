@@ -35,7 +35,7 @@ public class Status extends Command {
             ign = args[1];
 
             if (cooldown != 0) {
-                Utils.print("§dcurrently on cooldown for " + cooldown + "s");
+                Utils.modulePrint("§dcurrently on cooldown for " + cooldown + "s");
             }
             else {
                 ++currentMode;

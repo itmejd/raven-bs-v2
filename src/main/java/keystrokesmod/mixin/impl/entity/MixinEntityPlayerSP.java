@@ -6,10 +6,12 @@ import keystrokesmod.event.PostUpdateEvent;
 import keystrokesmod.event.PreMotionEvent;
 import keystrokesmod.event.PreUpdateEvent;
 import keystrokesmod.module.ModuleManager;
+import keystrokesmod.module.impl.client.Settings;
 import keystrokesmod.module.impl.combat.WTap;
 import keystrokesmod.module.impl.movement.NoSlow;
 import keystrokesmod.utility.ModuleUtils;
 import keystrokesmod.utility.RotationUtils;
+import keystrokesmod.utility.Utils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.client.entity.AbstractClientPlayer;
@@ -257,9 +259,12 @@ public abstract class MixinEntityPlayerSP extends AbstractClientPlayer {
         boolean flag2 = this.movementInput.moveForward >= f;
         this.movementInput.updatePlayerMoveState();
         boolean stopSprint = ModuleManager.noSlow == null || !ModuleManager.noSlow.isEnabled() || NoSlow.slowed.getInput() == 80;
-        if ((this.isUsingItem() || (ModuleManager.killAura != null && ModuleManager.killAura.isEnabled() && ModuleManager.killAura.blockingClient)) && !this.isRiding()) {
+        if ((this.isUsingItem() || (ModuleManager.killAura != null && ModuleManager.killAura.isEnabled() && ModuleManager.killAura.blockingClient || ModuleManager.noSlow != null && ModuleManager.noSlow.isEnabled() && ModuleManager.noSlow.blockingClient)) && !this.isRiding()) {
             MovementInput var10000 = this.movementInput;
             float slowed = NoSlow.getSlowed();
+            if (NoSlow.requireSlow()) {
+                slowed = 0.2f;
+            }
             var10000.moveStrafe *= slowed;
             var10000 = this.movementInput;
             var10000.moveForward *= slowed;
@@ -281,11 +286,11 @@ public abstract class MixinEntityPlayerSP extends AbstractClientPlayer {
             }
         }
 
-        if (!this.isSprinting() && this.mc.gameSettings.keyBindSprint.isKeyDown() && (this.movementInput.moveForward != 0 || this.movementInput.moveStrafe != 0)  && (ModuleManager.sprint.omniSprint() || ModuleManager.scaffold.sprint() || this.movementInput.moveForward >= f && flag3) && (!(this.isUsingItem() || mc.thePlayer.isBlocking()) || !stopSprint) && !this.isPotionActive(Potion.blindness)) {
+        if (!this.isSprinting() && this.mc.gameSettings.keyBindSprint.isKeyDown() && (this.movementInput.moveForward != 0 || this.movementInput.moveStrafe != 0) && (ModuleManager.sprint.omniSprint() || this.movementInput.moveForward >= f && flag3) && (!(this.isUsingItem() || mc.thePlayer.isBlocking()) || !stopSprint) && !this.isPotionActive(Potion.blindness)) {
             this.setSprinting(true);
         }
 
-        if (this.isSprinting() && (!ModuleManager.sprint.omniSprint() && !ModuleManager.scaffold.sprint() && (this.movementInput.moveForward < f || !flag3)) || this.isCollidedHorizontally || ModuleManager.sprint.disableBackwards() || ModuleUtils.setSlow || ModuleManager.noSlow != null && NoSlow.disableSprintInAir.isToggled() && ModuleManager.noSlow.fn && !mc.thePlayer.onGround || (this.movementInput.moveForward == 0 && this.movementInput.moveStrafe == 0) || this.mc.gameSettings.keyBindSneak.isKeyDown() || (ModuleManager.scaffold != null && ModuleManager.scaffold.isEnabled && !ModuleManager.scaffold.sprint()) || (ModuleManager.wTap.isEnabled() && WTap.stopSprint) || ModuleManager.sprint.isEnabled() && ModuleManager.sprint.omniDirectional.getInput() > 0 && !ModuleManager.sprint.omniSprint()) {
+        if (this.isSprinting() && (!ModuleManager.sprint.omniSprint() && (this.movementInput.moveForward < f || !flag3)) || this.isCollidedHorizontally || ModuleManager.sprint.disableBackwards() || ModuleUtils.setSlow || (this.movementInput.moveForward == 0 && this.movementInput.moveStrafe == 0) || this.mc.gameSettings.keyBindSneak.isKeyDown() || ModuleManager.tower.towerMove.getInput() == 0 && ModuleManager.tower.canTower() || ModuleManager.scaffold != null && ModuleManager.scaffold.isEnabled && !ModuleManager.scaffold.sprint() || (ModuleManager.wTap.isEnabled() && WTap.stopSprint) || ModuleManager.sprint.isEnabled() && ModuleManager.sprint.omniDirectional.getInput() > 0 && !ModuleManager.sprint.omniSprint()) {
             this.setSprinting(false);
             WTap.stopSprint = false;
         }

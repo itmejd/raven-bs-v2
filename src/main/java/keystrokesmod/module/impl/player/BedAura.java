@@ -5,6 +5,7 @@ import keystrokesmod.event.*;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
 import keystrokesmod.module.impl.minigames.BedWars;
+import keystrokesmod.module.impl.movement.LongJump;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.SliderSetting;
 import keystrokesmod.utility.*;
@@ -12,8 +13,10 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockBed;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.Packet;
 import net.minecraft.network.play.client.C07PacketPlayerDigging;
 import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
 import net.minecraft.network.play.client.C0APacketAnimation;
@@ -31,15 +34,17 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
+import static net.minecraft.util.EnumFacing.DOWN;
+
 public class BedAura extends Module {
     public SliderSetting mode;
     private SliderSetting breakSpeed;
     private SliderSetting fov;
     public SliderSetting range;
     private SliderSetting rate;
-    public ButtonSetting allowAura;
+    public ButtonSetting allowAura, allowAB, prioritizeAura;
     private ButtonSetting breakNearBlock;
-    private ButtonSetting cancelKnockback;
+    private ButtonSetting delayKnockback;
     private ButtonSetting disableBreakEffects;
     public ButtonSetting groundSpoof;
     private ButtonSetting onlyWhileVisible;
@@ -65,6 +70,14 @@ public class BedAura extends Module {
     private BlockPos rotateLastBlock;
     private boolean spoofGround, firstStop;
     private boolean isBreaking, startPacket, stopPacket, ignoreSlow, delayStop;
+    private boolean ra;
+    public boolean shouldUnblock;
+    public int stopKaTicks;
+    private List<Map<String, Object>> packets = new ArrayList<>();
+    public boolean delaying;
+    public boolean shouldDelay = false;
+    public int delayTicks = -1;
+    private boolean d, setSlot;
 
     public BedAura() {
         super("BedAura", category.player, 0);
@@ -73,9 +86,11 @@ public class BedAura extends Module {
         this.registerSetting(fov = new SliderSetting("FOV", 360.0, 30.0, 360.0, 4.0));
         this.registerSetting(range = new SliderSetting("Range", 4.5, 1.0, 8.0, 0.5));
         this.registerSetting(rate = new SliderSetting("Rate", " second", 0.2, 0.05, 3.0, 0.05));
-        this.registerSetting(allowAura = new ButtonSetting("Allow aura", true));
+        this.registerSetting(allowAura = new ButtonSetting("Allow aura", false));
+        this.registerSetting(allowAB = new ButtonSetting("Allow autoblock", false));
+        this.registerSetting(prioritizeAura = new ButtonSetting("Prioritize aura", false));
         this.registerSetting(breakNearBlock = new ButtonSetting("Break near block", false));
-        this.registerSetting(cancelKnockback = new ButtonSetting("Cancel knockback", false));
+        this.registerSetting(delayKnockback = new ButtonSetting("Delay knockback", false));
         this.registerSetting(disableBreakEffects = new ButtonSetting("Disable break effects", false));
         this.registerSetting(groundSpoof = new ButtonSetting("Ground spoof", false));
         this.registerSetting(onlyWhileVisible = new ButtonSetting("Only while visible", false));
@@ -93,11 +108,10 @@ public class BedAura extends Module {
     public void onDisable() {
         reset(true, true);
         bedPos = null;
-    }
-
-    @SubscribeEvent(priority = EventPriority.HIGHEST) // takes priority over ka & antifireball
-    public void onPreUpdate(PreUpdateEvent e) {
-
+        ra = false;
+        delayTicks = -1;
+        flushAll();
+        shouldDelay = false;
     }
 
     @SubscribeEvent
@@ -108,32 +122,38 @@ public class BedAura extends Module {
         }
     }
 
-    @SubscribeEvent
-    public void onReceivePacket(ReceivePacketEvent e) {
-        if (!Utils.nullCheck() || !cancelKnockback.isToggled() || currentBlock == null) {
-            return;
-        }
-        if (e.getPacket() instanceof S12PacketEntityVelocity) {
-            if (((S12PacketEntityVelocity) e.getPacket()).getEntityID() == mc.thePlayer.getEntityId()) {
-                e.setCanceled(true);
-            }
-        }
-        else if (e.getPacket() instanceof S27PacketExplosion) {
-            e.setCanceled(true);
-        }
-    }
-
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onClientRotation(ClientRotationEvent e) {
         if (!Utils.nullCheck()) {
             return;
         }
+        if (ra) {
+            //setRots(e);
+            ra = false;
+        }
         if (delayStop) {
             delayStop = false;
+            if (shouldUnblock) {
+                shouldUnblock = false;
+                if (stopAutoblock && ModuleUtils.isBlocked) {
+                    return;
+                }
+            }
         } else {
             stopAutoblock = false;
         }
         breakTick = false;
+        if (ModuleManager.autoBlockIn.active) {
+            reset(false, false);
+            return;
+        }
+        if (prioritizeAura.isToggled() && ModuleManager.killAura.targeting) {
+            reset(true, true);
+            return;
+        }
+        if (ModuleManager.noFall.used || ModuleManager.scaffold.isEnabled) {
+            return;
+        }
         if (currentBlock == null || !RotationUtils.inRange(currentBlock, range.getInput())) {
             reset(true, true);
             bedPos = null;
@@ -165,6 +185,8 @@ public class BedAura extends Module {
                 return;
             }
         }
+        KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
+        KeyBinding.setKeyBindState(mc.gameSettings.keyBindAttack.getKeyCode(), false);
         if (breakNearBlock.isToggled() && isCovered(bedPos[0]) && isCovered(bedPos[1])) {
             if (nearestBlock == null) {
                 nearestBlock = getBestBlock(bedPos, true);
@@ -177,7 +199,7 @@ public class BedAura extends Module {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onPreMotion(PreMotionEvent e) {
 
         if (stopAutoblock) {
@@ -186,15 +208,22 @@ public class BedAura extends Module {
             }
         }
 
-        if (groundSpoof.isToggled() && !mc.thePlayer.isInWater() && spoofGround) {
+        if (!mc.thePlayer.isInWater() && spoofGround) {
             e.setOnGround(true);
             if (Raven.debug) {
                 Utils.sendModuleMessage(this, "&7ground spoof (&3" + mc.thePlayer.ticksExisted + "&7).");
             }
         }
 
+        spoofGround = false;
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGH)
+    public void onPreUpdate(PreUpdateEvent e) {
         if (startPacket) {
             mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.START_DESTROY_BLOCK, packetPos, EnumFacing.UP));
+            shouldDelay = true;
+            delayTicks = -1;
             swing();
             if (Raven.debug) {
                 Utils.sendModuleMessage(this, "sending c07 &astart &7break &7(&b" + mc.thePlayer.ticksExisted + "&7)");
@@ -206,12 +235,96 @@ public class BedAura extends Module {
             if (Raven.debug) {
                 Utils.sendModuleMessage(this, "sending c07 &cstop &7break &7(&b" + mc.thePlayer.ticksExisted + "&7)");
             }
+            delayTicks = 0;
+            d = true;
+
         }
         if (isBreaking && !startPacket && !stopPacket) {
             swing();
         }
 
-        startPacket = stopPacket = spoofGround = false;
+        startPacket = stopPacket = false;
+    }
+
+    @SubscribeEvent
+    public void onReceivePacket(ReceivePacketEvent e) {
+        if (!Utils.nullCheck() || !delayKnockback.isToggled() || !shouldDelay) {
+            return;
+        }
+        if (e.getPacket() instanceof S27PacketExplosion) {
+            delaying = true;
+        }
+        if (e.getPacket() instanceof S12PacketEntityVelocity) {
+            if (((S12PacketEntityVelocity) e.getPacket()).getEntityID() == mc.thePlayer.getEntityId()) {
+                S12PacketEntityVelocity s12PacketEntityVelocity = (S12PacketEntityVelocity) e.getPacket();
+
+                if (s12PacketEntityVelocity.getEntityID() == mc.thePlayer.getEntityId()) {
+                    delaying = true;
+                }
+            }
+        }
+
+        if (!delaying) return;
+        Map<String, Object> entry = new HashMap<>();
+        entry.put("packet", e.getPacket());
+        entry.put("time", Utils.time());
+        synchronized (packets) {
+            packets.add(entry);
+        }
+        e.setCanceled(true);
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onPostMotion(PostMotionEvent e) {
+        if (!Utils.nullCheck()) {
+            return;
+        }
+
+        if (!packets.isEmpty()) {
+
+            long now = Utils.time();
+            long delayv = 700;
+
+            while (!packets.isEmpty()) {
+                long timestamp = (Long) packets.get(0).get("time");
+                if (now - timestamp >= delayv) {
+                    flushOne();
+                } else {
+                    break;
+                }
+            }
+
+
+            if (d || !shouldDelay || !containsVelocity()) {
+                flushAll();
+            }
+        }
+        d = false;
+    }
+
+    void flushOne() {
+        synchronized (packets) {
+            Map<String, Object> entry = packets.remove(0);
+            PacketUtils.receivePacketNoEvent((Packet) entry.get("packet"));
+        }
+    }
+
+    void flushAll() {
+        while (!packets.isEmpty()) {
+            flushOne();
+        }
+        delaying = false;
+    }
+
+    boolean containsVelocity() {
+        synchronized(packets) {
+            int id = mc.thePlayer.getEntityId();
+            for (Map<String, Object> entry : packets) {
+                Packet p = (Packet) entry.get("packet");
+                if (p instanceof S12PacketEntityVelocity && ((S12PacketEntityVelocity) p).getEntityID() == id) return true;
+            }
+        }
+        return false;
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -238,10 +351,6 @@ public class BedAura extends Module {
         else if (lastSlot != -1) {
             lastSlot = mc.thePlayer.inventory.currentItem = lastSlot;
         }
-    }
-
-    public boolean cancelKnockback() {
-        return cancelKnockback.isToggled() && currentBlock != null && RotationUtils.inRange(currentBlock, range.getInput());
     }
 
     private BlockPos[] getBedPos() {
@@ -354,8 +463,9 @@ public class BedAura extends Module {
     }
 
     private void reset(boolean resetSlot, boolean stopAutoblock) {
-        if (resetSlot) {
+        if (resetSlot && setSlot) {
             resetSlot();
+            setSlot = false;
         }
         breakProgress = 0;
         breakProgressMap.clear();
@@ -370,12 +480,19 @@ public class BedAura extends Module {
         if (isBreaking) {
             ModuleUtils.isBreaking = false;
             isBreaking = false;
+            mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.ABORT_DESTROY_BLOCK, BlockPos.ORIGIN, EnumFacing.UP));
+            ModuleUtils.pauseAB = 2;
         }
         breakTick = false;
         currentBlock = null;
         nearestBlock = null;
         ignoreSlow = false;
         delayStop = false;
+        shouldUnblock = false;
+        if (shouldDelay && delayTicks == -1) {
+            shouldDelay = false;
+        }
+        d = false;
     }
 
     public void setPacketSlot(int slot) {
@@ -384,6 +501,7 @@ public class BedAura extends Module {
         }
         Raven.packetsHandler.updateSlot(slot);
         stopAutoblock = true;
+        ModuleUtils.manualSlot = 2;
     }
 
     private void startBreak(ClientRotationEvent e ,BlockPos blockPos) {
@@ -393,7 +511,11 @@ public class BedAura extends Module {
         isBreaking = true;
         breakTick = true;
 
-        ignoreSlow = true;
+        if (mc.thePlayer.motionY >= -0.4D && groundSpoof.isToggled()) {
+            ignoreSlow = true;
+            spoofGround = true;
+        }
+        ra = true;
     }
 
     private void stopBreak(ClientRotationEvent e, BlockPos blockPos) {
@@ -406,10 +528,12 @@ public class BedAura extends Module {
             spoofGround = true;
         }
         ignoreSlow = false;
+        ra = true;
+        stopKaTicks = 5;
     }
 
     private void swing() {
-        if (!silentSwing.isToggled()) {
+        if (!silentSwing.isToggled() && !(ModuleManager.killAura.autoBlockOverride() && ModuleManager.killAura.targeting && allowAB.isToggled())) {
             mc.thePlayer.swingItem();
         }
         else {
@@ -438,8 +562,11 @@ public class BedAura extends Module {
         currentBlock = blockPos;
         if ((breakProgress <= 0 || breakProgress >= 1) && mode.getInput() == 2 && !firstStop) {
             firstStop = true;
+            //Utils.print(Utils.getTool(block));
+            if (Utils.getTool(block) == -1) {
+                shouldUnblock = true;
+            }
             stopAutoblock = delayStop = true;
-            setRots(e);
             return;
         }
         if (mode.getInput() == 2 || mode.getInput() == 0) {
@@ -513,6 +640,8 @@ public class BedAura extends Module {
             lastSlot = mc.thePlayer.inventory.currentItem;
         }
         mc.thePlayer.inventory.currentItem = slot;
+        setSlot = true;
+        ModuleUtils.manualSlot = 2;
     }
 
     private boolean isCovered(BlockPos blockPos) {

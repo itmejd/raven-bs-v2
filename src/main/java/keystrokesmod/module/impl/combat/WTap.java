@@ -30,6 +30,11 @@ public class WTap extends Module {
         this.closetModule = true;
     }
 
+    @Override
+    public String getInfo() {
+        return (int) delay.getInput() + "ms";
+    }
+
     @SubscribeEvent
     public void onAttack(AttackEntityEvent event) {
         if (!Utils.nullCheck() || event.entityPlayer != mc.thePlayer || !mc.thePlayer.isSprinting()) {

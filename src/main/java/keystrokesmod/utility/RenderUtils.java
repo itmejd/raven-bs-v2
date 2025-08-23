@@ -42,6 +42,10 @@ public class RenderUtils {
         renderBox(blockPos.getX(), blockPos.getY(), blockPos.getZ(), 1, 1, 1, color, outline, shade);
     }
 
+    public static void renderBlockVec3(Vec3 vec3, int color, boolean outline, boolean shade) {
+        renderBox(vec3.xCoord, vec3.yCoord, vec3.zCoord, 1, 1, 1, color, outline, shade);
+    }
+
     public static void renderChest(BlockPos blockPos, int color, boolean outline, boolean shade) {
         renderBox(blockPos.getX() + 0.0625F, blockPos.getY(), blockPos.getZ() + 0.0625F, 0.875f, 0.875f, 0.875f, color, outline, shade);
     }

@@ -23,7 +23,7 @@ public class Fly extends Module {
     private boolean d;
     private boolean a = false;
     private float firstYaw, firstPitch;
-    private String[] modes = new String[]{"Vanilla", "Fast", "Fast 2", "Freeze"};
+    private String[] modes = new String[]{"Vanilla", "Fast", "Fast 2", "Freeze", "OP"};
 
     public Fly() {
         super("Fly", category.movement);
@@ -89,8 +89,47 @@ public class Fly extends Module {
                 mc.thePlayer.motionZ = 0;
                 Utils.setSpeed(0);
                 break;
+            case 4:
+                op();
+                break;
         }
 
+    }
+
+    private int fm;
+    private void op() {
+
+        if (mc.thePlayer.motionY >= -0.0784000015258789) {
+            fm = 0;
+        }
+        else {
+            fm++;
+        }
+
+        double hSpeed = 0.3;
+        double vSpeed = 1.2;
+        if (mc.thePlayer.hurtTime > 0) {
+            hSpeed += 0.5;
+            vSpeed += 0.5;
+        }
+        if (mc.currentScreen == null) {
+            if (Utils.jumpDown()) {
+                mc.thePlayer.motionY = 0.3 * vSpeed;
+            }
+            else if (Utils.sneakDown()) {
+                double fallMulti = ((double) fm / 100);
+                mc.thePlayer.motionY = (-0.3 - fallMulti) * vSpeed;
+            }
+            else {
+                mc.thePlayer.motionY = 0.0;
+            }
+        }
+        else {
+            mc.thePlayer.motionY = 0.0;
+        }
+        mc.thePlayer.capabilities.setFlySpeed(0.2f);
+        mc.thePlayer.capabilities.isFlying = true;
+        setSpeed(0.85 * hSpeed);
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST) // called last in order to apply fix
@@ -110,6 +149,7 @@ public class Fly extends Module {
     }
 
     public void onDisable() {
+        fm = 0;
         if (mc.thePlayer.capabilities.allowFlying) {
             mc.thePlayer.capabilities.isFlying = this.d;
         }

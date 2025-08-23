@@ -14,7 +14,7 @@ public class StopSpammer extends Command {
     public void onExecute(String[] args) {
         if (args.length >= 1) {
             ModuleManager.spammer.reset();
-            Utils.print("§cPaused spammer");
+            Utils.modulePrint("§cPaused spammer");
         }
         else {
             syntaxError();

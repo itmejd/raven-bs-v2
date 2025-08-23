@@ -17,7 +17,7 @@ public class ProfileUtils {
         return result;
     }
 
-    public static int[] getHypixelStats(String playerName, ProfileUtils.DM dm) {
+    public static int[] getHypixelStats(String playerName, DM dm) {
         int[] s = new int[]{0, 0, 0};
         String u = getMojangProfile(playerName);
         if (u.isEmpty()) {

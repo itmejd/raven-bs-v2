@@ -3,6 +3,7 @@ package keystrokesmod.module.impl.player;
 import keystrokesmod.event.*;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.ModuleManager;
+import keystrokesmod.module.impl.client.Settings;
 import keystrokesmod.module.impl.movement.LongJump;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.module.setting.impl.GroupSetting;
@@ -22,6 +23,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 public class Tower extends Module {
     final public SliderSetting towerMove;
     private SliderSetting speedSetting;
+    private ButtonSetting disableDiagonal;
     final public SliderSetting verticalTower;
     final private SliderSetting slowedSpeed;
     final private SliderSetting slowedTicks;
@@ -32,7 +34,7 @@ public class Tower extends Module {
     public SliderSetting extraBlockDelay;
 
     final private String[] towerMoveModes = new String[]{"None", "Vanilla", "3 tick", "Edge", "2.5 tick", "1.5 tick", "1 tick", "10 tick", "Jump"};
-    final private String[] verticalTowerModes = new String[]{"None", "Vanilla", "Extra block", "3 tick", "Edge"};
+    final private String[] verticalTowerModes = new String[]{"None", "Vanilla", "Extra block", "3 tick", "Edge", "Prediction"};
     private int slowTicks;
     private boolean wasTowering, vtowering;
     private int towerTicks;
@@ -42,6 +44,9 @@ public class Tower extends Module {
     public int dCount;
     public float yaw;
     private int vt;
+    public boolean hasT;
+
+    public boolean blink;
 
     public int activeTicks;
 
@@ -70,6 +75,7 @@ public class Tower extends Module {
         super("Tower", category.player);
         this.registerSetting(towerMove = new SliderSetting("Tower Move", 0, towerMoveModes));
         this.registerSetting(speedSetting = new SliderSetting("Speed", 3.0, 0.5, 8.0, 0.1));
+        this.registerSetting(disableDiagonal = new ButtonSetting("Disable while diagonal", false));
         this.registerSetting(verticalTower = new SliderSetting("Vertical Tower", 0, verticalTowerModes));
         this.registerSetting(extraBlockDelay = new SliderSetting("Extra block delay", "", 0, 0, 10, 1));
         this.registerSetting(slowedSpeed = new SliderSetting("Slowed speed", "%", 0, 0, 100, 1));
@@ -85,6 +91,8 @@ public class Tower extends Module {
 
     public void guiUpdate() {
         this.extraBlockDelay.setVisible(verticalTower.getInput() == 2, this);
+        this.speedSetting.setVisible(towerMove.getInput() > 0 && !(Settings.movementFix.isToggled() && towerMove.getInput() == 8),this);
+        this.disableDiagonal.setVisible(towerMove.getInput() > 0,this);
     }
 
     @SubscribeEvent
@@ -102,81 +110,12 @@ public class Tower extends Module {
         }
     }
 
-    @SubscribeEvent
-    public void onPreMotion(PreMotionEvent e) {
-        if (!Utils.nullCheck()) {
-            return;
-        }
-        if (delay) {
-            return;
-        }
-        if (canTower() && Utils.keysDown()) {
-            if (disableWhileHurt.isToggled() && ModuleUtils.damage) {
-                return;
-            }
-            switch ((int) towerMove.getInput()) {
-                case 1:
-
-                    break;
-                case 2:
-
-                    break;
-                case 3:
-
-                    break;
-                case 4:
-                    if (towering) {
-                        if (towerTicks == 6) {
-                            e.setPosY(e.getPosY() + 0.000383527);
-                            ModuleManager.scaffold.rotateForward();
-                        }
-                    }
-                    break;
-                case 5:
-                    if (mc.thePlayer.onGround) {
-                        ModuleManager.scaffold.rotateForward();
-                    }
-                    break;
-                case 6:
-
-                    break;
-                case 7:
-                    if (towering) {
-                        if (towerTicks == 0) {
-                            //e.setOnGround(true);
-                        }
-                    }
-                    break;
-                case 8:
-                    if (mc.thePlayer.posY % 1 == 0 && mc.thePlayer.onGround) {
-                        towering = true;
-                    }
-                    if (towering) {
-                        if (mc.thePlayer.onGround) {
-                            jump = true;
-                            ModuleManager.scaffold.rotateForward();
-                        }
-                    }
-                    break;
-            }
-        }
+    boolean disableDiag() {
+        return disableDiagonal.isToggled() && Utils.scaffoldDiagonal(false);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGH)
     public void onClientRotation(ClientRotationEvent e) {
-        if (jump) {
-            mc.thePlayer.setSprinting(true);
-            mc.thePlayer.jump();
-            if (ModuleManager.scaffold.rotation.getInput() == 2) {
-                Utils.setSpeed(getTowerSpeed(getSpeedLevel()));
-                speed = true;
-            }
-            jump = false;
-        }
-    }
-
-    @SubscribeEvent
-    public void onPreUpdate(PreUpdateEvent e) {
         if (!Utils.nullCheck()) {
             return;
         }
@@ -185,12 +124,13 @@ public class Tower extends Module {
         if (towerVL > 0) {
             --towerVL;
         }
-        if (delay && ++delayTicks > 1) {
+        if (delay && ++delayTicks > 2) {
             delay = false;
             delayTicks = 0;
         }
+        blink = false;
         if (towerMove.getInput() > 0) {
-            if (canTower() && Utils.keysDown() && !delay) {
+            if (canTower() && Utils.keysDown() && !delay && !disableDiag()) {
                 ++activeTicks;
                 speed = false;
                 wasTowering = hasTowered = true;
@@ -392,11 +332,37 @@ public class Tower extends Module {
                         }
                         break;
                     case 8:
-
+                        if (mc.thePlayer.posY % 1 == 0 && mc.thePlayer.onGround) {
+                            towering = true;
+                        }
+                        if (towering && mc.thePlayer.onGround) {
+                            if (Settings.movementFix.isToggled()) {
+                                jump = !ModuleManager.scaffold.jumpFacingForward.isToggled();
+                            }
+                            else {
+                                mc.thePlayer.jump();
+                                Utils.setSpeed(get15tickspeed(getSpeedLevel()));
+                            }
+                            hasT = true;
+                            speed = true;
+                        }
                         break;
-
+                }
+                if (speed) {
+                    if (!Settings.movementFix.isToggled()) {
+                        blink = true;
+                        ModuleManager.scaffold.rotateForward(false);
+                    }
+                    else {
+                        ModuleManager.scaffold.rotateForward(true);
+                    }
+                    Scaffold.jumpDelayVal = 5;
+                    Scaffold.airTickVal = 4;
                 }
             } else {
+                if (mc.thePlayer.onGround) {
+                    hasT = false;
+                }
                 if (finishedTower) {
                     finishedTower = false;
                 }
@@ -421,13 +387,17 @@ public class Tower extends Module {
                     slowTicks = 0;
                 }
                 if (speed || hasTowered && mc.thePlayer.onGround) {
-                    if (ModuleManager.scaffold.rotation.getInput() == 2) {
+                    if (!Settings.movementFix.isToggled()) {
                         Utils.setSpeed(Utils.getHorizontalSpeed(mc.thePlayer) / 1.6);
                     }
                 }
                 hasTowered = towering = firstJump = startedTowerInAir = setLowMotion = speed = jump = false;
                 cMotionTicks = placeTicks = towerTicks = grounds = upFaces = activeTicks = 0;
                 reset();
+                if (!Scaffold.fastScaffoldKeepY) {
+                    Scaffold.firstJump = false;
+                    Scaffold.fjDelay = 0;
+                }
             }
         }
         if (verticalTower.getInput() > 0) {
@@ -486,6 +456,8 @@ public class Tower extends Module {
                         if (vtowering) {
                             mc.thePlayer.motionY = verticalTowerValue();
                             towerVL = 2;
+                            mc.thePlayer.motionX = 0;
+                            mc.thePlayer.motionZ = 0;
                         }
                         break;
                     case 4:
@@ -500,6 +472,14 @@ public class Tower extends Module {
                             }
                             else {
                                 vt = 0;
+                            }
+                        }
+                        break;
+                    case 5:
+                        if (mc.thePlayer.onGround) mc.thePlayer.motionY = 0.42f;
+                        if (mc.thePlayer.motionY <= 0.0 && Utils.getHorizontalSpeed() <= 0.02D) {
+                            if (mc.thePlayer.motionY >= -0.09) {
+                                mc.thePlayer.motionY = -0.38;
                             }
                         }
                         break;
@@ -519,13 +499,16 @@ public class Tower extends Module {
         return canTower() && !Utils.keysDown() && verticalTower.getInput() > 0;
     }
 
-    @SubscribeEvent
+    private boolean disableJump;
+
+    @SubscribeEvent(priority = EventPriority.HIGH)
     public void onPostPlayerInput(PostPlayerInputEvent e) {
+        disableJump = false;
         if (!ModuleManager.scaffold.isEnabled) {
             return;
         }
-        if (canTower() && Utils.keysDown() && towerMove.getInput() > 0) {
-            mc.thePlayer.movementInput.jump = false;
+        if (canTower() && Utils.keysDown() && towerMove.getInput() > 0 && !disableDiag()) {
+            disableJump = true;
             if (!firstJump) {
                 if (!mc.thePlayer.onGround) {
                     if (!startedTowerInAir) {
@@ -540,15 +523,24 @@ public class Tower extends Module {
             }
         }
         if (canTower() && !Utils.keysDown() && verticalTower.getInput() > 0) {
-            mc.thePlayer.movementInput.jump = false;
+            disableJump = true;
         }
         if (delay) {
+            disableJump = true;
+        }
+        if (disableJump) {
+            if (disableWhileHurt.isToggled() && ModuleUtils.damage && !delay) {
+                return;
+            }
             mc.thePlayer.movementInput.jump = false;
         }
     }
 
     @SubscribeEvent
     public void onSendPacket(SendPacketEvent e) {
+        if (!Utils.nullCheck()) {
+            return;
+        }
         if (e.getPacket() instanceof C08PacketPlayerBlockPlacement) {
             if (firstVTP) {
                 ebDelay++;
@@ -603,7 +595,10 @@ public class Tower extends Module {
     }
 
     public boolean canTower() {
-        if (!Utils.nullCheck() || !Utils.jumpDown() || !Utils.tabbedIn()) {
+        if (!Utils.nullCheck() || !Utils.jumpDown() || !Utils.tabbedIn() || !Utils.isMoving() && verticalTower.getInput() == 0 || Utils.isMoving() && towerMove.getInput() == 0) {
+            return false;
+        }
+        else if (Scaffold.fastScaffoldKeepY || Utils.hasJump()) {
             return false;
         }
         else if (mc.thePlayer.isCollidedHorizontally) {

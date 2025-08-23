@@ -11,8 +11,11 @@ import keystrokesmod.utility.RotationUtils;
 import keystrokesmod.utility.Utils;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.network.play.client.C03PacketPlayer;
 import net.minecraft.util.MathHelper;
+import net.minecraft.util.MovingObjectPosition;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import org.lwjgl.input.Mouse;
 
 public class AimAssist extends Module {
 
@@ -22,10 +25,9 @@ public class AimAssist extends Module {
     private SliderSetting distance;
 
     private ButtonSetting clickAim;
-    private ButtonSetting disableWhileMining;
     private ButtonSetting weaponOnly;
+    private ButtonSetting disableWhileMining;
     private ButtonSetting aimInvis;
-    private ButtonSetting blatantMode;
     private ButtonSetting ignoreTeammates;
 
     private String[] aimModes = new String[] { "Normal", "Silent" };
@@ -42,55 +44,69 @@ public class AimAssist extends Module {
         this.registerSetting(weaponOnly = new ButtonSetting("Weapon only", false));
         this.registerSetting(disableWhileMining = new ButtonSetting("Disable while mining", false));
         this.registerSetting(aimInvis = new ButtonSetting("Aim invis", false));
-        this.registerSetting(blatantMode = new ButtonSetting("Blatant mode", false));
         this.registerSetting(ignoreTeammates = new ButtonSetting("Ignore teammates", false));
     }
 
     @Override
     public String getInfo() {
-        String info;
-        info = aimModes[(int) mode.getInput()];
-        return info;
+        return aimModes[(int) mode.getInput()];
     }
-
 
     @SubscribeEvent
     public void onPreUpdate(PreUpdateEvent e) {
         this.lookingAt = null;
-        if (mc.currentScreen != null || !mc.inGameHasFocus) {
+        if (mode.getInput() == 0 || !conditionsMet()) {
             return;
         }
-        if (weaponOnly.isToggled() && !Utils.holdingWeapon()) {
-            return;
-        }
-        if (clickAim.isToggled() && !Utils.isClicking()) {
-            return;
-        }
-        if (disableWhileMining.isToggled() && Utils.isMining()) {
-            return;
-        }
-
         Entity en = this.getEnemy();
 
         if (en == null) {
             return;
         }
 
-        if (blatantMode.isToggled()) {
+        if (speed.getInput() == 100) {
             float[] rotations = RotationUtils.getRotations(en);
             if (rotations != null) {
                 float yaw = rotations[0];
-                float pitch = MathHelper.clamp_float(rotations[1] + 4.0F, -90, 90);
+                float pitch = MathHelper.clamp_float(rotations[1], -90, 90);
                 RotationHelper.get().setRotations(yaw, pitch);
-                lookingAt = new Float[] { yaw, pitch };
+                lookingAt = (new Float[] { yaw, pitch });
             }
         }
         else {
             double diff = Utils.aimDifference(en, this.mode.getInput() == 1);
             float val = (float) ( -( diff / (101.0D - speed.getInput()) ) ) * 1.2F;
-            float yaw = RotationUtils.serverRotations[0] + val;
+            float[] rots = RotationUtils.serverRotations;
+            float yaw = rots[0] + val;
             RotationHelper.get().setYaw(yaw);
             lookingAt = new Float[] { yaw };
+        }
+    }
+
+    @Override
+    public void onUpdate() {
+        if (mode.getInput() == 1 || !conditionsMet()) {
+            return;
+        }
+        Entity en = this.getEnemy();
+        if (en == null) {
+            return;
+        }
+        if (speed.getInput() == 100) {
+            float[] t = Utils.getRotationsOld(en);
+            if (t != null) {
+                float y = t[0];
+                float p = t[1];
+                mc.thePlayer.rotationYaw = y;
+                mc.thePlayer.rotationPitch = p;
+            }
+        }
+        else {
+            double n = Utils.aimDifference(en, false);
+            if (n > 1.0D || n < -1.0D) {
+                float val = (float) (-(n / (101.0D - (speed.getInput()))));
+                mc.thePlayer.rotationYaw += val;
+            }
         }
     }
 
@@ -128,13 +144,33 @@ public class AimAssist extends Module {
                 if (AntiBot.isBot(entityPlayer)) {
                     continue;
                 }
-                if (!blatantMode.isToggled() && n != 360 && !Utils.inFov((float)n, entityPlayer)) {
+                if (n != 360 && !Utils.inFov((float)n, entityPlayer)) {
                     continue;
                 }
                 return entityPlayer;
             }
         }
         return null;
+    }
+
+    private boolean conditionsMet() {
+        if (mc.currentScreen != null || !mc.inGameHasFocus) {
+            return false;
+        }
+        if (weaponOnly.isToggled() && !Utils.holdingWeapon()) {
+            return false;
+        }
+        if (clickAim.isToggled() && !Utils.isClicking()) {
+            return false;
+        }
+        if (disableWhileMining.isToggled() && isMining()) {
+            return false;
+        }
+        return true;
+    }
+
+    private boolean isMining() {
+        return Mouse.isButtonDown(0) && mc.objectMouseOver != null && mc.objectMouseOver.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK && mc.objectMouseOver.getBlockPos() != null;
     }
 
 }

@@ -14,15 +14,11 @@ public class SpammerUtil extends Command {
         if (args.length >= 2) {
 
             String message = Arrays.toString(args);
-            //String[] spl = message.split("spammer, ");
+            String[] spl = message.split("spammer, ");
 
-            ModuleManager.spammer.message = message;
+            ModuleManager.spammer.message = spl[1];
 
-            if (args.length > 50) {
-                Utils.print("§cToo many args");
-                return;
-            }
-            Utils.print("§dSet spammer message as: " + ModuleManager.spammer.message);
+            Utils.modulePrint("§dSet spammer message as: " + ModuleManager.spammer.message);
         }
         else {
             syntaxError();

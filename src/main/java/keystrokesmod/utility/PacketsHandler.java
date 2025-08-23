@@ -1,6 +1,7 @@
 package keystrokesmod.utility;
 
 import keystrokesmod.Raven;
+import keystrokesmod.event.ClientRotationEvent;
 import keystrokesmod.event.PostUpdateEvent;
 import keystrokesmod.event.ReceivePacketEvent;
 import keystrokesmod.event.SendPacketEvent;
@@ -20,8 +21,8 @@ public class PacketsHandler {
     public Minecraft mc = Minecraft.getMinecraft();
 
     public PacketData C0A = new PacketData();
-    public PacketData C08 = new PacketData();
     public PacketData C07 = new PacketData();
+    public PacketData C08 = new PacketData();
     public PacketData C02 = new PacketData();
     public PacketData C02_INTERACT_AT = new PacketData();
     public PacketData C09 = new PacketData();
@@ -37,34 +38,34 @@ public class PacketsHandler {
         }
         Packet<?> packet = e.getPacket();
         if (packet instanceof C02PacketUseEntity) {
-            if (C07.sentCurrentTick.get()) {
+            /*if (C07.sentCurrentTick.get()) {
                 e.setCanceled(true);
                 return;
-            }
+            }*/
             if (((C02PacketUseEntity) packet).getAction() == C02PacketUseEntity.Action.INTERACT_AT) {
                 C02_INTERACT_AT.sentCurrentTick.set(true);
             }
             C02.sentCurrentTick.set(true);
         }
-        else if (packet instanceof C08PacketPlayerBlockPlacement) {
+        if (packet instanceof C08PacketPlayerBlockPlacement) {
             C08.sentCurrentTick.set(true);
         }
-        else if (packet instanceof C07PacketPlayerDigging) {
+        if (packet instanceof C07PacketPlayerDigging) {
             C07.sentCurrentTick.set(true);
         }
-        else if (packet instanceof C0APacketAnimation) {
+        if (packet instanceof C0APacketAnimation) {
             C0A.sentCurrentTick.set(true);
         }
-        else if (packet instanceof C09PacketHeldItemChange && handleSlots) {
+        if (packet instanceof C09PacketHeldItemChange && handleSlots) {
             C09PacketHeldItemChange slotPacket = (C09PacketHeldItemChange) packet;
             int slotId = slotPacket.getSlotId();
-            if (slotId == playerSlot.get() && slotId == serverSlot.get()) {
+            /*if (slotId == playerSlot.get() && slotId == serverSlot.get()) {
                 if (Raven.debug) {
                     Utils.sendMessage("&7bad packet detected (same slot): &b" + slotId);
                 }
                 e.setCanceled(true);
                 return;
-            }
+            }*/
             C09.sentCurrentTick.set(true);
             playerSlot.set(slotId);
             serverSlot.set(slotId);
@@ -105,25 +106,25 @@ public class PacketsHandler {
             this.playerSlot.set(slotId);
             C09.sentCurrentTick.set(true);
         }
-        else if (packet instanceof C02PacketUseEntity) {
+        if (packet instanceof C02PacketUseEntity) {
             C02.sentCurrentTick.set(true);
             if (((C02PacketUseEntity) packet).getAction() == C02PacketUseEntity.Action.INTERACT_AT) {
                 C02_INTERACT_AT.sentCurrentTick.set(true);
             }
         }
-        else if (packet instanceof C07PacketPlayerDigging) {
-            C07.sentCurrentTick.set(true);
-        }
-        else if (packet instanceof C08PacketPlayerBlockPlacement) {
+        if (packet instanceof C08PacketPlayerBlockPlacement) {
             C08.sentCurrentTick.set(true);
         }
-        else if (packet instanceof C0APacketAnimation) {
+        if (packet instanceof C07PacketPlayerDigging) {
+            C07.sentCurrentTick.set(true);
+        }
+        if (packet instanceof C0APacketAnimation) {
             C0A.sentCurrentTick.set(true);
         }
     }
 
     public boolean sent() {
-        return C02.sentCurrentTick.get() || C08.sentCurrentTick.get() || C09.sentCurrentTick.get() || C07.sentCurrentTick.get() || C0A.sentCurrentTick.get();
+        return C02.sentCurrentTick.get() || C08.sentCurrentTick.get() || C07.sentCurrentTick.get() || C09.sentCurrentTick.get()|| C0A.sentCurrentTick.get();
     }
 
     public boolean updateSlot(int slot) {

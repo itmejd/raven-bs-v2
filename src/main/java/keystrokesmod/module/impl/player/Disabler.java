@@ -100,7 +100,7 @@ public class Disabler extends Module {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onPreMotion(PreMotionEvent e) {
         if (resetDisabler.isToggled()) {
-            Utils.print("&7[&dR&7] &cdisabler resetting...");
+            Utils.modulePrint("&7[&dR&7] &cdisabler resetting...");
             resetState();
             disablerLoaded = false;
             resetDisabler.disable();
@@ -110,7 +110,7 @@ public class Disabler extends Module {
         }
         long now = System.currentTimeMillis();
         if (finished != 0 && mc.thePlayer.onGround && now - finished > checkDisabledTime) {
-            Utils.print("&7[&dR&7] &adisabler enabled");
+            Utils.modulePrint("&7[&dR&7] &adisabler enabled");
             finished = 0;
             filledWidth = 0;
             disablerLoaded = true;
@@ -157,13 +157,13 @@ public class Disabler extends Module {
                         resetState();
                         activationDelayMillis = 2000;
                         reset = true;
-                        Utils.print("&7[&dR&7] &adisabler reset, wait 2s");
+                        Utils.modulePrint("&7[&dR&7] &adisabler reset, wait 2s");
                     }
                     else {
                         shouldRun = false;
                         applyingMotion = false;
                         running = false;
-                        Utils.print("&7[&dR&7] &cfailed to reset disabler, re-enable to try again");
+                        Utils.modulePrint("&7[&dR&7] &cfailed to reset disabler, re-enable to try again");
                     }
                 }
 

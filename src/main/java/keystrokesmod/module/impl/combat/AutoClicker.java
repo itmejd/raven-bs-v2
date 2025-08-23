@@ -86,6 +86,9 @@ public class AutoClicker extends Module {
     @SubscribeEvent
     public void onRenderTick(RenderTickEvent ev) {
         if (ev.phase != Phase.END && Utils.nullCheck() && !Utils.isConsuming(mc.thePlayer)) {
+            if (ModuleManager.killAura.isEnabled() && KillAura.target != null || ModuleManager.scaffold.isEnabled) {
+                return;
+            }
             if (disableCreative.isToggled() && mc.thePlayer.capabilities.isCreativeMode) {
                 return;
             }
@@ -135,7 +138,7 @@ public class AutoClicker extends Module {
             if (pos != null) {
                 Block block = mc.theWorld.getBlockState(pos).getBlock();
                 if (block != Blocks.air && !(block instanceof BlockLiquid)) {
-                    if (!this.isHoldingBlockBreak && (!ModuleManager.killAura.isEnabled() || KillAura.target == null)) {
+                    if (!this.isHoldingBlockBreak) {
                         KeyBinding.setKeyBindState(key, true);
                         KeyBinding.onTick(key);
                         this.isHoldingBlockBreak = true;
@@ -171,7 +174,7 @@ public class AutoClicker extends Module {
         if (this.nextPressTime > 0L && this.nextReleaseTime > 0L) {
             double blockHitC = blockHitChance.getInput();
             long currentTime = System.currentTimeMillis();
-            if (currentTime > this.nextPressTime && (!ModuleManager.killAura.isEnabled() || KillAura.target == null)) {
+            if (currentTime > this.nextPressTime) {
                 KeyBinding.setKeyBindState(key, true);
                 KeyBinding.onTick(key);
                 ReflectionUtils.setButton(mouse, true);
