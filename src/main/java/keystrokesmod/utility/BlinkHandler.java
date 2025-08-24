@@ -87,7 +87,7 @@ public class BlinkHandler {
         return false;
     }
 
-    private boolean renderTimer() {
+    public static boolean renderTimer() {
         if (ModuleManager.antiVoid != null && ModuleManager.antiVoid.isEnabled() && ModuleManager.antiVoid.blink && ModuleManager.antiVoid.renderTimer.isToggled()) {
             return true;
         }

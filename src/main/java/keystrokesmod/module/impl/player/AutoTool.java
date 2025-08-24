@@ -17,7 +17,7 @@ public class AutoTool extends Module {
 
     private ButtonSetting rightDisable;
     private ButtonSetting requireCrouch;
-    private ButtonSetting ignoreInteractables;
+    private ButtonSetting ignoreChests;
     private ButtonSetting requireMouse;
     public ButtonSetting spoofItem;
     private ButtonSetting swapBack;
@@ -35,7 +35,7 @@ public class AutoTool extends Module {
         this.registerSetting(swapDelay = new SliderSetting("Swap delay", 0, 0, 20, 1));
         this.registerSetting(rightDisable = new ButtonSetting("Disable while right click", true));
         this.registerSetting(requireCrouch = new ButtonSetting("Only while crouching", false));
-        this.registerSetting(ignoreInteractables = new ButtonSetting("Ignore interactables", true));
+        this.registerSetting(ignoreChests = new ButtonSetting("Ignore chests", true));
         this.registerSetting(requireMouse = new ButtonSetting("Require mouse down", true));
         this.registerSetting(spoofItem = new ButtonSetting("Spoof item", false));
         this.registerSetting(swapBack = new ButtonSetting("Swap to previous slot", true));
@@ -65,7 +65,7 @@ public class AutoTool extends Module {
             ((IMixinItemRenderer) mc.getItemRenderer()).setCancelUpdate(true);
             ((IMixinItemRenderer) mc.getItemRenderer()).setCancelReset(true);
         }
-        if (ModuleManager.autoBlockIn.active || BlockUtils.isInteractable(over) && ignoreInteractables.isToggled() || !mc.inGameHasFocus || mc.currentScreen != null || (rightDisable.isToggled() && Mouse.isButtonDown(1)) || !mc.thePlayer.capabilities.allowEdit || (requireCrouch.isToggled() && !mc.thePlayer.isSneaking())) {
+        if (ModuleManager.autoBlockIn.active || BlockUtils.isChest(over) && ignoreChests.isToggled() || !mc.inGameHasFocus || mc.currentScreen != null || (rightDisable.isToggled() && Mouse.isButtonDown(1)) || !mc.thePlayer.capabilities.allowEdit || (requireCrouch.isToggled() && !mc.thePlayer.isSneaking())) {
             resetVariables(false);
             return;
         }

@@ -79,6 +79,7 @@ public class ModuleManager {
     public static Momentum momentum;
     public static S38Logger S38Logger;
     public static AutoBlockIn autoBlockIn;
+    public static VelocityBuffer velocityBuffer;
 
     public void register() {
         this.addModule(autoClicker = new AutoClicker());
@@ -182,6 +183,7 @@ public class ModuleManager {
         this.addModule(momentum = new Momentum());
         this.addModule(S38Logger = new S38Logger());
         this.addModule(autoBlockIn = new AutoBlockIn());
+        this.addModule(velocityBuffer = new VelocityBuffer());
         antiBot.enable();
         Collections.sort(this.modules, Comparator.comparing(Module::getName));
     }

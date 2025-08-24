@@ -44,7 +44,6 @@ public class BedAura extends Module {
     private SliderSetting rate;
     public ButtonSetting allowAura, allowAB, prioritizeAura;
     private ButtonSetting breakNearBlock;
-    private ButtonSetting delayKnockback;
     private ButtonSetting disableBreakEffects;
     public ButtonSetting groundSpoof;
     private ButtonSetting onlyWhileVisible;
@@ -90,7 +89,6 @@ public class BedAura extends Module {
         this.registerSetting(allowAB = new ButtonSetting("Allow autoblock", false));
         this.registerSetting(prioritizeAura = new ButtonSetting("Prioritize aura", false));
         this.registerSetting(breakNearBlock = new ButtonSetting("Break near block", false));
-        this.registerSetting(delayKnockback = new ButtonSetting("Delay knockback", false));
         this.registerSetting(disableBreakEffects = new ButtonSetting("Disable break effects", false));
         this.registerSetting(groundSpoof = new ButtonSetting("Ground spoof", false));
         this.registerSetting(onlyWhileVisible = new ButtonSetting("Only while visible", false));
@@ -248,7 +246,7 @@ public class BedAura extends Module {
 
     @SubscribeEvent
     public void onReceivePacket(ReceivePacketEvent e) {
-        if (!Utils.nullCheck() || !delayKnockback.isToggled() || !shouldDelay) {
+        if (!Utils.nullCheck() || !shouldDelay) {
             return;
         }
         if (e.getPacket() instanceof S27PacketExplosion) {

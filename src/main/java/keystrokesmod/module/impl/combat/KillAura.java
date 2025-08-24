@@ -723,9 +723,6 @@ public class KillAura extends Module {
     }
 
     private void handleSwingAndAttack(double distance, boolean swung) {
-        if (ModuleManager.velocity.optimize) {
-            return;
-        }
         if (ModuleManager.bedAura.breakTick) {
             return;
         }

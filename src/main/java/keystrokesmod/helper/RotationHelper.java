@@ -34,7 +34,7 @@ public class RotationHelper {
         MinecraftForge.EVENT_BUS.post(event);
 
         if (event.yaw != null && !event.yaw.isNaN()) {
-            this.serverYaw = event.yaw + yawOffset;
+            this.serverYaw = event.yaw;
             this.setRotations = true;
         }
         if (event.pitch != null && !event.pitch.isNaN()) {
@@ -57,13 +57,15 @@ public class RotationHelper {
 
         float sneakMultiplier = mc.thePlayer.movementInput.sneak ? 0.3F : 1F;
 
-        float yaw = this.serverYaw;
+        float yaw = this.serverYaw + yawOffset;
         float forward = mc.thePlayer.movementInput.moveForward;
         float strafe = mc.thePlayer.movementInput.moveStrafe;
 
         if (forward == 0 && strafe == 0) {
             return;
         }
+
+        // 162 to -180
 
         double angle = MathHelper.wrapAngleTo180_double(Math.toDegrees(getDirection(mc.thePlayer.rotationYaw + yawOffset, forward, strafe)));
 
@@ -98,14 +100,14 @@ public class RotationHelper {
     @SubscribeEvent
     public void onStrafe(StrafeEvent e) {
         if (fixMovement()) {
-            e.setYaw(this.serverYaw);
+            e.setYaw(this.serverYaw + yawOffset);
         }
     }
 
     @SubscribeEvent
     public void onJump(JumpEvent e) {
         if (fixMovement()) {
-            e.setYaw(this.serverYaw);
+            e.setYaw(this.serverYaw + yawOffset);
         }
     }
 
@@ -114,7 +116,7 @@ public class RotationHelper {
         if (!this.setRotations) {
             return;
         }
-        if (this.serverYaw != null && !this.serverYaw.isNaN()) e.setYaw(this.serverYaw);
+        if (this.serverYaw != null && !this.serverYaw.isNaN()) e.setYaw(this.serverYaw + yawOffset);
         if (this.serverPitch != null && !this.serverPitch.isNaN()) e.setPitch(this.serverPitch);
     }
 

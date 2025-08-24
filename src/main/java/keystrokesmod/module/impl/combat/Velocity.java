@@ -65,11 +65,9 @@ public class Velocity extends Module {
     //delay velo
     private List<Map<String, Object>> packets = new ArrayList<>();
     private SliderSetting delay;
-    private ButtonSetting optimizeAB;
     private boolean delaying, conditionals;
-    public boolean optimize;
 
-    private String[] modes = new String[] { "Normal", "Packet", "Reverse", "Jump", "Delay", "Buffer" };
+    private String[] modes = new String[] { "Normal", "Packet", "Reverse", "Jump", "Delay" };
 
 
     public Velocity() {
@@ -78,7 +76,6 @@ public class Velocity extends Module {
 
 
         this.registerSetting(delay = new SliderSetting("Maximuim Delay", "ms", 400, 0, 1000, 50));
-        this.registerSetting(optimizeAB = new ButtonSetting("Optimize autoblock", false));
         this.registerSetting(horizontal = new SliderSetting("Horizontal", 0.0, 0.0, 100.0, 1.0));
         this.registerSetting(vertical = new SliderSetting("Vertical", 0.0, 0.0, 100.0, 1.0));
         this.registerSetting(verticalM = new SliderSetting("Vertical Motion Limit", 1.0, -1.0, 1, 0.1));
@@ -107,8 +104,7 @@ public class Velocity extends Module {
     }
 
     public void guiUpdate() {
-        this.delay.setVisible(mode.getInput() == 4 || mode.getInput() == 5, this);
-        this.optimizeAB.setVisible(mode.getInput() == 4 || mode.getInput() == 5, this);
+        this.delay.setVisible(mode.getInput() == 4, this);
         this.onlyWhileAttacking.setVisible(mode.getInput() == 0, this);
         this.onlyWhileSwinging.setVisible(mode.getInput() == 0, this);
         this.onlyWhileTargeting.setVisible(mode.getInput() == 0, this);
@@ -149,7 +145,7 @@ public class Velocity extends Module {
         if (mode.getInput() == 2) {
             name = "-" + (int) reverseHorizontal.getInput()+ "%";
         }
-        if (mode.getInput() == 3 || mode.getInput() == 4 || mode.getInput() == 5) {
+        if (mode.getInput() == 3 || mode.getInput() == 4) {
             name = modes[(int) mode.getInput()];
         }
         return name;
@@ -257,20 +253,9 @@ public class Velocity extends Module {
         conditionals = conditionals();
 
 
-        if (delaying && !packets.isEmpty() && (mode.getInput() == 4 || mode.getInput() == 5)) {
+        if (delaying && !packets.isEmpty() && mode.getInput() == 4) {
             long now = Utils.time();
             long delayv = (long) delay.getInput();
-
-            int v3v = 300; //ms
-            if (++ovd >= (v3v / 50)) {
-                optimize = (optimizeAB.isToggled());
-            }
-
-            if (mode.getInput() == 5) {
-                if (ovd >= (delay.getInput() / 50)) {
-                    flushAll();
-                }
-            }
 
             if (mode.getInput() == 4) {
                 while (!packets.isEmpty()) {
@@ -283,7 +268,7 @@ public class Velocity extends Module {
                 }
             }
 
-            if (fb || !conditionals || mc.thePlayer.onGround || Utils.overVoid() || !containsVelocity() || !Utils.nullCheck()/* || Raven.packetsHandler.C02.sentCurrentTick.get()*/) {
+            if ((fb || !conditionals || mc.thePlayer.onGround || Utils.overVoid() || !containsVelocity() || !Utils.nullCheck() || ModuleManager.velocityBuffer.delaying)/* || Raven.packetsHandler.C02.sentCurrentTick.get()*/) {
                 flushAll();
             }
         }
@@ -298,7 +283,7 @@ public class Velocity extends Module {
         canJump = false;
     }
 
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    @SubscribeEvent(priority = EventPriority.NORMAL)
     public void onReceivePacket(ReceivePacketEvent e) {
         if (!Utils.nullCheck()) {
             return;
@@ -309,7 +294,10 @@ public class Velocity extends Module {
         if (LongJump.stopVelocity || disableLobby.isToggled() && Utils.isLobby()) {
             return;
         }
-        if (mode.getInput() == 1 || mode.getInput() == 4 || mode.getInput() == 5) {
+        if (ModuleManager.velocityBuffer.delaying) {
+            return;
+        }
+        if (mode.getInput() == 1 || mode.getInput() == 4) {
             if (ModuleManager.bhop.isEnabled() && ModuleManager.bhop.damageBoost.isToggled() && ModuleUtils.firstDamage && (!ModuleManager.bhop.damageBoostRequireKey.isToggled() || ModuleManager.bhop.damageBoostKey.isPressed())) {
                 return;
             }
@@ -352,14 +340,9 @@ public class Velocity extends Module {
                 if (((S12PacketEntityVelocity) e.getPacket()).getEntityID() == mc.thePlayer.getEntityId()) {
                     S12PacketEntityVelocity s12PacketEntityVelocity = (S12PacketEntityVelocity) e.getPacket();
 
-                    if (mode.getInput() == 4 || mode.getInput() == 5) {
+                    if (mode.getInput() == 4) {
                         if (s12PacketEntityVelocity.getEntityID() == mc.thePlayer.getEntityId() && conditionals && !stopFBvelo) {
-                            /*if (mode.getInput() == 5 && dontEditMotion()) {
-                                e.setCanceled(true);
-                            }
-                            else {*/
-                                delaying = true;
-                            //}
+                            delaying = true;
                         }
                     }
 
@@ -403,11 +386,6 @@ public class Velocity extends Module {
             }
         }
 
-
-        Packet p = e.getPacket();
-        if (mode.getInput() == 5 && (p instanceof S0BPacketAnimation || p instanceof S25PacketBlockBreakAnim || p instanceof S24PacketBlockAction || p instanceof S2APacketParticles || p instanceof S04PacketEntityEquipment || p instanceof S0DPacketCollectItem || p instanceof S19PacketEntityHeadLook || p instanceof S02PacketChat)) {
-            return;
-        }
         if (!delaying) return;
         Map<String, Object> entry = new HashMap<>();
         entry.put("packet", e.getPacket());
@@ -440,7 +418,6 @@ public class Velocity extends Module {
         }
         delaying = false;
         exp = false;
-        optimize = false;
         ovd = 0;
     }
 

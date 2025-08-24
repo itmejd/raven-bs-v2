@@ -71,11 +71,11 @@ public class BadPacketHandler {
             }
 
             if (mc.thePlayer.ticksExisted == c08Tick) {
-                Utils.sendMessage("&7bad packet detected (block / attack (before attack))");
+                //Utils.sendMessage("&7bad packet detected (block / attack (before attack))");
                 e.setCanceled(true);
             }
             if (mc.thePlayer.ticksExisted == c07Tick) {
-                Utils.sendMessage("&7bad packet detected (dig / attack)");
+                //Utils.sendMessage("&7bad packet detected (dig / attack)");
                 e.setCanceled(true);
             }
         }
@@ -83,11 +83,11 @@ public class BadPacketHandler {
             c08Tick = mc.thePlayer.ticksExisted;
 
             if (mc.thePlayer.ticksExisted == c07Tick) {
-                Utils.sendMessage("&7bad packet detected (dig / block)");
+                //Utils.sendMessage("&7bad packet detected (dig / block)");
                 e.setCanceled(true);
             }
             if (mc.thePlayer.ticksExisted == c02Tick && mc.thePlayer.ticksExisted != c02ITick) {
-                Utils.sendMessage("&7bad packet detected (attack / block (no interact))");
+                //Utils.sendMessage("&7bad packet detected (attack / block (no interact))");
                 e.setCanceled(true);
             }
         }
@@ -95,11 +95,11 @@ public class BadPacketHandler {
             c07Tick = mc.thePlayer.ticksExisted;
 
             if (mc.thePlayer.ticksExisted == c08Tick) {
-                Utils.sendMessage("&7bad packet detected (block / dig)");
+                //Utils.sendMessage("&7bad packet detected (block / dig)");
                 e.setCanceled(true);
             }
             if (mc.thePlayer.ticksExisted == c02Tick) {
-                Utils.sendMessage("&7bad packet detected (attack / dig)");
+                //Utils.sendMessage("&7bad packet detected (attack / dig)");
                 e.setCanceled(true);
             }
         }
