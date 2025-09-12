@@ -98,7 +98,7 @@ public class FakeLag extends Module {
         }
     }
 
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onPacketSent(SendPacketEvent e) {
         if (!Utils.nullCheck() || mc.isSingleplayer() || (int) packetDelaySlider.getInput() == 0 || e.isCanceled()) {
             return;

@@ -76,10 +76,10 @@ public class ModuleManager {
     public static AntiDebuff antiDebuff;
     public static Timers timers;
     public static LagRange lagRange;
-    public static Momentum momentum;
     public static S38Logger S38Logger;
     public static AutoBlockIn autoBlockIn;
     public static VelocityBuffer velocityBuffer;
+    public static Scaffold2 scaffold2;
 
     public void register() {
         this.addModule(autoClicker = new AutoClicker());
@@ -180,10 +180,10 @@ public class ModuleManager {
         this.addModule(antiDebuff = new AntiDebuff());
         this.addModule(timers = new Timers());
         this.addModule(lagRange = new LagRange());
-        this.addModule(momentum = new Momentum());
         this.addModule(S38Logger = new S38Logger());
         this.addModule(autoBlockIn = new AutoBlockIn());
         this.addModule(velocityBuffer = new VelocityBuffer());
+        this.addModule(scaffold2 = new Scaffold2());
         antiBot.enable();
         Collections.sort(this.modules, Comparator.comparing(Module::getName));
     }

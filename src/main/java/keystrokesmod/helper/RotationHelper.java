@@ -27,7 +27,7 @@ public class RotationHelper {
 
     public float yawOffset = 0F;
 
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onPreUpdate(PreUpdateEvent e) {
         ClientRotationEvent event = new ClientRotationEvent(this.serverYaw, this.serverPitch);
 
@@ -43,13 +43,30 @@ public class RotationHelper {
         }
     }
 
-    @SubscribeEvent
-    public void onRunTick(GameTickEvent e) {
-        this.serverYaw = this.serverPitch = null;
-        this.setRotations = this.forceMovementFix = false;
+    @SubscribeEvent(priority = EventPriority.LOW)
+    public void onPreMotion(PreMotionEvent e) {
+        if (!this.setRotations) {
+            return;
+        }
+        if (this.serverYaw != null && !this.serverYaw.isNaN()) e.setYaw(this.serverYaw + yawOffset);
+        if (this.serverPitch != null && !this.serverPitch.isNaN()) e.setPitch(this.serverPitch);
     }
 
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    @SubscribeEvent(priority = EventPriority.LOW)
+    public void onStrafe(StrafeEvent e) {
+        if (fixMovement()) {
+            e.setYaw(this.serverYaw + yawOffset);
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOW)
+    public void onJump(JumpEvent e) {
+        if (fixMovement()) {
+            e.setYaw(this.serverYaw + yawOffset);
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onPostInput(PostPlayerInputEvent event) {
         if (!fixMovement()) {
             return;
@@ -64,8 +81,6 @@ public class RotationHelper {
         if (forward == 0 && strafe == 0) {
             return;
         }
-
-        // 162 to -180
 
         double angle = MathHelper.wrapAngleTo180_double(Math.toDegrees(getDirection(mc.thePlayer.rotationYaw + yawOffset, forward, strafe)));
 
@@ -97,35 +112,14 @@ public class RotationHelper {
         Settings.fixedStrafe = closestStrafe;
     }
 
-    @SubscribeEvent
-    public void onStrafe(StrafeEvent e) {
-        if (fixMovement()) {
-            e.setYaw(this.serverYaw + yawOffset);
-        }
-    }
-
-    @SubscribeEvent
-    public void onJump(JumpEvent e) {
-        if (fixMovement()) {
-            e.setYaw(this.serverYaw + yawOffset);
-        }
-    }
-
-    @SubscribeEvent
-    public void onPreMotion(PreMotionEvent e) {
-        if (!this.setRotations) {
-            return;
-        }
-        if (this.serverYaw != null && !this.serverYaw.isNaN()) e.setYaw(this.serverYaw + yawOffset);
-        if (this.serverPitch != null && !this.serverPitch.isNaN()) e.setPitch(this.serverPitch);
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public void onRunTick(GameTickEvent e) {
+        this.serverYaw = this.serverPitch = null;
+        this.setRotations = this.forceMovementFix = false;
     }
 
     private boolean fixMovement() {
         return ((Settings.movementFix != null && Settings.movementFix.isToggled()) || this.forceMovementFix) && this.setRotations;
-    }
-
-    private boolean fixOn() {
-        return ((Settings.movementFix != null && Settings.movementFix.isToggled()) || this.forceMovementFix);
     }
 
     public static double getDirection(float rotationYaw, double moveForward, double moveStrafing) {

@@ -84,7 +84,7 @@ public class RotationUtils {
         return new float[] { yaw, pitch };
     }
 
-    public static float[] getRotations(Vec3 vec3) {
+    public static float[] getRotationsB(Vec3 vec3) {
         double x = vec3.xCoord + 1.0D - mc.thePlayer.posX;
         double y = vec3.yCoord + 1.0D - (mc.thePlayer.posY + mc.thePlayer.getEyeHeight());
         double z = vec3.zCoord + 1.0D - mc.thePlayer.posZ;
@@ -180,7 +180,54 @@ public class RotationUtils {
         return false;
     }
 
+    public static boolean inRange(Entity target, double reach, float[] rotations, Vec3 player) {
+        final float yaw = rotations[0];
+        final float pitch = rotations[1];
+
+        final float radianYaw = -yaw * 0.017453292f - (float)Math.PI;
+        final float radianPitch = -pitch * 0.017453292f;
+
+        final float cosYaw = MathHelper.cos(radianYaw);
+        final float sinYaw = MathHelper.sin(radianYaw);
+        final float cosPitch = -MathHelper.cos(radianPitch);
+        final float sinPitch = MathHelper.sin(radianPitch);
+
+        final Vec3 lookVector = new Vec3(
+                sinYaw * cosPitch, // x
+                sinPitch,         // y
+                cosYaw * cosPitch // z
+        );
+
+        final double lookVecX = lookVector.xCoord * reach;
+        final double lookVecY = lookVector.yCoord * reach;
+        final double lookVecZ = lookVector.zCoord * reach;
+
+        final Vec3 endPosition = player.addVector(lookVecX, lookVecY, lookVecZ);
+
+        final Entity renderViewEntity = mc.getRenderViewEntity();
+        final AxisAlignedBB expandedBox = renderViewEntity
+                .getEntityBoundingBox()
+                .addCoord(lookVecX, lookVecY, lookVecZ)
+                .expand(1.0, 1.0, 1.0);
+
+        final List<Entity> entitiesInPath = mc.theWorld.getEntitiesWithinAABBExcludingEntity(renderViewEntity, expandedBox);
+        for (Entity entity : entitiesInPath) {
+            if (entity == target && entity.canBeCollidedWith()) {
+                final float borderSize = entity.getCollisionBorderSize();
+                final AxisAlignedBB entityBox = entity.getEntityBoundingBox()
+                        .expand(borderSize, borderSize, borderSize);
+                final MovingObjectPosition intercept = entityBox.calculateIntercept(player, endPosition);
+                return intercept != null;
+            }
+        }
+
+        return false;
+    }
+
     public static boolean inRange(final BlockPos blockPos, final double n) {
+        if (mc.thePlayer.posY - blockPos.getY() > 3) {
+            return false;
+        }
         final float[] array = RotationUtils.getRotations(blockPos);
         final Vec3 getPositionEyes = mc.thePlayer.getPositionEyes(1.0f);
         final float n2 = -array[0] * 0.017453292f;
@@ -294,7 +341,7 @@ public class RotationUtils {
         return mc.theWorld.rayTraceBlocks(getPositionEyes, getPositionEyes.addVector(vec3.xCoord * distance, vec3.yCoord * distance, vec3.zCoord * distance), true, collisionCheck, true);
     }
 
-    public static Object[] raycastBlock(final double distance, final float yaw, final float pitch) {
+    public static MovingObjectPosition raycastBlock(final double distance, final float yaw, final float pitch) {
         final net.minecraft.util.Vec3 eyeVec = mc.thePlayer.getPositionEyes(1.0f);
         final net.minecraft.util.Vec3 lookVec = Utils.getLookVec(yaw, pitch);
         final net.minecraft.util.Vec3 sumVec = eyeVec.addVector(lookVec.xCoord * distance, lookVec.yCoord * distance, lookVec.zCoord * distance);
@@ -302,9 +349,7 @@ public class RotationUtils {
         if (mop == null || mop.typeOfHit != MovingObjectPosition.MovingObjectType.BLOCK) {
             return null;
         }
-        final keystrokesmod.script.model.Vec3 pos = new keystrokesmod.script.model.Vec3(mop.getBlockPos());
-        final keystrokesmod.script.model.Vec3 offset = new keystrokesmod.script.model.Vec3(mop.hitVec.xCoord - pos.x, mop.hitVec.yCoord - pos.y, mop.hitVec.zCoord - pos.z);
-        return new Object[] { pos, offset, mop.sideHit.name() };
+        return mop;
     }
 
     public static MovingObjectPosition rayTraceCustom(double blockReachDistance, float yaw, float pitch) {

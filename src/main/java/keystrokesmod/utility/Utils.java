@@ -35,6 +35,7 @@ import net.minecraft.entity.projectile.EntityFireball;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.ContainerPlayer;
 import net.minecraft.item.*;
+import net.minecraft.network.Packet;
 import net.minecraft.network.play.client.C03PacketPlayer.C05PacketPlayerLook;
 import net.minecraft.network.play.client.C0APacketAnimation;
 import net.minecraft.potion.Potion;
@@ -54,6 +55,7 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.IntStream;
 
 public class Utils {
@@ -1340,6 +1342,9 @@ public class Utils {
 
     public static boolean hasJump() {
         String p = mc.thePlayer.getActivePotionEffects().toString();
+        if (p == null) {
+            return false;
+        }
         if (p.contains("potion.jump")) {
             return true;
         }
@@ -1863,6 +1868,10 @@ public class Utils {
 
     public static boolean isLobby() {
         if (Utils.isHypixel()) {
+            final Scoreboard scoreboard = mc.theWorld.getScoreboard();
+            if (scoreboard == null) {
+                return false;
+            }
             List<String> sidebarLines = Utils.getSidebarLines();
             if (!sidebarLines.isEmpty()) {
                 String[] parts = Utils.stripColor(sidebarLines.get(1)).split("  ");
@@ -1872,6 +1881,30 @@ public class Utils {
             }
         }
         return false;
+    }
+
+    public static float getDistanceToEntity(Entity entityIn, Vec3 pos) {
+        float f = (float)(pos.xCoord - entityIn.posX);
+        float f1 = (float)(pos.yCoord - entityIn.posY);
+        float f2 = (float)(pos.zCoord - entityIn.posZ);
+        return MathHelper.sqrt_float(f * f + f1 * f1 + f2 * f2);
+    }
+
+    public static String getMotionAngle() {
+        if (mc.thePlayer.motionX >= 0 && mc.thePlayer.motionZ >= 0) {
+            return "x>=z>=";
+        }
+        if (mc.thePlayer.motionX >= 0 && mc.thePlayer.motionZ < 0) {
+            return "x>=z<";
+        }
+        if (mc.thePlayer.motionX < 0 && mc.thePlayer.motionZ >= 0) {
+            return "x<z>=";
+        }
+        if (mc.thePlayer.motionX < 0 && mc.thePlayer.motionZ < 0) {
+            return "x<z<";
+        }
+
+        return "none";
     }
 
     public static boolean isBedwarsPracticeOrReplay() {

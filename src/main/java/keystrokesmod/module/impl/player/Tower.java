@@ -27,10 +27,6 @@ public class Tower extends Module {
     final public SliderSetting verticalTower;
     final private SliderSetting slowedSpeed;
     final private SliderSetting slowedTicks;
-    final private ButtonSetting disableWhileHurt;
-    private GroupSetting cancelKnockbackGroup;
-    private final ButtonSetting cancelKnockback;
-    private ButtonSetting cancelVelocityRequired;
     public SliderSetting extraBlockDelay;
 
     final private String[] towerMoveModes = new String[]{"None", "Vanilla", "3 tick", "Edge", "2.5 tick", "1.5 tick", "1 tick", "10 tick", "Jump"};
@@ -45,8 +41,6 @@ public class Tower extends Module {
     public float yaw;
     private int vt;
     public boolean hasT;
-
-    public boolean blink;
 
     public int activeTicks;
 
@@ -80,10 +74,6 @@ public class Tower extends Module {
         this.registerSetting(extraBlockDelay = new SliderSetting("Extra block delay", "", 0, 0, 10, 1));
         this.registerSetting(slowedSpeed = new SliderSetting("Slowed speed", "%", 0, 0, 100, 1));
         this.registerSetting(slowedTicks = new SliderSetting("Slowed ticks", 1, 0, 20, 1));
-        this.registerSetting(disableWhileHurt = new ButtonSetting("Disable while hurt", false));
-        this.registerSetting(cancelKnockbackGroup = new GroupSetting("Cancel knockback"));
-        this.registerSetting(cancelKnockback = new ButtonSetting(cancelKnockbackGroup, "Enable Cancel knockback", false));
-        this.registerSetting(cancelVelocityRequired = new ButtonSetting(cancelKnockbackGroup, "Require velocity enabled", false));
         //this.registerSetting(capUpFaces = new ButtonSetting("Cap up faces", false));
 
         this.canBeEnabled = false;
@@ -93,21 +83,6 @@ public class Tower extends Module {
         this.extraBlockDelay.setVisible(verticalTower.getInput() == 2, this);
         this.speedSetting.setVisible(towerMove.getInput() > 0 && !(Settings.movementFix.isToggled() && towerMove.getInput() == 8),this);
         this.disableDiagonal.setVisible(towerMove.getInput() > 0,this);
-    }
-
-    @SubscribeEvent
-    public void onReceivePacket(ReceivePacketEvent e) {
-        if (!Utils.nullCheck() || !cancelKnockback()) {
-            return;
-        }
-        if (e.getPacket() instanceof S12PacketEntityVelocity) {
-            if (((S12PacketEntityVelocity) e.getPacket()).getEntityID() == mc.thePlayer.getEntityId()) {
-                e.setCanceled(true);
-            }
-        }
-        else if (e.getPacket() instanceof S27PacketExplosion) {
-            e.setCanceled(true);
-        }
     }
 
     boolean disableDiag() {
@@ -128,17 +103,11 @@ public class Tower extends Module {
             delay = false;
             delayTicks = 0;
         }
-        blink = false;
         if (towerMove.getInput() > 0) {
             if (canTower() && Utils.keysDown() && !delay && !disableDiag()) {
                 ++activeTicks;
                 speed = false;
                 wasTowering = hasTowered = true;
-                if (disableWhileHurt.isToggled() && ModuleUtils.damage) {
-                    towerTicks = 0;
-                    towering = false;
-                    return;
-                }
                 switch ((int) towerMove.getInput()) {
                     case 1:
                         mc.thePlayer.motionY = 0.41965;
@@ -350,14 +319,11 @@ public class Tower extends Module {
                 }
                 if (speed) {
                     if (!Settings.movementFix.isToggled()) {
-                        blink = true;
                         ModuleManager.scaffold.rotateForward(false);
                     }
                     else {
                         ModuleManager.scaffold.rotateForward(true);
                     }
-                    Scaffold.jumpDelayVal = 5;
-                    Scaffold.airTickVal = 4;
                 }
             } else {
                 if (mc.thePlayer.onGround) {
@@ -394,10 +360,6 @@ public class Tower extends Module {
                 hasTowered = towering = firstJump = startedTowerInAir = setLowMotion = speed = jump = false;
                 cMotionTicks = placeTicks = towerTicks = grounds = upFaces = activeTicks = 0;
                 reset();
-                if (!Scaffold.fastScaffoldKeepY) {
-                    Scaffold.firstJump = false;
-                    Scaffold.fjDelay = 0;
-                }
             }
         }
         if (verticalTower.getInput() > 0) {
@@ -490,7 +452,6 @@ public class Tower extends Module {
                 firstX = 0;
                 placeExtraBlock = firstVTP = false;
                 ebDelay = vt = 0;
-                ModuleManager.scaffold.placedVP = false;
             }
         }
     }
@@ -529,9 +490,6 @@ public class Tower extends Module {
             disableJump = true;
         }
         if (disableJump) {
-            if (disableWhileHurt.isToggled() && ModuleUtils.damage && !delay) {
-                return;
-            }
             mc.thePlayer.movementInput.jump = false;
         }
     }
@@ -579,19 +537,6 @@ public class Tower extends Module {
         towering = false;
         placeTicks = 0;
         setLowMotion = false;
-    }
-
-    public boolean cancelKnockback() {
-        if (!canTower()) {
-            return false;
-        }
-        if (cancelVelocityRequired.isToggled() && !ModuleManager.velocity.isEnabled()) {
-            return false;
-        }
-        if (cancelKnockback.isToggled()) {
-            return true;
-        }
-        return false;
     }
 
     public boolean canTower() {

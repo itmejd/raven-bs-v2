@@ -47,7 +47,8 @@ public class Scaffold extends Module {
     private SliderSetting floatFirstJump;
     public SliderSetting fastScaffold;
     private SliderSetting multiPlace;
-    public ButtonSetting multiPlaceOnlyNecessary;
+
+    private SliderSetting poffset;
 
     public ButtonSetting autoSwap;
     private ButtonSetting fastOnRMB;
@@ -82,12 +83,9 @@ public class Scaffold extends Module {
     private boolean finishProcedure;
     private boolean stopUpdate;
     private boolean stopUpdate2;
-    private PlaceData lastPlacement;
-    private EnumFacing[] facings = { EnumFacing.EAST, EnumFacing.WEST, EnumFacing.NORTH, EnumFacing.SOUTH, EnumFacing.UP };
-    private BlockPos[] offsets = { new BlockPos(-1, 0, 0), new BlockPos(1, 0, 0), new BlockPos(0, 0, 1), new BlockPos(0, 0, -1), new BlockPos(0, -1, 0) };
     private Vec3 targetBlock;
     private PlaceData blockInfo;
-    private Vec3 blockPos, hitVec, lookVec;
+    private Vec3 hitVec, lookVec;
 
     //bypass related
     private boolean rotateForward;
@@ -104,7 +102,6 @@ public class Scaffold extends Module {
     private boolean floatWasEnabled;
     private boolean floatKeepY;
     public int offsetDelay;
-    public boolean placedVP;
     public boolean jump;
     private int floatTicks;
     public boolean blink;
@@ -112,12 +109,7 @@ public class Scaffold extends Module {
     private boolean idle;
     private int idleTicks;
     private boolean didJump;
-    private int placeIdle;
-    public static boolean firstJump;
-    public static int fjDelay;
-    private boolean didLastRotation, setYawOffset;
-    private boolean reqrp;
-    private boolean placedb;
+    private boolean setYawOffset;
 
     //disable checks
     public boolean moduleEnabled;
@@ -128,43 +120,33 @@ public class Scaffold extends Module {
     private int scaffoldTicks;
 
     //rotation related
-    private boolean lockRotation;
     private boolean was451, was452;
-    private float minPitch, minOffset, pOffset;
+    private float minPitch, minOffset;
     private float edge;
-    private long firstStroke, yawEdge, vlS, swDelay;
+    private long firstStroke, yawEdge;
     private float lastEdge2, yawAngle, theYaw;
     private boolean enabledOffGround = false;
     private float[] blockRotations;
-    private float[] rotations2;
     public float yaw, pitch, blockYaw, yawOffset, lastOffset;
     private boolean set2;
-    private float maxOffset;
     private int sameMouse;
-    private int randomF, yawChanges, dynamic;
-    private boolean getVTR, resetm;
+    private int yawChanges, dynamic;
+    private boolean getVTR;
     private float VTRY;
     private float normalYaw, normalPitch;
     private int switchvl;
     private int dt;
     private float getSmooth, lastYawS, smoothedYaw;
-    private boolean neg, wasForward;
-    private float yawWithOffset;
-    private int rt = 1, forwardTicks;
+    private float fr = 0, p1 = 0;
     //fake rotations
     private float fakeYaw, fakePitch;
     private float fakeYaw1, fakeYaw2;
 
-    private boolean firstRotate;
 
-    private int canSnap;
-    private boolean began;
-    private boolean cantRotate, startRotation;
-    private int srt;
+    private int sst, str, str2;
+    private float r2f;
 
-    public static int jumpDelayVal, airTickVal;
 
-    float correct = -180F;
 
     public Scaffold() {
         super("Scaffold", category.player);
@@ -186,6 +168,9 @@ public class Scaffold extends Module {
         this.registerSetting(safeWalk = new ButtonSetting("Safewalk", true));
         this.registerSetting(showBlockCount = new ButtonSetting("Show block count", true));
         this.registerSetting(silentSwing = new ButtonSetting("Silent swing", false));
+
+
+        //this.registerSetting(poffset = new SliderSetting("Pitch offset", "", 1, -10, 10, 1));
 
         this.alwaysOn = true;
     }
@@ -244,25 +229,6 @@ public class Scaffold extends Module {
         if (dt > 0) {
             return;
         }
-
-        dynamic = 0;
-
-        if (targetBlock != null) {
-            Vec3 lookAt = new Vec3(targetBlock.xCoord - lookVec.xCoord, targetBlock.yCoord - lookVec.yCoord, targetBlock.zCoord - lookVec.zCoord);
-            blockRotations = RotationUtils.getRotations(lookAt);
-            rotations2 = RotationUtils.getRotations(lookAt);
-            correct = rotations2[0];
-            //if (rotation.getInput() != 1) {
-                targetBlock = null;
-            //}
-            fakeYaw1 = mc.thePlayer.rotationYaw - hardcodedYaw();
-            if (yawEdge == 0) {
-                randomF = Utils.randomizeInt(0, 9);
-                yawEdge = Utils.time();
-            }
-            dynamic++;
-        }
-        randomF = 0;
 
         //Fake rotations
         if (fakeRotation.getInput() > 0) {
@@ -336,17 +302,11 @@ public class Scaffold extends Module {
             fastScaffoldKeepY = firstKeepYPlace = false;
             startYPos = -1;
             keepYTicks = 0;
-            if (!ModuleManager.tower.canTower()) {
-                firstJump = false;
-                fjDelay = 0;
-            }
         }
         if (fastScaffoldKeepY) {
             if (mc.thePlayer.onGround && Utils.isMoving()) {
                 if (scaffoldTicks > 1) {
                     jump = !jumpFacingForward.isToggled();
-                    jumpDelayVal = 4;
-                    airTickVal = 5;
                     rotateForward(true);
                     if (startYPos == -1 || Math.abs(startYPos - mc.thePlayer.posY) > 2) {
                         startYPos = mc.thePlayer.posY;
@@ -367,7 +327,7 @@ public class Scaffold extends Module {
                     startYPos = -1;
                 }
                 floatStarted = floatJumped = floatKeepY = floatWasEnabled = false;
-                floatTicks = rt = 0;
+                floatTicks = 0;
                 canSprint2 = false;
 
                 offsetDelay = 0;
@@ -442,7 +402,7 @@ public class Scaffold extends Module {
                     startYPos = -1;
                 }
                 floatStarted = floatJumped = floatKeepY = floatWasEnabled = false;
-                floatTicks = rt = 0;
+                floatTicks = 0;
                 canSprint2 = false;
 
                 idle = false;
@@ -468,7 +428,6 @@ public class Scaffold extends Module {
             }
             lastOffset = mc.thePlayer.rotationYaw;
             if (yawChanges > 15) {
-                randomF = 1;
                 yawEdge = Utils.time();
             }
             if (yawEdge > 0 && (Utils.time() - yawEdge) > 500) {
@@ -502,11 +461,24 @@ public class Scaffold extends Module {
             return;
         }
 
-        placeIdle++;
+        dynamic = 0;
+        locateBlocks(0, 0, true);
+        if (targetBlock != null) {
+            Vec3 lookAt = new Vec3(targetBlock.xCoord - lookVec.xCoord, targetBlock.yCoord - lookVec.yCoord, targetBlock.zCoord - lookVec.zCoord);
+            blockRotations = RotationUtils.getRotationsB(lookAt);
+            targetBlock = null;
+
+
+            fakeYaw1 = mc.thePlayer.rotationYaw - hardcodedYaw();
+            if (yawEdge == 0) {
+                yawEdge = Utils.time();
+            }
+            dynamic++;
+        }
 
         float ny = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw);
         if (mc.thePlayer.onGround || ModuleUtils.inAirTicks >= 3) {
-            if (ny >= 161.5 && ny <= 180) {
+            if (ny >= 160 && ny <= 180) {
                 normal = false;
             } else {
                 normal = true;
@@ -539,11 +511,10 @@ public class Scaffold extends Module {
         if (ModuleUtils.inAirTicks >= 1 || rotation.getInput() != 1 && !mc.thePlayer.onGround) {
             rotateForward = false;
             jumpDelay = 0;
-            forwardTicks = 0;
-            lockRotation = false;
         }
         if (rotateForward && jumpFacingForward.isToggled()) {
-            if (rotation.getInput() > 0) {
+            Block blockAbove = BlockUtils.getBlock(new BlockPos(mc.thePlayer.posX, mc.thePlayer.posY + 2, mc.thePlayer.posZ));
+            if (rotation.getInput() > 0 && blockAbove instanceof BlockAir) {
                 if (back == 0) {
                     rnj++;
                     /*if (rnj == 1) {
@@ -562,22 +533,17 @@ public class Scaffold extends Module {
                     if (mc.thePlayer.onGround) {
                         getSmooth = lastYawS = (mc.thePlayer.rotationYaw - hardcodedYaw());
                         jump = true;
-                        rt++;
                         rotationDelay = 3;
                         over45 = quad > 45;
                     }
                     e.setYaw(forwardYaw);
-                    lockRotation = true;
-                    wasForward = true;
                     rotatingForward = true;
                     canSprint = true;
-                    blockRotations = null;
                     theYaw = forwardYaw;
                     back = 2;
                     bvs = false;
                     b1t = 0;
                 //}
-                firstJump = true;
 
                 /*if (ModuleUtils.inAirTicks == 1 && Utils.scaffoldDiagonal(false)) {
                     rotationDelay = airTickVal;
@@ -638,185 +604,86 @@ public class Scaffold extends Module {
     private boolean t7;
 
     private void simpleRots(ClientRotationEvent e) {
-        /*if ((fastScaffoldKeepY || ModuleManager.tower.canTower()) && Utils.scaffoldDiagonal(false)) {
-            yaw = mc.thePlayer.rotationYaw - hardcodedYaw();
-            if (back > 0 && blockRotations != null) {
-                //yaw = blockRotations[0];
-            }
+        float relativeYaw = mc.thePlayer.rotationYaw - hardcodedYaw() - 180F;
+        float normalizedYaw = (relativeYaw % 360 + 360) % 360;
+        float quad = normalizedYaw % 90;
+        float rotOffset = 0;
+        float ofv = -45;
+
+        if (mc.thePlayer.onGround && sst == 0) {
+            sst = 1;
         }
-        else {*/
-            float relativeYaw = mc.thePlayer.rotationYaw - hardcodedYaw() - 180F;
-            float normalizedYaw = (relativeYaw % 360 + 360) % 360;
-            float quad = normalizedYaw % 90;
-            float rotOffset = 0;
-            float ofv = -45;
-            float d = correct - (mc.thePlayer.rotationYaw - hardcodedYaw());
-            float f = 85;
-            if ((fastScaffoldKeepY || ModuleManager.tower.hasT) && jumpFacingForward.isToggled()) {
-                //if (over45) { 11
-                float oval = 18.5f;
-                if (!hasPlaced) {
-                    placedb = true;
+
+        if (firstStroke > 0 && (Utils.time() - firstStroke) > 250) {
+            firstStroke = 0;
+        }
+
+        if ((fastScaffoldKeepY || ModuleManager.tower.hasT) && jumpFacingForward.isToggled()) {
+            float oval = 19.5f;
+            if (normal) {
+                RotationHelper.get().yawOffset = oval;
+                if (ModuleUtils.inAirTicks <= 2) {
+                    ofv = -oval;
+                } else {
+                    ofv = oval;
                 }
-                if (normal) {
-                    RotationHelper.get().yawOffset = oval;
-                    if (ModuleUtils.inAirTicks <= 2) {
-                        ofv = -oval;
-                    } else {
-                        ofv = oval;
-                    }
-                }
-                else {
-                    RotationHelper.get().yawOffset = -oval;
-                    if (ModuleUtils.inAirTicks <= 2) {
-                        ofv = oval;
-                    } else {
-                        ofv = -oval;
-                    }
-                }
-                    /*Utils.print(">45");
-                }
-                else {
-                    RotationHelper.get().yawOffset = -16.3F;
-                    if (ModuleUtils.inAirTicks <= 2) {
-                        ofv = 12;
-                    }
-                    Utils.print("<45");
-                }*/
-                setYawOffset = true;
-                offsetvv = ofv;
             }
             else {
-                if (setYawOffset) {
-                    RotationHelper.get().yawOffset = 0F;
-                    setYawOffset = false;
+                RotationHelper.get().yawOffset = -oval;
+                if (ModuleUtils.inAirTicks <= 2) {
+                    ofv = oval;
+                } else {
+                    ofv = -oval;
                 }
-                rt = 1;
-
-                /*if (dynamic > 0 && vdl == 0 || !hasPlaced) {
-                    if (quad >= 6 && quad <= 84 || !hasPlaced && !mc.thePlayer.onGround || mc.thePlayer.hurtTime > 0) {
-                        */offsetvv = 0;
-                        /*vdl = Utils.time();
-                    }
-                    else {
-                        Utils.print(d);
-                        if (d <= 0) {
-                            if (offsetvv != -ofv) {
-                                offsetvv = -ofv;
-                                vdl = Utils.time();
-                            }
-                        } else {
-                            if (offsetvv != ofv) {
-                                offsetvv = ofv;
-                                vdl = Utils.time();
-                            }
-                        }
-                    }
-                }*/
             }
-            //if (dynamic > 0 || !reqrp || blockRotations == null) {
-                yaw = mc.thePlayer.rotationYaw - hardcodedYaw() - offsetvv;
-                reqrp = false;
+            setYawOffset = true;
+            offsetvv = ofv;
+            fr = 0;
+        }
+        else {
+            if (setYawOffset) {
+                RotationHelper.get().yawOffset = 0F;
+                setYawOffset = false;
+            }
 
-                if ((fastScaffoldKeepY || ModuleManager.tower.hasT) && jumpFacingForward.isToggled()) {
-                    getSmooth = (mc.thePlayer.rotationYaw - hardcodedYaw());
-                    float yawDifference = Utils.getAngleDifference(lastYawS, getSmooth);
-                    float smoothingFactor = 0.025f;
-                    getSmooth = (lastYawS + yawDifference * smoothingFactor);
-                    lastYawS = getSmooth;
-                    smoothedYaw = getSmooth;
-                    yaw = smoothedYaw - offsetvv;
-                }
-            //}
-            /*if (blockRotations != null && (!(fastScaffoldKeepY || ModuleManager.tower.hasT) && (blockRotations[1] < 60F || !mc.thePlayer.onGround && scaffoldTicks <= 5) || mc.thePlayer.hurtTime > 0 || !ModuleManager.tower.canTower() && (mc.thePlayer.motionX == 0.0D && mc.thePlayer.motionZ == 0.0D))) {
+            offsetvv = 0;
+        }
+
+        if (fr == -1) {
+            if (blockRotations != null) {
                 yaw = blockRotations[0];
-                reqrp = true;
-            }*/
-        //}
-
-        if (vdl > 0 && (Utils.time() - vdl) > 250) {
-            vdl = 0;
-        }
-
-
-        if (canSprint2) {
-            b1t++;
-            if (b1t == 1) {
-                began = blink = true;
-                yaw = mc.thePlayer.rotationYaw - hardcodedYaw() - offsetvv;
-            }
-            else if (b1t <= 2) {
-                yaw = mc.thePlayer.rotationYaw - hardcodedYaw() - 135;
-            }
-            else {
-                b1t = 0;
-            }
-
-            if (mc.thePlayer.motionX == 0.0D && mc.thePlayer.motionY == -0.0784000015258789 && mc.thePlayer.motionZ == 0.0D || placeIdle > 8) {
-                btm++;
-                if (btm >= 19) {
-                    began = blink = false;
-                }
-
-            }
-            else {
-                btm = 0;
             }
         }
         else {
-            if (began) {
-                began = blink = false;
-            }
+            yaw = mc.thePlayer.rotationYaw - hardcodedYaw() - offsetvv;
         }
 
+        if ((fastScaffoldKeepY || ModuleManager.tower.hasT) && jumpFacingForward.isToggled()) {
+            getSmooth = (mc.thePlayer.rotationYaw - hardcodedYaw());
+            float yawDifference = Utils.getAngleDifference(lastYawS, getSmooth);
+            float smoothingFactor = 0.015f;
+            getSmooth = (lastYawS + yawDifference * smoothingFactor);
+            lastYawS = getSmooth;
+            smoothedYaw = getSmooth;
+            yaw = smoothedYaw - offsetvv;
+        }
+        else if (blockRotations != null && scaffoldTicks < 5) {
+            yaw = blockRotations[0];
+        }
 
         if (blockRotations != null) {
             pitch = blockRotations[1];
+            if (pitch > 70.0F) {
+                pitch = blockRotations[1] + p1;
+            }
+            if (pitch >= 90.0F) {
+                pitch = 90.0F;
+            }
         } else {
-            /*if (rotationDelay <= 1) {
-                pitch = 79F;
-            }
-            else if (rotationDelay == 2) {
-                pitch = 77F;
-            }
-            else if (rotationDelay == 3) {
-                pitch = 75F;
-            }
-            else {
-                pitch = 73F;
-            }*/
-            pitch = 78F;
+            pitch = 77F;
         }
-        if (!cantRotate) {
-            e.setRotations(yaw, pitch);
-            theYaw = yaw;
-        }
-        if (b1t == 2) {
-            mc.thePlayer.setSprinting(false);
-            BlinkHandler.release();
-        }
-    }
-
-    Vec3 getBestFacing(Vec3 playerVec, Vec3 blockPos) {
-        double dx = blockPos.xCoord + 0.5 - playerVec.xCoord;
-        double dz = blockPos.zCoord + 0.5 - playerVec.zCoord;
-
-        if (Math.abs(dx) > Math.abs(dz)) {
-            if (dx > 0) {
-                return new Vec3(-1, 0, 0);
-            }
-            else {
-                return new Vec3(1, 0, 0);
-            }
-        }
-        else {
-            if (dz > 0) {
-                return new Vec3(0, 0, -1);
-            }
-            else {
-                return new Vec3(0, 0, 1);
-            }
-        }
+        e.setRotations(yaw, pitch);
+        theYaw = yaw;
     }
 
     private float lastey;
@@ -892,12 +759,9 @@ public class Scaffold extends Module {
             //if (switchvl > 0) {
                 firstStroke = Utils.time();
                 switchvl = 0;
-                vlS = 0;
-                resetm = true;
             //}
         }
         else {
-            vlS = Utils.time();
         }
         if (firstStroke > 0 && (Utils.time() - firstStroke) > strokeDelay) {
             firstStroke = 0;
@@ -1047,6 +911,8 @@ public class Scaffold extends Module {
             pitch = 80F;
         }
         e.setRotations(yaw, pitch);
+        //Utils.print((MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw) - hardcodedYaw()) - yaw);
+
         theYaw = yaw;
     }
 
@@ -1105,21 +971,17 @@ public class Scaffold extends Module {
             ModuleUtils.swapTick = 2;
             KeyBinding.setKeyBindState(mc.gameSettings.keyBindAttack.getKeyCode(), false);
             KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
-            if (holdingBlocks() && setSlot()) {
+            if (holdingBlocks() && setSlot() && !ModuleUtils.swapped) {
                 hasSwapped = true;
-                /*if (moduleEnabled && !finishProcedure) {
-                    if (Utils.distanceToGround(mc.thePlayer) < 2) {
+                /*if (!finishProcedure) {
+                    if (Utils.distanceToGround(mc.thePlayer) <= 3) {
                         finishProcedure = true;
                     }
-                    if (Utils.distanceToGround(mc.thePlayer) > 6) {
-                        if (hasPlaced) {
-                            finishProcedure = true;
-                        }
-                    } else if (!finishProcedure) {
-                        stopUpdate = true;
+                    if (hasPlaced) {
+                        finishProcedure = true;
                     }
                 }*/
-                if (!stopUpdate) {
+                if (!stopUpdate/* && finishProcedure*/) {
 
                     int mode = (int) fastScaffold.getInput();
                     if (!ModuleManager.tower.placeExtraBlock) {
@@ -1128,7 +990,6 @@ public class Scaffold extends Module {
                         }
                     } else if ((ModuleManager.tower.ebDelay == 0 || !ModuleManager.tower.firstVTP)) {
                         placeBlock(0, 0);
-                        placedVP = true;
                     }
                     if (ModuleManager.tower.placeExtraBlock) {
                         placeBlock(0, -1);
@@ -1211,23 +1072,19 @@ public class Scaffold extends Module {
                 blockInfo = null;
                 blockRotations = null;
                 fastScaffoldKeepY = firstKeepYPlace = rotateForward = rotatingForward = floatStarted = floatJumped = floatWasEnabled = towerEdge =
-                        was451 = was452 = enabledOffGround = finishProcedure = jump = blink = canSprint = canSprint2 = idle = didJump = firstRotate = bvs = began = cantRotate =
-                                startRotation = lockRotation = firstJump = didLastRotation = reqrp = placedb = false;
-                rotationDelay = keepYTicks = scaffoldTicks = floatTicks = idleTicks = frd = back = b1t = canSnap = btm = snapDelay = srt = placeIdle = fjDelay = 0;
-                rt = 1;
-                forwardTicks = 0;
-                wasForward = false;
+                        was451 = was452 = enabledOffGround = jump = blink = canSprint = canSprint2 = idle = didJump = bvs = finishProcedure = false;
+                rotationDelay = keepYTicks = scaffoldTicks = floatTicks = idleTicks = frd = back = b1t = btm = snapDelay = sst = str = str2 = 0;
                 jumpDelay = 0;
                 canForward = false;
-                firstStroke = vlS = 0;
+                firstStroke = 0;
                 startYPos = -1;
                 lookVec = null;
-                lastPlacement = null;
                 if (setYawOffset) {
                     RotationHelper.get().yawOffset = 0F;
                     setYawOffset = false;
                 }
-                correct = -180F;
+                fr = 0;
+                p1 = 0;
             }
         }
     }
@@ -1331,7 +1188,6 @@ public class Scaffold extends Module {
             }
             highlight.put(block.blockPos.offset(block.enumFacing), null);
             hasPlaced = true;
-            placeIdle = 0;
         }
     }
 
@@ -1385,16 +1241,15 @@ public class Scaffold extends Module {
     }
 
     private void locateAndPlaceBlock(int yOffset, int xOffset) {
-        locateBlocks(yOffset, xOffset);
+        locateBlocks(yOffset, xOffset, false);
         if (blockInfo == null) {
             return;
         }
-        lastPlacement = blockInfo;
         place(blockInfo);
         blockInfo = null;
     }
 
-    private void locateBlocks(int yOffset, int xOffset) {
+    private void locateBlocks(int yOffset, int xOffset, boolean alert) {
         List<PlaceData> blocksInfo = findBlocks(yOffset, xOffset);
 
         if (blocksInfo == null) {
@@ -1419,24 +1274,100 @@ public class Scaffold extends Module {
         double avgY = sumY / index;
         double avgZ = sumZ / index;
 
-        targetBlock = new Vec3(avgX, avgY, avgZ);
-
         PlaceData blockInfo2 = blocksInfo.get(0);
         int blockX = blockInfo2.blockPos.getX();
         int blockY = blockInfo2.blockPos.getY();
         int blockZ = blockInfo2.blockPos.getZ();
         EnumFacing blockFacing = blockInfo2.enumFacing;
-        blockInfo = blockInfo2;
 
         double hitX = (blockX + 0.5D) + getCoord(blockFacing.getOpposite(), "x") * 0.5D;
         double hitY = (blockY + 0.5D) + getCoord(blockFacing.getOpposite(), "y") * 0.5D;
         double hitZ = (blockZ + 0.5D) + getCoord(blockFacing.getOpposite(), "z") * 0.5D;
-        lookVec = new Vec3(0.5D + getCoord(blockFacing.getOpposite(), "x") * 0.5D,
-                0.5D + getCoord(blockFacing.getOpposite(), "y") * 0.5D,
-                0.5D + getCoord(blockFacing.getOpposite(), "z") * 0.5D);
+        if (alert) {
+            lookVec = new Vec3(0.5D + getCoord(blockFacing.getOpposite(), "x") * 0.5D,
+                    0.5D + getCoord(blockFacing.getOpposite(), "y") * 0.5D,
+                    0.5D + getCoord(blockFacing.getOpposite(), "z") * 0.5D);
+        }
+
+        if (mc.thePlayer.posY - avgY > 3) {
+            return;
+        }
+
+        if (rotation.getInput() == 1) {
+            float b2 = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw - hardcodedYaw());
+            String b = blockFacing.toString();
+            if (b.equals("north") || b.equals("south") || b.equals("west") || b.equals("east")) {
+                fr = 0;
+                p1 = -5;
+            }
+            if (b.equals("up")) {
+                p1 = 0;
+            }
+            if (!b.equals("up")) {
+                if (b2 > -90 && b2 < -0) {
+                    //west north
+                    if (!b.equals("west") && !b.equals("north")) {
+                        fr = -1;
+                    }
+                } else if (b2 >= -180 && b2 < -90) {
+                    //west south
+                    if (!b.equals("west") && !b.equals("south")) {
+                        fr = -1;
+                    }
+                } else if (b2 >= 90 && b2 < 180) {
+                    //east south
+                    if (!(b.equals("east") && e3()) && !b.equals("south")) {
+                        fr = -1;
+                    }
+                } else if (b2 >= 0 && b2 < 90) {
+                    //east north
+                    //east 0.1
+                    if (!(b.equals("east") && e4()) && !b.equals("north")) {
+                        fr = -1;
+                    }
+                }
+
+                //Utils.print(blockFacing + " " + b2 + " " + mc.thePlayer.motionX + " " + mc.thePlayer.motionZ);
+            }
+        }
+
+        if (alert) {
+            targetBlock = new Vec3(avgX, avgY, avgZ);
+        }
+
+        blockInfo = blockInfo2;
         hitVec = new Vec3(hitX, hitY, hitZ);
         blockInfo.hitVec = hitVec;
+
+
     }
+
+    private boolean e4() {
+        float b2 = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw - hardcodedYaw());
+        double mx = mc.thePlayer.motionX;
+        double mz = mc.thePlayer.motionZ;
+        if (Utils.scaffoldDiagonal(false) && mc.thePlayer.onGround) {
+            return true;
+        }
+        if (mx > 0.1 && b2 > 45) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean e3() {
+        float b2 = MathHelper.wrapAngleTo180_float(mc.thePlayer.rotationYaw - hardcodedYaw());
+        double mx = mc.thePlayer.motionX;
+        double mz = mc.thePlayer.motionZ;
+        if (Utils.scaffoldDiagonal(false) && mc.thePlayer.onGround) {
+            return true;
+        }
+        if (mx > 0.1 && b2 < 135) {
+            return true;
+        }
+        return false;
+    }
+
 
     private double getCoord(EnumFacing facing, String axis) {
         switch (axis) {
@@ -1447,10 +1378,9 @@ public class Scaffold extends Module {
         return 0;
     }
 
-    private static double distance = 3.5;
+    private static double distance = 4.5;
 
     private List<PlaceData> findBlocks(int yOffset, int xOffset) {
-        distance = 3.5;
         int x = (int) Math.floor(mc.thePlayer.posX + xOffset);
         int y = (int) Math.floor(((startYPos != -1) ? startYPos : mc.thePlayer.posY) + yOffset);
         int z = (int) Math.floor(mc.thePlayer.posZ);
@@ -1464,7 +1394,7 @@ public class Scaffold extends Module {
         EnumFacing[] allFacings = getFacingsSorted();
         List<EnumFacing> validFacings = new ArrayList<>(5);
         for (EnumFacing facing : allFacings) {
-            if (facing != EnumFacing.UP && placeConditions(facing, yOffset, xOffset)) {
+            if (facing != EnumFacing.UP && placeConditions(facing.getOpposite(), yOffset, xOffset)) {
                 validFacings.add(facing);
             }
         }
@@ -1552,17 +1482,15 @@ public class Scaffold extends Module {
     private boolean placeConditions(EnumFacing enumFacing, int yCondition, int xCondition) {
         if (xCondition == -1) {
             if (!ModuleManager.tower.placeExtraBlock) {
-                return enumFacing == EnumFacing.EAST;
+                return enumFacing == EnumFacing.WEST;
+            } else {
+                return enumFacing == EnumFacing.UP;
             }
-            else {
-                return enumFacing == EnumFacing.DOWN;
-            }
-        }
-        else if (ModuleManager.tower.placeExtraBlock) {
-            return enumFacing == EnumFacing.WEST;
+        } else if (ModuleManager.tower.placeExtraBlock) {
+            return enumFacing == EnumFacing.EAST;
         }
         if (yCondition == 1) {
-            return enumFacing == EnumFacing.DOWN;
+            return enumFacing == EnumFacing.UP;
         }
         return true;
     }
@@ -1629,7 +1557,6 @@ public class Scaffold extends Module {
         mc.thePlayer.motionZ *= input;
     }
 
-    private float finalhYaw;
     public float hardcodedYaw() {
         float simpleYaw = 0;
         boolean w = Keyboard.isKeyDown(mc.gameSettings.keyBindForward.getKeyCode());
@@ -1639,28 +1566,43 @@ public class Scaffold extends Module {
 
         boolean dupe = a & d;
 
-        //if (!lockRotation) {
-            if (w) {
-                simpleYaw -= 180;
-                if (!dupe) {
-                    if (a) simpleYaw += 45;
-                    if (d) simpleYaw -= 45;
-                }
-            } else if (!s) {
-                simpleYaw -= 180;
-                if (!dupe) {
-                    if (a) simpleYaw += 90;
-                    if (d) simpleYaw -= 90;
-                }
-            } else if (!w) {
-                if (!dupe) {
-                    if (a) simpleYaw -= 45;
-                    if (d) simpleYaw += 45;
-                }
+        if (w) {
+            simpleYaw -= 180;
+            if (!dupe) {
+                if (a) simpleYaw += 45;
+                if (d) simpleYaw -= 45;
             }
-            finalhYaw = simpleYaw;
-        //}
-        return finalhYaw;
+        } else if (!s) {
+            simpleYaw -= 180;
+            if (!dupe) {
+                if (a) simpleYaw += 90;
+                if (d) simpleYaw -= 90;
+            }
+        } else if (!w) {
+            if (!dupe) {
+                if (a) simpleYaw -= 45;
+                if (d) simpleYaw += 45;
+            }
+        }
+        return simpleYaw;
+    }
+
+    public float motionAngleYaw() {
+        float simpleYaw = 0;
+
+        if (Utils.getMotionAngle().equals("x>=z>=")) {
+            simpleYaw = -180;
+        }
+        if (Utils.getMotionAngle().equals("x>=z<")) {
+            simpleYaw = -90;
+        }
+        if (Utils.getMotionAngle().equals("x<z>=")) {
+            simpleYaw = 0;
+        }
+        if (Utils.getMotionAngle().equals("x<z<")) {
+            simpleYaw = 90;
+        }
+        return simpleYaw;
     }
 
     public boolean holdingBlocks() {

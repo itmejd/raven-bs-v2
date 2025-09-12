@@ -52,13 +52,8 @@ public class Velocity extends Module {
     private int lastHurtTime;
     private double lastFallDistance;
 
-    public boolean blink;
-    private int delayTicks;
-
-    private boolean exp, canJump;
-
-    private int db, ovd;
-    private boolean t1;
+    private int db;
+    private boolean s08;
     private int t2;
     private boolean fb;
 
@@ -67,7 +62,7 @@ public class Velocity extends Module {
     private SliderSetting delay;
     private boolean delaying, conditionals;
 
-    private String[] modes = new String[] { "Normal", "Packet", "Reverse", "Jump", "Delay" };
+    private String[] modes = new String[] { "Normal", "Packet", "Reverse", "Jump", "Delay", "Buffer" };
 
 
     public Velocity() {
@@ -104,7 +99,7 @@ public class Velocity extends Module {
     }
 
     public void guiUpdate() {
-        this.delay.setVisible(mode.getInput() == 4, this);
+        this.delay.setVisible(mode.getInput() >= 4, this);
         this.onlyWhileAttacking.setVisible(mode.getInput() == 0, this);
         this.onlyWhileSwinging.setVisible(mode.getInput() == 0, this);
         this.onlyWhileTargeting.setVisible(mode.getInput() == 0, this);
@@ -145,7 +140,7 @@ public class Velocity extends Module {
         if (mode.getInput() == 2) {
             name = "-" + (int) reverseHorizontal.getInput()+ "%";
         }
-        if (mode.getInput() == 3 || mode.getInput() == 4) {
+        if (mode.getInput() >= 3) {
             name = modes[(int) mode.getInput()];
         }
         return name;
@@ -153,18 +148,13 @@ public class Velocity extends Module {
 
     @Override
     public void onDisable() {
-        blink = false;
-        delayTicks = 0;
         stopFBvelo = disableVelo = false;
         buttonDown = pDown = rDown = false;
         setJump = ignoreNext = aiming = false;
         lastHurtTime = 0;
         lastFallDistance = 0;
         db = 0;
-        exp = false;
-        canJump = false;
         flushAll();
-        t1 = false;
         if (t2 != 0) {
             Utils.resetTimer();
         }
@@ -201,10 +191,6 @@ public class Velocity extends Module {
         int hurtTime = mc.thePlayer.hurtTime;
         boolean onGround = mc.thePlayer.onGround;
 
-        if (mc.thePlayer.hurtTime > 0 && mode.getInput() == 4) {
-            KeyBinding.onTick(mc.gameSettings.keyBindJump.getKeyCode());
-        }
-
         if (onGround && lastFallDistance > 3 && !mc.thePlayer.capabilities.allowFlying) ignoreNext = true;
         if (hurtTime > lastHurtTime) {
 
@@ -231,6 +217,9 @@ public class Velocity extends Module {
         if (db > 0) {
             return;
         }
+        if (ModuleManager.velocityBuffer.delaying) {
+            return;
+        }
         if (!ignoreNext && onGround && aimingAt && forward && mouseDown && Utils.randomizeDouble(0, 100) < chance.getInput() && !hasBadEffect()) {
             KeyBinding.setKeyBindState(mc.gameSettings.keyBindJump.getKeyCode(), setJump = true);
             KeyBinding.onTick(mc.gameSettings.keyBindJump.getKeyCode());
@@ -243,6 +232,8 @@ public class Velocity extends Module {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onPostMotion(PostMotionEvent e) {
 
+        s08 = false;
+
         if (setJump && !Utils.jumpDown()) {
             KeyBinding.setKeyBindState(mc.gameSettings.keyBindJump.getKeyCode(), setJump = false);
             if (Raven.debug) {
@@ -253,34 +244,31 @@ public class Velocity extends Module {
         conditionals = conditionals();
 
 
-        if (delaying && !packets.isEmpty() && mode.getInput() == 4) {
+        if (delaying && !packets.isEmpty() && mode.getInput() >= 4) {
             long now = Utils.time();
             long delayv = (long) delay.getInput();
 
-            if (mode.getInput() == 4) {
+            if (mode.getInput() >= 4) {
                 while (!packets.isEmpty()) {
                     long timestamp = (Long) packets.get(0).get("time");
                     if (now - timestamp >= delayv) {
-                        flushOne();
+                        if (mode.getInput() == 4) {
+                            flushOne();
+                        }
+                        else {
+                            flushAll();
+                        }
                     } else {
                         break;
                     }
                 }
             }
 
-            if ((fb || !conditionals || mc.thePlayer.onGround || Utils.overVoid() || !containsVelocity() || !Utils.nullCheck() || ModuleManager.velocityBuffer.delaying)/* || Raven.packetsHandler.C02.sentCurrentTick.get()*/) {
+            if (mode.getInput() == 4 && ((fb || !conditionals || mc.thePlayer.onGround || Utils.overVoid() || !containsVelocity() || !Utils.nullCheck()) || ModuleManager.velocityBuffer.delaying)/* || Raven.packetsHandler.C02.sentCurrentTick.get()*/) {
                 flushAll();
             }
         }
         fb = false;
-    }
-
-    @SubscribeEvent
-    public void onPostPlayerInput(PostPlayerInputEvent e) {
-        if (canJump && mc.thePlayer.onGround) {
-            //mc.thePlayer.movementInput.jump = true;
-        }
-        canJump = false;
     }
 
     @SubscribeEvent(priority = EventPriority.NORMAL)
@@ -291,13 +279,16 @@ public class Velocity extends Module {
         if (e.getPacket() instanceof S27PacketExplosion) {
             db = 10;
         }
+        if (!delaying && e.getPacket() instanceof S08PacketPlayerPosLook) {
+            s08 = true;
+        }
         if (LongJump.stopVelocity || disableLobby.isToggled() && Utils.isLobby()) {
             return;
         }
         if (ModuleManager.velocityBuffer.delaying) {
             return;
         }
-        if (mode.getInput() == 1 || mode.getInput() == 4) {
+        if (mode.getInput() == 1 || mode.getInput() >= 4) {
             if (ModuleManager.bhop.isEnabled() && ModuleManager.bhop.damageBoost.isToggled() && ModuleUtils.firstDamage && (!ModuleManager.bhop.damageBoostRequireKey.isToggled() || ModuleManager.bhop.damageBoostKey.isPressed())) {
                 return;
             }
@@ -340,7 +331,11 @@ public class Velocity extends Module {
                 if (((S12PacketEntityVelocity) e.getPacket()).getEntityID() == mc.thePlayer.getEntityId()) {
                     S12PacketEntityVelocity s12PacketEntityVelocity = (S12PacketEntityVelocity) e.getPacket();
 
-                    if (mode.getInput() == 4) {
+                    if (mode.getInput() >= 4) {
+                        if (s08) {
+                            s08 = false;
+                            return;
+                        }
                         if (s12PacketEntityVelocity.getEntityID() == mc.thePlayer.getEntityId() && conditionals && !stopFBvelo) {
                             delaying = true;
                         }
@@ -387,6 +382,9 @@ public class Velocity extends Module {
         }
 
         if (!delaying) return;
+        if (!(e.getPacket() instanceof S12PacketEntityVelocity || e.getPacket() instanceof S32PacketConfirmTransaction || e.getPacket() instanceof S08PacketPlayerPosLook)) {
+            return;
+        }
         Map<String, Object> entry = new HashMap<>();
         entry.put("packet", e.getPacket());
         entry.put("time", Utils.time());
@@ -401,7 +399,6 @@ public class Velocity extends Module {
         if (mc.thePlayer.isCollidedHorizontally) return false;
         //if (mc.thePlayer.onGround) return false;
         if (mc.thePlayer.capabilities.isFlying) return false;
-        if (ModuleManager.bedAura.delaying) return false;
         return true;
     }
 
@@ -417,8 +414,6 @@ public class Velocity extends Module {
             flushOne();
         }
         delaying = false;
-        exp = false;
-        ovd = 0;
     }
 
     boolean containsVelocity() {

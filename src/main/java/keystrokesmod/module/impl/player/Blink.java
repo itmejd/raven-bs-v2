@@ -58,8 +58,8 @@ public class Blink extends Module {
         blink = false;
     }
 
-    @SubscribeEvent
-    public void onSendPacketAll(SendAllPacketsEvent e) {
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onSendPacket(SendPacketEvent e) {
         if (!Utils.nullCheck()) {
             return;
         }

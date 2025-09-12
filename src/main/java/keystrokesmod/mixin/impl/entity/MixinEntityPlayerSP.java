@@ -259,11 +259,24 @@ public abstract class MixinEntityPlayerSP extends AbstractClientPlayer {
         boolean flag2 = this.movementInput.moveForward >= f;
         this.movementInput.updatePlayerMoveState();
         boolean stopSprint = ModuleManager.noSlow == null || !ModuleManager.noSlow.isEnabled() || NoSlow.slowed.getInput() == 80;
-        if ((this.isUsingItem() || (ModuleManager.killAura != null && ModuleManager.killAura.isEnabled() && ModuleManager.killAura.blockingClient || ModuleManager.noSlow != null && ModuleManager.noSlow.isEnabled() && ModuleManager.noSlow.blockingClient)) && !this.isRiding()) {
+        if ((this.isUsingItem() || (ModuleManager.killAura != null && ModuleManager.killAura.isEnabled() && ModuleManager.killAura.hasBlocked || ModuleManager.noSlow != null && ModuleManager.noSlow.isEnabled() && ModuleManager.noSlow.blockingClient)) && !this.isRiding()) {
             MovementInput var10000 = this.movementInput;
             float slowed = NoSlow.getSlowed();
             if (NoSlow.requireSlow()) {
                 slowed = 0.2f;
+            }
+            if (ModuleManager.killAura != null && ModuleManager.killAura.isEnabled() && ModuleManager.killAura.blockingClient && (NoSlow.disableSword.isToggled() || !ModuleManager.noSlow.isEnabled())) {
+                if (ModuleManager.killAura.hasBlocked) {
+                    slowed = 0.2f;
+                }
+                else {
+                    if (ModuleManager.noSlow.isEnabled()) {
+                        slowed = NoSlow.getSlowed();
+                    }
+                    else {
+                        slowed = 1.0f;
+                    }
+                }
             }
             var10000.moveStrafe *= slowed;
             var10000 = this.movementInput;

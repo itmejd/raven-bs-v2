@@ -1,7 +1,6 @@
 package keystrokesmod.module.impl.other;
 
 import keystrokesmod.event.ReceivePacketEvent;
-import keystrokesmod.event.SendAllPacketsEvent;
 import keystrokesmod.event.SendPacketEvent;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.setting.impl.ButtonSetting;
@@ -11,6 +10,7 @@ import net.minecraft.event.HoverEvent;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.client.*;
 import net.minecraft.util.*;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
@@ -60,7 +60,7 @@ public class ViewPackets extends Module {
         mc.thePlayer.addChatMessage(chatComponentText);
     }
 
-    /*@SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void onSendPacket(SendPacketEvent e) {
         if (!sent.isToggled()) {
             return;
@@ -81,9 +81,9 @@ public class ViewPackets extends Module {
             return;
         }
         sendMessage(packet = e.getPacket(), false);
-    }*/
+    }
 
-    @SubscribeEvent
+    /*@SubscribeEvent
     public void onSendAllPacketsEvent(SendAllPacketsEvent e) {
         if (!sent.isToggled()) {
             return;
@@ -104,7 +104,7 @@ public class ViewPackets extends Module {
             return;
         }
         sendMessage(packet = e.getPacket(), false);
-    }
+    }*/
 
     @SubscribeEvent
     public void onReceivePacket(ReceivePacketEvent e) {

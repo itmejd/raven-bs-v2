@@ -36,7 +36,7 @@ public class LagRange extends Module {
     public SliderSetting latency;
     private SliderSetting activationDist;
     private SliderSetting hurttime;
-    private ButtonSetting ignoreTeammates, weaponOnly, forceRelease, releaseOnRod, forwardOnly;
+    private ButtonSetting ignoreTeammates, weaponOnly, forceRelease, releaseOnRod, forwardOnly, flushNearRange;
     public ButtonSetting renderTimer, initialPosition, initialPosition2;
 
     public ButtonSetting players, jumpPot, arrows;
@@ -52,6 +52,8 @@ public class LagRange extends Module {
     private boolean beganJump, beganJumpBlink, goingUp;
     private int jumpPotTimeout, arrowsTimeout, fallTicks;
     private Vec3 arrowPos;
+    private boolean nr;
+    private boolean nRange;
 
     public LagRange() {
         super("LagRange", category.combat, 0);
@@ -59,7 +61,8 @@ public class LagRange extends Module {
         this.registerSetting(players = new ButtonSetting("Players", true));
         this.registerSetting(latency = new SliderSetting("Latency", "ms", 300, 10, 500, 10));
         this.registerSetting(activationDist = new SliderSetting("Activation Distance", " blocks", 7, 0, 20, 1));
-        this.registerSetting(hurttime = new SliderSetting("Hurttime", 2, 0, 10, 1));
+        //this.registerSetting(hurttime = new SliderSetting("Hurttime", 2, 0, 10, 1));
+        this.registerSetting(flushNearRange = new ButtonSetting("Flush near range", false));
         //this.registerSetting(releaseOnRod = new ButtonSetting("Release on rod", false));
         this.registerSetting(initialPosition = new ButtonSetting("Show initial position", true));
         this.registerSetting(ignoreTeammates = new ButtonSetting("Ignore teammates", false));
@@ -84,7 +87,7 @@ public class LagRange extends Module {
         disabledJumpPot = false;
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onPreUpdate(PreUpdateEvent e) {
         disableTicks--;
         double boxSize = activationDist.getInput();
@@ -197,6 +200,17 @@ public class LagRange extends Module {
 
         a(boxSize, myPosition);
 
+        if (flushNearRange.isToggled() && nr) {
+            if (!nRange) {
+                disableTicks = 1;
+                function = false;
+                nRange = true;
+            }
+        }
+        else {
+            nRange = false;
+        }
+
         boolean correctHeldItem = !weaponOnly.isToggled();
         if (!correctHeldItem) {
             boolean holdingWeapon = false;
@@ -216,6 +230,32 @@ public class LagRange extends Module {
             startFallHeight = -Double.MAX_VALUE;
         }
         lastPosition = myPosition;
+
+
+
+
+        if ((function || functionJumpPot || functionArrows) && !(jumpPot.isToggled() && disabledJumpPot || arrows.isToggled() && disabledArrows)) {
+            if (functionJumpPot || functionArrows) {
+                delay = -1;
+            }
+            if (delay == -1) {
+                delay = Utils.time();
+                blink = true;
+            }
+            if (delay > 0 && (Utils.time() - delay) >= latency.getInput() && ModuleManager.killAura.isBlocked()) {
+                delay = -1;
+                if (blink) {
+                    BlinkHandler.release();
+                }
+            }
+        }
+        else {
+            if (blink && ModuleManager.killAura.isBlocked()) {
+                blink = false;
+                BlinkHandler.release();
+            }
+            delay = -1;
+        }
     }
 
     private void a(double boxSize, Vec3 myPosition) {
@@ -238,7 +278,8 @@ public class LagRange extends Module {
             else {
                 continue;
             }
-            double maxRange = activationDist.getInput();
+            float maxRange = (float) activationDist.getInput();
+            nr = mc.thePlayer.getDistanceToEntity(entity) <= 4.0F + 4.0F / 3;
             if (mc.thePlayer.getDistanceToEntity(entity) < maxRange + maxRange / 3) { // simple distance check
                 Vec3 position = new Vec3(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ);
                 double distanceSq = position.distanceTo(myPosition);
@@ -249,7 +290,7 @@ public class LagRange extends Module {
         }
     }
 
-    @SubscribeEvent(priority = EventPriority.HIGH)
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onSendPacket(SendPacketEvent e) {
         if (!Utils.nullCheck()) {
             return;
@@ -262,13 +303,10 @@ public class LagRange extends Module {
         }
         if (e.getPacket() instanceof C02PacketUseEntity) {
             C02PacketUseEntity c02 = (C02PacketUseEntity) e.getPacket();
-            int enemyHT = Utils.getHurttime(c02.getEntityFromWorld(mc.theWorld));
+            //int enemyHT = Utils.getHurttime(c02.getEntityFromWorld(mc.theWorld));
             if (Objects.equals(String.valueOf(c02.getAction()), "ATTACK")) {
-                if (enemyHT <= hurttime.getInput()) {
-                    disableTicks = 1;
-                    function = false;
-                    resetJumpPot();
-                    resetArrows();
+                if (blink) {
+                    BlinkHandler.release();
                 }
                 /*Vec3 ps = new Vec3(c02.getEntityFromWorld(mc.theWorld).posX, c02.getEntityFromWorld(mc.theWorld).posY, c02.getEntityFromWorld(mc.theWorld).posZ);
                 Vec3 p2 = new Vec3(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ);
@@ -276,27 +314,6 @@ public class LagRange extends Module {
 
                 }*/
             }
-        }
-    }
-
-    @SubscribeEvent
-    public void onPostMotion(PostMotionEvent e) {
-        if ((function || functionJumpPot || functionArrows) && !(jumpPot.isToggled() && disabledJumpPot || arrows.isToggled() && disabledArrows)) {
-            if (functionJumpPot || functionArrows) {
-                delay = -1;
-            }
-            if (delay == -1) {
-                delay = Utils.time();
-                blink = true;
-            }
-            if (delay > 0 && (Utils.time() - delay) >= latency.getInput()) {
-                delay = -1;
-                blink = false;
-            }
-        }
-        else {
-            blink = false;
-            delay = -1;
         }
     }
 

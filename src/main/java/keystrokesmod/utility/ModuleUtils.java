@@ -84,6 +84,8 @@ public class ModuleUtils {
 
     public static int pauseAB;
 
+    public static boolean swapped;
+
 
     //-0.0784000015258789 = ground value
 
@@ -95,64 +97,61 @@ public class ModuleUtils {
             return;
         }
         if (e.entity == mc.thePlayer) {
-            ModuleManager.disabler.disablerLoaded = false;
+            if (ModuleManager.disabler != null) {
+                ModuleManager.disabler.disablerLoaded = false;
+            }
             inAirTicks = 0;
             worldChange = true;
             worldTicks = 0;
         }
     }
+    private int sf;
 
-    @SubscribeEvent(priority = EventPriority.HIGH)
-    public void onSendPacketsAll(SendAllPacketsEvent e) {
+    @SubscribeEvent(priority = EventPriority.NORMAL)
+    public void onSendPacket(SendPacketEvent e) {
         if (!Utils.nullCheck()) {
             return;
         }
-        Packet packet = e.getPacket();
+        if (e.isCanceled()) {
+            return;
+        }
 
+        Packet p = e.getPacket();
 
-        if (packet instanceof C07PacketPlayerDigging && isBlocked) {
-            C07PacketPlayerDigging c07 = (C07PacketPlayerDigging) packet;
+        if (p instanceof C07PacketPlayerDigging && isBlocked) {
+            C07PacketPlayerDigging c07 = (C07PacketPlayerDigging) p;
             if (Objects.equals(String.valueOf(c07.getStatus()), "RELEASE_USE_ITEM")) {
                 isBlocked = false;
             }
         }
-        if (packet instanceof C09PacketHeldItemChange && isBlocked) {
+        if (p instanceof C09PacketHeldItemChange && isBlocked) {
             isBlocked = false;
         }
-        if (packet instanceof C08PacketPlayerBlockPlacement && Utils.holdingSword() && !BlockUtils.isInteractable(mc.objectMouseOver) && !isBlocked) {
+        if (p instanceof C08PacketPlayerBlockPlacement && Utils.holdingSword() && (!BlockUtils.isInteractable(mc.objectMouseOver, false) || ModuleManager.killAura.hasAutoblocked) && !isBlocked) {
             isBlocked = true;
         }
-        if (packet instanceof C02PacketUseEntity) {
-            C02PacketUseEntity c02 = (C02PacketUseEntity) packet;
+        if (p instanceof C02PacketUseEntity) {
+            C02PacketUseEntity c02 = (C02PacketUseEntity) p;
             if (Objects.equals(String.valueOf(c02.getAction()), "ATTACK")) {
                 hasAttacked = true;
             }
             isAttacking = true;
             attackingTicks = 5;
         }
-        if (packet instanceof C0APacketAnimation) {
+        if (p instanceof C0APacketAnimation) {
             isSwinging = true;
             swingingTicks = 5;
         }
 
 
         if (e.getPacket() instanceof C07PacketPlayerDigging) {
-            C07PacketPlayerDigging c07 = (C07PacketPlayerDigging) packet;
+            C07PacketPlayerDigging c07 = (C07PacketPlayerDigging) p;
             if (Objects.equals(String.valueOf(c07.getStatus()), "START_DESTROY_BLOCK")) {
                 isBreaking = true;
             }
             if (Objects.equals(String.valueOf(c07.getStatus()), "ABORT_DESTROY_BLOCK") || Objects.equals(String.valueOf(c07.getStatus()), "STOP_DESTROY_BLOCK")) {
                 isBreaking = false;
             }
-        }
-    }
-
-    private int sf;
-
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public void onSendPacket(SendPacketEvent e) {
-        if (!Utils.nullCheck()) {
-            return;
         }
 
         if (e.getPacket() instanceof C08PacketPlayerBlockPlacement) {
@@ -200,9 +199,6 @@ public class ModuleUtils {
         if (!Utils.nullCheck()) {
             return;
         }
-        if (e.isCanceled()) {
-            return;
-        }
         if (e.getPacket() instanceof S27PacketExplosion) {
             firstDamage = false;
 
@@ -223,7 +219,7 @@ public class ModuleUtils {
 
             }
         }
-        if (mc.thePlayer.ticksExisted >= 6 && mc.thePlayer != null && e.getPacket() instanceof S08PacketPlayerPosLook) {
+        if (mc.thePlayer.ticksExisted >= 6 && e.getPacket() instanceof S08PacketPlayerPosLook) {
             hasTeleported = true;
             htpt = 2;
         }
@@ -236,6 +232,8 @@ public class ModuleUtils {
         if (!Utils.nullCheck()) {
             return;
         }
+
+        swapped = false;
 
         hasAttacked = false;
 
@@ -305,13 +303,6 @@ public class ModuleUtils {
         }
         if (beginNoJumpTicks) {
             noJumpTicks++;
-        }
-
-        if (ModuleManager.bedAura.delayTicks > -1) {
-            if (ModuleManager.bedAura.delayTicks++ >= 4) {
-                ModuleManager.bedAura.delayTicks = -1;
-                ModuleManager.bedAura.shouldDelay = false;
-            }
         }
 
         if (manualSlot > 0) {

@@ -102,7 +102,7 @@ public class NoSlow extends Module {
         if (sword.getInput() == 2 && Utils.tabbedIn() && !ModuleManager.killAura.blockingClient) {
             if (e.button == 1) {
                 EntityLivingBase g = Utils.raytrace(4);
-                if (Utils.holdingSword() && g == null && !BlockUtils.isInteractable(mc.objectMouseOver)) {
+                if (Utils.holdingSword() && g == null && !BlockUtils.isInteractable(mc.objectMouseOver, false)) {
                     e.setCanceled(true);
                 }
             }
@@ -115,7 +115,7 @@ public class NoSlow extends Module {
         boolean apply = getSlowed() != 0.2f;
         EntityLivingBase g = Utils.raytrace(4);
         if (sword.getInput() == 2) {
-            if (Utils.holdingSword() && g == null && !BlockUtils.isInteractable(mc.objectMouseOver)) {
+            if (Utils.holdingSword() && g == null && !BlockUtils.isInteractable(mc.objectMouseOver, false)) {
                 KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
             }
         }
@@ -126,13 +126,13 @@ public class NoSlow extends Module {
             ReflectionUtils.setItemInUse(blockingClient = false);
         }
         if (sword.getInput() == 2) {
-            if (blocking && (g == null && !BlockUtils.isInteractable(mc.objectMouseOver) || !Utils.holdingSword() && !Utils.keybinds.isMouseDown(1) || !Utils.tabbedIn())) {
+            if (blocking && (g == null && !BlockUtils.isInteractable(mc.objectMouseOver, false) || !Utils.holdingSword() && !Utils.keybinds.isMouseDown(1) || !Utils.tabbedIn())) {
                 KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
                 blocking = false;
                 hasClicked = false;
             }
             if (Utils.holdingSword()) {
-                if (g == null && !BlockUtils.isInteractable(mc.objectMouseOver)) {
+                if (g == null && !BlockUtils.isInteractable(mc.objectMouseOver, false)) {
                     cantBlock = true;
 
                     if (Utils.tabbedIn() && Mouse.isButtonDown(1)) {
@@ -279,7 +279,7 @@ public class NoSlow extends Module {
         if (mode.getInput() != 4) {
             return;
         }
-        if (!apply || fix || didC || !holdingUsable() || canFloat || jumped || BlockUtils.isInteractable(mc.objectMouseOver) || md) {
+        if (!apply || fix || didC || !holdingUsable() || canFloat || jumped || BlockUtils.isInteractable(mc.objectMouseOver, false) || md) {
             return;
         }
         if (mc.thePlayer.onGround) {
@@ -337,10 +337,7 @@ public class NoSlow extends Module {
             else if (fix && !(mc.thePlayer.getHeldItem().getItem() instanceof ItemSword)) {
                 return 0.2f;
             }
-            else if (!ModuleManager.killAura.hasAutoblocked && mc.thePlayer.getHeldItem().getItem() instanceof ItemSword && autoblockOnly.isToggled() && !(sword.getInput() == 2 && !hasClicked)) {
-                return 0.2f;
-            }
-            else if (ModuleManager.killAura.autoBlockMode.getInput() == 7 && mc.thePlayer.getHeldItem().getItem() instanceof ItemSword && ModuleManager.killAura.hasBlocked) {
+            else if (mc.thePlayer.getHeldItem().getItem() instanceof ItemSword && autoblockOnly.isToggled() && !ModuleManager.killAura.hasAutoblocked && !(sword.getInput() == 2 && hasClicked)) {
                 return 0.2f;
             }
         }

@@ -24,6 +24,7 @@ public class VelocityBuffer extends Module {
     private List<Map<String, Object>> packets = new ArrayList<>();
     public boolean delaying = false;
     private int timeout = 0;
+    private boolean s08;
 
 
     public VelocityBuffer() {
@@ -41,23 +42,29 @@ public class VelocityBuffer extends Module {
         if (!Utils.nullCheck()) {
             return;
         }
-        if (e.getPacket() instanceof S12PacketEntityVelocity) {
-            if (((S12PacketEntityVelocity) e.getPacket()).getEntityID() == mc.thePlayer.getEntityId()) {
-                S12PacketEntityVelocity s12PacketEntityVelocity = (S12PacketEntityVelocity) e.getPacket();
+        Packet p = e.getPacket();
+        if (!delaying && p instanceof S08PacketPlayerPosLook) {
+            s08 = true;
+        }
+        if (p instanceof S12PacketEntityVelocity) {
+            if (((S12PacketEntityVelocity) p).getEntityID() == mc.thePlayer.getEntityId()) {
+                S12PacketEntityVelocity s12 = (S12PacketEntityVelocity) p;
 
-                if (s12PacketEntityVelocity.getEntityID() == mc.thePlayer.getEntityId()) {
+                if (s08) {
+                    s08 = false;
+                    return;
+                }
+                if (s12.getEntityID() == mc.thePlayer.getEntityId()) {
                     delaying = true;
                 }
             }
         }
 
-
-        Packet p = e.getPacket();
-        if (!delaying || !(p instanceof S12PacketEntityVelocity || p instanceof S32PacketConfirmTransaction)) {
+        if (!delaying || !(p instanceof S12PacketEntityVelocity || p instanceof S32PacketConfirmTransaction || p instanceof S08PacketPlayerPosLook)) {
             return;
         }
         Map<String, Object> entry = new HashMap<>();
-        entry.put("packet", e.getPacket());
+        entry.put("packet", p);
         entry.put("time", Utils.time());
         synchronized (packets) {
             packets.add(entry);
@@ -67,10 +74,11 @@ public class VelocityBuffer extends Module {
 
     @SubscribeEvent(priority = EventPriority.NORMAL)
     public void onPostMotion(PostMotionEvent e) {
-        if (delaying && ++timeout >= 1000) {
+        if (delaying && ++timeout >= 300) {
             flush();
             Utils.modulePrint("&cVelocityBuffer timed out.");
         }
+        s08 = false;
     }
 
     @SubscribeEvent

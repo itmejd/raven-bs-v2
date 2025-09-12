@@ -10,6 +10,7 @@ import net.minecraft.init.Blocks;
 import net.minecraft.item.EnumDyeColor;
 import net.minecraft.item.ItemStack;
 import net.minecraft.potion.Potion;
+import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.util.Vec3;
@@ -29,6 +30,9 @@ public class BlockUtils {
         return block == Blocks.glass || (block.isFullBlock() && block != Blocks.gravel && block != Blocks.sand && block != Blocks.soul_sand && block != Blocks.tnt && block != Blocks.crafting_table && block != Blocks.furnace && block != Blocks.dispenser && block != Blocks.dropper && block != Blocks.noteblock && block != Blocks.command_block);
     }
 
+    public static AxisAlignedBB getAABB(BlockPos blockPos) {
+        return getBlockState(blockPos).getBlock().getCollisionBoundingBox(mc.theWorld, blockPos, getBlockState(blockPos));
+    }
 
     public static BlockPos pos(final double x, final double y, final double z) {
         return new BlockPos(x, y, z);
@@ -54,11 +58,11 @@ public class BlockUtils {
         return block instanceof BlockChest || block instanceof BlockEnderChest;
     }
 
-    public static boolean isInteractable(MovingObjectPosition mv) {
+    public static boolean isInteractable(MovingObjectPosition mv, boolean checkSneaking) {
         if (mv == null || mv.typeOfHit != MovingObjectPosition.MovingObjectType.BLOCK || mv.getBlockPos() == null) {
             return false;
         }
-        if (!mc.thePlayer.isSneaking() || mc.thePlayer.getHeldItem() == null) {
+        if (!checkSneaking || (!mc.thePlayer.isSneaking() || mc.thePlayer.getHeldItem() == null)) {
             return isInteractable(BlockUtils.getBlock(mv.getBlockPos()));
         }
         return false;

@@ -1,6 +1,6 @@
 package keystrokesmod.module.impl.other;
 
-import keystrokesmod.event.SendAllPacketsEvent;
+import keystrokesmod.event.SendPacketEvent;
 import keystrokesmod.module.Module;
 import keystrokesmod.module.setting.impl.ButtonSetting;
 import keystrokesmod.utility.BlockUtils;
@@ -14,6 +14,7 @@ import net.minecraft.init.Blocks;
 import net.minecraft.network.play.client.*;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.MovingObjectPosition;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
@@ -125,8 +126,8 @@ public class DebugAC extends Module {
         }
     }
 
-    @SubscribeEvent
-    public void onAllPacketSent(SendAllPacketsEvent e) {
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public void onSendPacket(SendPacketEvent e) {
         if (e.getPacket() instanceof C03PacketPlayer) {
             lastC03 = System.currentTimeMillis();
         }

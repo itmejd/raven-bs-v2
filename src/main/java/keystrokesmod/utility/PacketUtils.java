@@ -5,10 +5,12 @@ import net.minecraft.network.Packet;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class PacketUtils {
     public static List<Packet> skipSendEvent = new ArrayList<>();
     public static List<Packet> skipReceiveEvent = new ArrayList<>();
+    public static Packet noEventPacket;
 
     public static void sendPacketNoEvent(Packet packet) {
         if (packet == null || packet.getClass().getSimpleName().startsWith("S")) {
@@ -16,6 +18,7 @@ public class PacketUtils {
         }
         skipSendEvent.add(packet);
         Raven.mc.thePlayer.sendQueue.addToSendQueue(packet);
+        noEventPacket = packet;
     }
 
     public static void receivePacketNoEvent(Packet packet) {

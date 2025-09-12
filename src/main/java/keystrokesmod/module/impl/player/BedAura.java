@@ -72,11 +72,7 @@ public class BedAura extends Module {
     private boolean ra;
     public boolean shouldUnblock;
     public int stopKaTicks;
-    private List<Map<String, Object>> packets = new ArrayList<>();
-    public boolean delaying;
-    public boolean shouldDelay = false;
-    public int delayTicks = -1;
-    private boolean d, setSlot;
+    private boolean setSlot;
 
     public BedAura() {
         super("BedAura", category.player, 0);
@@ -107,9 +103,6 @@ public class BedAura extends Module {
         reset(true, true);
         bedPos = null;
         ra = false;
-        delayTicks = -1;
-        flushAll();
-        shouldDelay = false;
     }
 
     @SubscribeEvent
@@ -220,8 +213,6 @@ public class BedAura extends Module {
     public void onPreUpdate(PreUpdateEvent e) {
         if (startPacket) {
             mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.START_DESTROY_BLOCK, packetPos, EnumFacing.UP));
-            shouldDelay = true;
-            delayTicks = -1;
             swing();
             if (Raven.debug) {
                 Utils.sendModuleMessage(this, "sending c07 &astart &7break &7(&b" + mc.thePlayer.ticksExisted + "&7)");
@@ -233,8 +224,6 @@ public class BedAura extends Module {
             if (Raven.debug) {
                 Utils.sendModuleMessage(this, "sending c07 &cstop &7break &7(&b" + mc.thePlayer.ticksExisted + "&7)");
             }
-            delayTicks = 0;
-            d = true;
 
         }
         if (isBreaking && !startPacket && !stopPacket) {
@@ -244,85 +233,33 @@ public class BedAura extends Module {
         startPacket = stopPacket = false;
     }
 
-    @SubscribeEvent
-    public void onReceivePacket(ReceivePacketEvent e) {
-        if (!Utils.nullCheck() || !shouldDelay) {
-            return;
+    private void reset(boolean resetSlot, boolean stopAutoblock) {
+        if (resetSlot && setSlot) {
+            resetSlot();
+            setSlot = false;
         }
-        if (e.getPacket() instanceof S27PacketExplosion) {
-            delaying = true;
+        breakProgress = 0;
+        breakProgressMap.clear();
+        lastSlot = -1;
+        vanillaProgress = 0;
+        lastProgress = 0;
+        if (stopAutoblock) {
+            this.stopAutoblock = false;
         }
-        if (e.getPacket() instanceof S12PacketEntityVelocity) {
-            if (((S12PacketEntityVelocity) e.getPacket()).getEntityID() == mc.thePlayer.getEntityId()) {
-                S12PacketEntityVelocity s12PacketEntityVelocity = (S12PacketEntityVelocity) e.getPacket();
-
-                if (s12PacketEntityVelocity.getEntityID() == mc.thePlayer.getEntityId()) {
-                    delaying = true;
-                }
-            }
+        rotateLastBlock = null;
+        firstStop = false;
+        if (isBreaking) {
+            ModuleUtils.isBreaking = false;
+            isBreaking = false;
+            mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.ABORT_DESTROY_BLOCK, BlockPos.ORIGIN, EnumFacing.UP));
+            ModuleUtils.pauseAB = 2;
         }
-
-        if (!delaying) return;
-        Map<String, Object> entry = new HashMap<>();
-        entry.put("packet", e.getPacket());
-        entry.put("time", Utils.time());
-        synchronized (packets) {
-            packets.add(entry);
-        }
-        e.setCanceled(true);
-    }
-
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public void onPostMotion(PostMotionEvent e) {
-        if (!Utils.nullCheck()) {
-            return;
-        }
-
-        if (!packets.isEmpty()) {
-
-            long now = Utils.time();
-            long delayv = 700;
-
-            while (!packets.isEmpty()) {
-                long timestamp = (Long) packets.get(0).get("time");
-                if (now - timestamp >= delayv) {
-                    flushOne();
-                } else {
-                    break;
-                }
-            }
-
-
-            if (d || !shouldDelay || !containsVelocity()) {
-                flushAll();
-            }
-        }
-        d = false;
-    }
-
-    void flushOne() {
-        synchronized (packets) {
-            Map<String, Object> entry = packets.remove(0);
-            PacketUtils.receivePacketNoEvent((Packet) entry.get("packet"));
-        }
-    }
-
-    void flushAll() {
-        while (!packets.isEmpty()) {
-            flushOne();
-        }
-        delaying = false;
-    }
-
-    boolean containsVelocity() {
-        synchronized(packets) {
-            int id = mc.thePlayer.getEntityId();
-            for (Map<String, Object> entry : packets) {
-                Packet p = (Packet) entry.get("packet");
-                if (p instanceof S12PacketEntityVelocity && ((S12PacketEntityVelocity) p).getEntityID() == id) return true;
-            }
-        }
-        return false;
+        breakTick = false;
+        currentBlock = null;
+        nearestBlock = null;
+        ignoreSlow = false;
+        delayStop = false;
+        shouldUnblock = false;
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -363,6 +300,9 @@ public class BedAura extends Module {
                         float fov = (float) this.fov.getInput();
                         if (fov != 360 && !Utils.inFov(fov, blockPos)) {
                             continue priority;
+                        }
+                        if (mc.thePlayer.posY - blockPos.getY() > 3) {
+                            return null;
                         }
                         return new BlockPos[]{blockPos, blockPos.offset((EnumFacing) getBlockState.getValue((IProperty) BlockBed.FACING))};
                     }
@@ -458,39 +398,6 @@ public class BedAura extends Module {
         }
 
         return efficiency;
-    }
-
-    private void reset(boolean resetSlot, boolean stopAutoblock) {
-        if (resetSlot && setSlot) {
-            resetSlot();
-            setSlot = false;
-        }
-        breakProgress = 0;
-        breakProgressMap.clear();
-        lastSlot = -1;
-        vanillaProgress = 0;
-        lastProgress = 0;
-        if (stopAutoblock) {
-            this.stopAutoblock = false;
-        }
-        rotateLastBlock = null;
-        firstStop = false;
-        if (isBreaking) {
-            ModuleUtils.isBreaking = false;
-            isBreaking = false;
-            mc.thePlayer.sendQueue.addToSendQueue(new C07PacketPlayerDigging(C07PacketPlayerDigging.Action.ABORT_DESTROY_BLOCK, BlockPos.ORIGIN, EnumFacing.UP));
-            ModuleUtils.pauseAB = 2;
-        }
-        breakTick = false;
-        currentBlock = null;
-        nearestBlock = null;
-        ignoreSlow = false;
-        delayStop = false;
-        shouldUnblock = false;
-        if (shouldDelay && delayTicks == -1) {
-            shouldDelay = false;
-        }
-        d = false;
     }
 
     public void setPacketSlot(int slot) {

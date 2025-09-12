@@ -15,12 +15,11 @@ import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.network.Packet;
 import net.minecraft.network.handshake.client.C00Handshake;
 import net.minecraft.network.login.client.C00PacketLoginStart;
-import net.minecraft.network.play.client.C03PacketPlayer;
-import net.minecraft.network.play.client.C07PacketPlayerDigging;
-import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
-import net.minecraft.network.play.client.C0BPacketEntityAction;
+import net.minecraft.network.play.client.*;
 import net.minecraft.network.play.server.S12PacketEntityVelocity;
 import net.minecraft.network.play.server.S27PacketExplosion;
+import net.minecraft.network.status.client.C00PacketServerQuery;
+import net.minecraft.network.status.client.C01PacketPing;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.Vec3;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
@@ -48,43 +47,34 @@ public class BlinkHandler {
     static boolean active;
     public static int blinkTicks;
     private int color = new Color(0, 187, 255, 255).getRGB();
-    private Vec3 bPos;
+    private static Vec3 bPos;
     public static boolean released;
-    private List<Map<String, Object>> packets = new ArrayList<>();
-    private boolean delaying;
 
+    public static int a1;
     public static boolean blinkModule() {
+        a1 = 0;
         if (ModuleManager.antiVoid != null && ModuleManager.antiVoid.isEnabled() && ModuleManager.antiVoid.blink) {
-            return true;
+            a1++;
         }
         if (ModuleManager.blink != null && ModuleManager.blink.isEnabled() && ModuleManager.blink.blink) {
-            return true;
+            a1++;
         }
         if (ModuleManager.noFall != null && ModuleManager.noFall.isEnabled() && ModuleManager.noFall.mode.getInput() == 5 && ModuleManager.noFall.blink) {
-            return true;
+            a1++;
         }
         if (ModuleManager.noSlow != null && ModuleManager.noSlow.isEnabled() && NoSlow.mode.getInput() == 5 && ModuleManager.noSlow.blink) {
-            return true;
+            a1++;
         }
         if (ModuleManager.killAura != null && ModuleManager.killAura.isEnabled() && ModuleManager.killAura.blink) {
-            return true;
+            a1++;
         }
         if (ModuleManager.scaffold != null && ModuleManager.scaffold.isEnabled && ModuleManager.scaffold.blink) {
-            return true;
-        }
-        if (ModuleManager.tower != null && ModuleManager.tower.canTower() && ModuleManager.tower.blink) {
-            return true;
-        }
-        if (ModuleManager.velocity != null && ModuleManager.velocity.isEnabled() && ModuleManager.velocity.blink) {
-            return true;
+            a1++;
         }
         if (ModuleManager.lagRange != null && ModuleManager.lagRange.isEnabled() && ModuleManager.lagRange.blink) {
-            return true;
+            a1++;
         }
-        if (ModuleManager.momentum != null && ModuleManager.momentum.isEnabled() && ModuleManager.momentum.blink) {
-            return true;
-        }
-        return false;
+        return a1 > 0;
     }
 
     public static boolean renderTimer() {
@@ -100,9 +90,6 @@ public class BlinkHandler {
         if (ModuleManager.noSlow != null && ModuleManager.noSlow.isEnabled() && ModuleManager.noSlow.blink && NoSlow.mode.getInput() == 5 && ModuleManager.noSlow.renderTimer.isToggled()) {
             return true;
         }
-        if (ModuleManager.momentum != null && ModuleManager.momentum.isEnabled() && ModuleManager.momentum.blink && ModuleManager.momentum.renderTimer.isToggled()) {
-            return true;
-        }
         return false;
     }
 
@@ -116,52 +103,7 @@ public class BlinkHandler {
         return false;
     }
 
-    /*@SubscribeEvent(priority = EventPriority.LOWEST)
-    public void onReceivePacket(ReceivePacketEvent e) {
-        if (!Utils.nullCheck()) {
-            return;
-        }
-
-
-        if (!delaying) return;
-        Map<String, Object> entry = new HashMap<>();
-        entry.put("packet", e.getPacket());
-        entry.put("time", Utils.time());
-        synchronized (packets) {
-            packets.add(entry);
-        }
-        e.setCanceled(true);
-    }
-
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public void onPostMotion(PostMotionEvent e) {
-        if (!Utils.nullCheck()) {
-            return;
-        }
-
-        if (!Sactive || sBlinkModule()) {
-            return;
-        }
-
-        if (packets.isEmpty()) return;
-
-        long now = Utils.time();
-
-        while (!packets.isEmpty()) {
-            long timestamp = (Long) packets.get(0).get("time");
-            if () {
-                flushOne();
-            } else {
-                break;
-            }
-        }
-
-        if (!containsVelocity()) {
-            flushAll();
-        }
-    }*/
-
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    @SubscribeEvent(priority = EventPriority.LOW)
     public void onPreUpdate(PreUpdateEvent e) {
         if (!Utils.nullCheck()) {
             return;
@@ -177,10 +119,10 @@ public class BlinkHandler {
         if (!active || blinkModule()) {
             return;
         }
-        release();
+        releaseAll();
     }
 
-    public static void release() {
+    public static void releaseAll() {
         if (blinkedPackets.isEmpty()) {
             return;
         }
@@ -197,9 +139,24 @@ public class BlinkHandler {
         blinkedPackets.clear();
         blinkTicks = 0;
         released = true;
+        bPos = new Vec3(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ);
         if (!blinkModule()) {
             active = false;
         }
+    }
+
+    public static boolean exceptions() {
+        if (blinkModule() && a1 == 2 && (ModuleManager.killAura != null && ModuleManager.killAura.isEnabled() && ModuleManager.killAura.blink && ModuleManager.lagRange != null && ModuleManager.lagRange.isEnabled() && ModuleManager.lagRange.blink)) {
+            return true;
+        }
+        return false;
+    }
+
+    public static void release() {
+        if (blinkModule() && a1 > 1 && !exceptions()) {
+            return;
+        }
+        releaseAll();
     }
 
     @SubscribeEvent
@@ -207,15 +164,22 @@ public class BlinkHandler {
         released = false;
     }
 
-    @SubscribeEvent(priority = EventPriority.LOWEST)
+    @SubscribeEvent(priority = EventPriority.LOW)
     public void onSendPacket(SendPacketEvent e) {
-        if (!Utils.nullCheck() || mc.isSingleplayer() || e.getPacket().getClass().getSimpleName().startsWith("S") || e.getPacket() instanceof C00PacketLoginStart || e.getPacket() instanceof C00Handshake) {
+        if (!Utils.nullCheck() || mc.isSingleplayer()) {
             return;
         }
+        Packet p = e.getPacket();
         if (blinkModule()) {
             active = true;
         }
         if (active) {
+            if (p instanceof C00PacketLoginStart || p instanceof C00Handshake || p instanceof C01PacketPing || p instanceof C00PacketServerQuery || p instanceof C00PacketKeepAlive) {
+                return;
+            }
+            if (!(p instanceof C03PacketPlayer || p instanceof C13PacketPlayerAbilities || p instanceof C0EPacketClickWindow || p instanceof C0DPacketCloseWindow || p instanceof C0FPacketConfirmTransaction || p instanceof C0BPacketEntityAction || p instanceof C08PacketPlayerBlockPlacement || p instanceof C09PacketHeldItemChange || p instanceof C07PacketPlayerDigging || p instanceof C02PacketUseEntity || p instanceof C0APacketAnimation)) {
+                Utils.print(e.getPacket());
+            }
             blinkedPackets.add(e.getPacket());
             e.setCanceled(true);
         }
@@ -236,7 +200,7 @@ public class BlinkHandler {
 
     @SubscribeEvent
     public void onRenderWorld(RenderWorldLastEvent e) {
-        if (!Utils.nullCheck() || bPos == null || !renderBox() || !blinkModule()) {
+        if (!Utils.nullCheck() || bPos == null || !renderBox() || !blinkModule() || mc.gameSettings.thirdPersonView == 0) {
             return;
         }
         drawBox(bPos);
