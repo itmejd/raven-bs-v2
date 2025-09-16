@@ -4,8 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="371fdaac-49d2-42c5-a655-54882c949de7" name="Changes" comment="latest">
-      <change beforePath="$PROJECT_DIR$/.gradle/8.8/checksums/checksums.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.8/checksums/checksums.lock" afterDir="false" />
+    <list default="true" id="371fdaac-49d2-42c5-a655-54882c949de7" name="Changes" comment="legit autoswap, scaffold &amp; ka manual block fixes 2">
       <change beforePath="$PROJECT_DIR$/.gradle/8.8/executionHistory/executionHistory.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.8/executionHistory/executionHistory.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.8/executionHistory/executionHistory.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.8/executionHistory/executionHistory.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.8/fileHashes/fileHashes.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.8/fileHashes/fileHashes.bin" afterDir="false" />
@@ -14,24 +13,36 @@
       <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/file-system.probe" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/file-system.probe" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/mixin/impl/network/MixinNetworkManager.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/mixin/impl/network/MixinNetworkManager.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/mixin/impl/entity/MixinEntityPlayerSP.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/mixin/impl/entity/MixinEntityPlayerSP.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/KillAura$KillAuraTarget.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/KillAura$KillAuraTarget.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/KillAura.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/KillAura.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/NoFall.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/NoFall.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Scaffold$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Scaffold$1.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Scaffold$PlaceData.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Scaffold$PlaceData.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Scaffold.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Scaffold.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/BadPacketHandler.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/BadPacketHandler.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/ModuleUtils.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/ModuleUtils.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/BadPacketHandler.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/BlinkHandler.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/BlockUtils.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/Commands.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/ModuleUtils.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/NetworkUtils.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/ProfileUtils$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/ProfileUtils.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/RandomUtils.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/ReflectionUtils.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/RenderUtils.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/RotationUtils$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/RotationUtils.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/Theme.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/Utils$keybinds.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/Utils.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/shader/BlurUtils.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/shader/KawaseBloom.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/shader/KawaseBlur.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/shader/RoundedUtils.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/shader/ShaderUtils.class" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/build/intermediates/raven-bS-997-non-obfuscated-with-deps.jar" beforeDir="false" afterPath="$PROJECT_DIR$/build/intermediates/raven-bS-997-non-obfuscated-with-deps.jar" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/intermediates/raven-bS-997-without-deps.jar" beforeDir="false" afterPath="$PROJECT_DIR$/build/intermediates/raven-bS-997-without-deps.jar" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/tmp/compileJava/previous-compilation-data.bin" beforeDir="false" afterPath="$PROJECT_DIR$/build/tmp/compileJava/previous-compilation-data.bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/mixin/impl/network/MixinNetworkManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/mixin/impl/network/MixinNetworkManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/mixin/impl/entity/MixinEntityPlayerSP.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/mixin/impl/entity/MixinEntityPlayerSP.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/combat/KillAura.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/combat/KillAura.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/NoFall.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/NoFall.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/Scaffold.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/Scaffold.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/BadPacketHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/BadPacketHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/ModuleUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/ModuleUtils.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/BlinkHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/BlinkHandler.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -208,22 +219,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1736536952705</updated>
-    </task>
-    <task id="LOCAL-00030" summary="t">
-      <option name="closed" value="true" />
-      <created>1738519138860</created>
-      <option name="number" value="00030" />
-      <option name="presentableId" value="LOCAL-00030" />
-      <option name="project" value="LOCAL" />
-      <updated>1738519138860</updated>
-    </task>
-    <task id="LOCAL-00031" summary="t">
-      <option name="closed" value="true" />
-      <created>1738584403655</created>
-      <option name="number" value="00031" />
-      <option name="presentableId" value="LOCAL-00031" />
-      <option name="project" value="LOCAL" />
-      <updated>1738584403655</updated>
     </task>
     <task id="LOCAL-00032" summary="t">
       <option name="closed" value="true" />
@@ -601,7 +596,23 @@
       <option name="project" value="LOCAL" />
       <updated>1757709853035</updated>
     </task>
-    <option name="localTasksCounter" value="79" />
+    <task id="LOCAL-00079" summary="legit autoswap, scaffold &amp; ka manual block fixes">
+      <option name="closed" value="true" />
+      <created>1757991448913</created>
+      <option name="number" value="00079" />
+      <option name="presentableId" value="LOCAL-00079" />
+      <option name="project" value="LOCAL" />
+      <updated>1757991448913</updated>
+    </task>
+    <task id="LOCAL-00080" summary="legit autoswap, scaffold &amp; ka manual block fixes 2">
+      <option name="closed" value="true" />
+      <created>1757991477735</created>
+      <option name="number" value="00080" />
+      <option name="presentableId" value="LOCAL-00080" />
+      <option name="project" value="LOCAL" />
+      <updated>1757991477736</updated>
+    </task>
+    <option name="localTasksCounter" value="81" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -638,7 +649,9 @@
     <MESSAGE value="Test 3" />
     <MESSAGE value="weird 00 bypass, autotool ignore chests option &amp; cleaned up some of the modules" />
     <MESSAGE value="latest" />
-    <option name="LAST_COMMIT_MESSAGE" value="latest" />
+    <MESSAGE value="legit autoswap, scaffold &amp; ka manual block fixes" />
+    <MESSAGE value="legit autoswap, scaffold &amp; ka manual block fixes 2" />
+    <option name="LAST_COMMIT_MESSAGE" value="legit autoswap, scaffold &amp; ka manual block fixes 2" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

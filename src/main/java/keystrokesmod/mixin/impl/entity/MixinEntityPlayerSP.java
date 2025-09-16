@@ -299,11 +299,11 @@ public abstract class MixinEntityPlayerSP extends AbstractClientPlayer {
             }
         }
 
-        if (!this.isSprinting() && this.mc.gameSettings.keyBindSprint.isKeyDown() && (this.movementInput.moveForward != 0 || this.movementInput.moveStrafe != 0) && (ModuleManager.sprint.omniSprint() || this.movementInput.moveForward >= f && flag3) && (!(this.isUsingItem() || mc.thePlayer.isBlocking()) || !stopSprint) && !this.isPotionActive(Potion.blindness)) {
+        if (!this.isSprinting() && this.mc.gameSettings.keyBindSprint.isKeyDown() && (this.movementInput.moveForward != 0 || this.movementInput.moveStrafe != 0) && (ModuleManager.sprint.omniSprint() || this.movementInput.moveForward >= f && flag3) && (!(this.isUsingItem() || mc.thePlayer.isBlocking() || ModuleManager.killAura.hasBlocked) || !stopSprint) && !this.isPotionActive(Potion.blindness)) {
             this.setSprinting(true);
         }
 
-        if (this.isSprinting() && (!ModuleManager.sprint.omniSprint() && (this.movementInput.moveForward < f || !flag3)) || this.isCollidedHorizontally || ModuleManager.sprint.disableBackwards() || ModuleUtils.setSlow || (this.movementInput.moveForward == 0 && this.movementInput.moveStrafe == 0) || this.mc.gameSettings.keyBindSneak.isKeyDown() || ModuleManager.tower.towerMove.getInput() == 0 && ModuleManager.tower.canTower() || ModuleManager.scaffold != null && ModuleManager.scaffold.isEnabled && !ModuleManager.scaffold.sprint() || (ModuleManager.wTap.isEnabled() && WTap.stopSprint) || ModuleManager.sprint.isEnabled() && ModuleManager.sprint.omniDirectional.getInput() > 0 && !ModuleManager.sprint.omniSprint()) {
+        if (this.isSprinting() && ((!ModuleManager.sprint.omniSprint() && (this.movementInput.moveForward < f || !flag3)) || this.isCollidedHorizontally || ModuleManager.sprint.disableBackwards() || ModuleUtils.setSlow || (this.movementInput.moveForward == 0 && this.movementInput.moveStrafe == 0) || this.mc.gameSettings.keyBindSneak.isKeyDown() || ModuleManager.tower.towerMove.getInput() == 0 && ModuleManager.tower.canTower() || ModuleManager.scaffold != null && ModuleManager.scaffold.isEnabled && !ModuleManager.scaffold.sprint() || (ModuleManager.wTap.isEnabled() && WTap.stopSprint) || ModuleManager.sprint.isEnabled() && ModuleManager.sprint.omniDirectional.getInput() > 0 && !ModuleManager.sprint.omniSprint() || ModuleManager.killAura.hasBlocked)) {
             this.setSprinting(false);
             WTap.stopSprint = false;
         }

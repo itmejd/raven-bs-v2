@@ -27,6 +27,7 @@ import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import net.minecraftforge.fml.common.network.internal.FMLProxyPacket;
 import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
@@ -174,10 +175,10 @@ public class BlinkHandler {
             active = true;
         }
         if (active) {
-            if (p instanceof C00PacketLoginStart || p instanceof C00Handshake || p instanceof C01PacketPing || p instanceof C00PacketServerQuery || p instanceof C00PacketKeepAlive) {
+            if (p instanceof C00PacketLoginStart || p instanceof FMLProxyPacket || p instanceof C15PacketClientSettings || p instanceof C17PacketCustomPayload || p instanceof C00Handshake || p instanceof C01PacketPing || p instanceof C00PacketServerQuery || p instanceof C00PacketKeepAlive) {
                 return;
             }
-            if (!(p instanceof C03PacketPlayer || p instanceof C13PacketPlayerAbilities || p instanceof C0EPacketClickWindow || p instanceof C0DPacketCloseWindow || p instanceof C0FPacketConfirmTransaction || p instanceof C0BPacketEntityAction || p instanceof C08PacketPlayerBlockPlacement || p instanceof C09PacketHeldItemChange || p instanceof C07PacketPlayerDigging || p instanceof C02PacketUseEntity || p instanceof C0APacketAnimation)) {
+            if (!(p instanceof C03PacketPlayer || p instanceof C01PacketChatMessage || p instanceof C13PacketPlayerAbilities || p instanceof C0EPacketClickWindow || p instanceof C0DPacketCloseWindow || p instanceof C0FPacketConfirmTransaction || p instanceof C0BPacketEntityAction || p instanceof C08PacketPlayerBlockPlacement || p instanceof C09PacketHeldItemChange || p instanceof C07PacketPlayerDigging || p instanceof C02PacketUseEntity || p instanceof C0APacketAnimation)) {
                 Utils.print(e.getPacket());
             }
             blinkedPackets.add(e.getPacket());

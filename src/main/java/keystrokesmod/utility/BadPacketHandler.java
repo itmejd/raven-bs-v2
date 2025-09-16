@@ -31,6 +31,8 @@ public class BadPacketHandler {
 
     private boolean isBlocked;
 
+    private boolean j = false;
+
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onWorldJoin(EntityJoinWorldEvent e) {
         if (!Utils.nullCheck()) {
@@ -38,6 +40,14 @@ public class BadPacketHandler {
         }
         if (e.entity == mc.thePlayer) {
             playerSlot.set(-1);
+        }
+    }
+
+    @SubscribeEvent
+    public void onPreUpdate(PreUpdateEvent e) {
+        if (!j) {
+            mc.thePlayer.ticksExisted = 0;
+            j = true;
         }
     }
 
@@ -111,7 +121,7 @@ public class BadPacketHandler {
                 e.setCanceled(true);
             }
             if (mc.thePlayer.ticksExisted == c02Tick) {
-                Utils.sendMessage("&7bad packet detected (attack / dig)");
+                //Utils.sendMessage("&7bad packet detected (attack / dig)");
                 e.setCanceled(true);
             }
             if (!e.isCanceled() && ((C07PacketPlayerDigging) p).getStatus() == C07PacketPlayerDigging.Action.RELEASE_USE_ITEM) {
@@ -124,7 +134,7 @@ public class BadPacketHandler {
         }
         if (p instanceof C09PacketHeldItemChange) {
             C09PacketHeldItemChange c09 = (C09PacketHeldItemChange) p;
-            if (mc.thePlayer.ticksExisted == c09Tick && mc.thePlayer.ticksExisted > 2) {
+            if (mc.thePlayer.ticksExisted == c09Tick && mc.thePlayer.ticksExisted > 1) {
                 Utils.sendMessage("&7bad packet detected (double slot)");
                 e.setCanceled(true);
             }

@@ -222,6 +222,7 @@ public class KillAura extends Module {
         if (!Utils.holdingSword()) {
             resetAutoblock(true);
             hasBlocked = false;
+            srb();
         }
         if ((manualBlock.isToggled() || autoBlockMode.getInput() == 0) && !isManualBlocking()) { // for manual block
             resetAutoblock(true);
@@ -233,6 +234,7 @@ public class KillAura extends Module {
             if (canNb()) {
                 blockingClient = false;
                 KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), true);
+                mc.thePlayer.setSprinting(false);
                 sendUnBlock = false;
                 blink = false;
                 return;
@@ -308,6 +310,7 @@ public class KillAura extends Module {
         apsTicks++;
         double distanceToBB = getDistanceToBoundingBox(target);
         boolean inBlockRange = distanceToBB <= blockRange.getInput();
+        boolean inSwingRange = distanceToBB <= swingRange.getInput();
         KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
         KeyBinding.setKeyBindState(mc.gameSettings.keyBindAttack.getKeyCode(), false);
         if (!autoBlockOverride() || allowAura() && !allowAB() || !inBlockRange || !manualBlock()) { // regular swing & attack if autoblock isnt overriding or isnt in autoblock range
@@ -325,6 +328,9 @@ public class KillAura extends Module {
         if (inBlockRange) {
             handleBlocking();
         }
+        if (!inSwingRange && Mouse.isButtonDown(0)) {
+            mc.thePlayer.swingItem();
+        }
         /*if (mc.currentScreen == null || mc.currentScreen.allowUserInput) {
             boolean pressedRight = Mouse.isButtonDown(1);
             if (pressedRight && !lastPressedRight) {
@@ -336,6 +342,10 @@ public class KillAura extends Module {
             lastPressedRight = pressedRight;
         }*/
         targeting = true;
+
+        if (hasBlocked) {
+            mc.thePlayer.setSprinting(false);
+        }
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -721,7 +731,7 @@ public class KillAura extends Module {
     }
 
     private boolean canNb() {
-        return Mouse.isButtonDown(1) && !(ModuleManager.noSlow != null && ModuleManager.noSlow.isEnabled() && NoSlow.sword.getInput() == 2 && ModuleManager.noSlow.blockingClient);
+        return Utils.holdingSword() && Mouse.isButtonDown(1) && !(ModuleManager.noSlow != null && ModuleManager.noSlow.isEnabled() && NoSlow.sword.getInput() == 2 && ModuleManager.noSlow.blockingClient);
     }
 
     private boolean isHostile(EntityCreature entityCreature) {
@@ -1176,7 +1186,7 @@ public class KillAura extends Module {
     }
 
     private void srb() {
-        if (Utils.holdingSword() && canNb()) {
+        if (canNb()) {
             return;
         }
         if (blockingClient) {
