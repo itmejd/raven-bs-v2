@@ -76,7 +76,6 @@ public class ModuleUtils {
     private boolean ldmg;
     private int placeFrequency, removeFrequency, heldDelay, rcDelay;
     public static boolean worldChange;
-    public static int worldTicks;
     public static boolean isPlacing;
     private int isPlacingTicks;
     public static int noJumpTicks;
@@ -102,7 +101,6 @@ public class ModuleUtils {
             }
             inAirTicks = 0;
             worldChange = true;
-            worldTicks = 0;
         }
     }
     private int sf;
@@ -184,11 +182,13 @@ public class ModuleUtils {
     @SubscribeEvent
     public void onScrollSlot(PreSlotScrollEvent e) {
         manualSlot = 2;
+        placeFrequency = heldDelay = 0;
     }
 
     @SubscribeEvent
     public void onSlotUpdate(SlotUpdateEvent e) {
         manualSlot = 2;
+        placeFrequency = heldDelay = 0;
     }
 
     public static boolean hasTeleported;
@@ -197,6 +197,9 @@ public class ModuleUtils {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void onReceivePacket(ReceivePacketEvent e) {
         if (!Utils.nullCheck()) {
+            return;
+        }
+        if (e.isCanceled()) {
             return;
         }
         if (e.getPacket() instanceof S27PacketExplosion) {
@@ -321,8 +324,6 @@ public class ModuleUtils {
             pauseAB--;
         }
 
-        ++worldTicks;
-
         if (++sf > 5) {
             //ModuleManager.scaffold.hasPlaced = false;
         }
@@ -338,6 +339,10 @@ public class ModuleUtils {
         rcTick = Utils.keybinds.isMouseDown(1) ? ++rcTick : 0;
 
         //Autoswap option "Legit"
+
+        if (ModuleManager.scaffold.isEnabled) {
+            placeFrequency = heldDelay = 0;
+        }
 
         if (placeFrequency > 0) {
             if (++removeFrequency > 2) {

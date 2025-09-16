@@ -4,11 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="371fdaac-49d2-42c5-a655-54882c949de7" name="Changes" comment="weird 00 bypass, autotool ignore chests option &amp; cleaned up some of the modules">
-      <change afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/Scaffold2.java" afterDir="false" />
+    <list default="true" id="371fdaac-49d2-42c5-a655-54882c949de7" name="Changes" comment="latest">
       <change beforePath="$PROJECT_DIR$/.gradle/8.8/checksums/checksums.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.8/checksums/checksums.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/8.8/checksums/md5-checksums.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.8/checksums/md5-checksums.bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/8.8/checksums/sha1-checksums.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.8/checksums/sha1-checksums.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.8/executionHistory/executionHistory.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.8/executionHistory/executionHistory.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.8/executionHistory/executionHistory.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.8/executionHistory/executionHistory.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/8.8/fileHashes/fileHashes.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.8/fileHashes/fileHashes.bin" afterDir="false" />
@@ -17,69 +14,24 @@
       <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/file-system.probe" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/file-system.probe" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/event/ReceivePacketNoEvent.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/event/SendAllPacketsEvent.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/helper/RotationHelper.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/helper/RotationHelper.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/mixin/impl/entity/MixinEntityPlayerSP.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/mixin/impl/entity/MixinEntityPlayerSP.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/mixin/impl/network/MixinNetworkManager.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/mixin/impl/network/MixinNetworkManager.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/ModuleManager.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/ModuleManager.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/KillAura$KillAuraTarget.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/KillAura$KillAuraTarget.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/KillAura.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/KillAura.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/LagRange.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/LagRange.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/Velocity.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/combat/Velocity.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/movement/InvMove.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/movement/InvMove.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/movement/Momentum.class" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/movement/NoSlow.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/movement/NoSlow.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/other/DebugAC.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/other/DebugAC.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/other/ViewPackets.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/other/ViewPackets.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/BedAura.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/BedAura.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Blink.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Blink.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/FakeLag.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/FakeLag.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/NoFall.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/NoFall.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Scaffold$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Scaffold$1.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Scaffold$PlaceData.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Scaffold$PlaceData.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Scaffold.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Scaffold.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Tower.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/Tower.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/VelocityBuffer.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/module/impl/player/VelocityBuffer.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/BadPacketHandler.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/BadPacketHandler.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/BlinkHandler.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/BlinkHandler.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/BlockUtils.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/BlockUtils.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/ModuleUtils.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/ModuleUtils.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/PacketUtils.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/PacketUtils.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/RotationUtils$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/RotationUtils$1.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/RotationUtils$PLAYER_OFFSETS.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/RotationUtils$PLAYER_OFFSETS.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/RotationUtils.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/RotationUtils.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/Utils$keybinds.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/Utils$keybinds.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/Utils.class" beforeDir="false" afterPath="$PROJECT_DIR$/build/classes/java/main/keystrokesmod/utility/Utils.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/intermediates/raven-bS-997-non-obfuscated-with-deps.jar" beforeDir="false" afterPath="$PROJECT_DIR$/build/intermediates/raven-bS-997-non-obfuscated-with-deps.jar" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/intermediates/raven-bS-997-without-deps.jar" beforeDir="false" afterPath="$PROJECT_DIR$/build/intermediates/raven-bS-997-without-deps.jar" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/tmp/compileJava/previous-compilation-data.bin" beforeDir="false" afterPath="$PROJECT_DIR$/build/tmp/compileJava/previous-compilation-data.bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/event/ReceivePacketNoEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/event/SendAllPacketsEvent.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/helper/RotationHelper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/helper/RotationHelper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/mixin/impl/entity/MixinEntityPlayerSP.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/mixin/impl/entity/MixinEntityPlayerSP.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/mixin/impl/network/MixinNetworkManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/mixin/impl/network/MixinNetworkManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/ModuleManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/ModuleManager.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/combat/KillAura.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/combat/KillAura.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/combat/LagRange.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/combat/LagRange.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/combat/Velocity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/combat/Velocity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/movement/InvMove.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/movement/InvMove.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/movement/Momentum.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/movement/NoSlow.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/movement/NoSlow.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/other/DebugAC.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/other/DebugAC.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/other/ViewPackets.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/other/ViewPackets.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/BedAura.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/BedAura.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/Blink.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/Blink.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/FakeLag.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/FakeLag.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/NoFall.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/NoFall.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/Scaffold.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/Scaffold.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/Tower.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/Tower.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/VelocityBuffer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/module/impl/player/VelocityBuffer.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/BadPacketHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/BadPacketHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/BlinkHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/BlinkHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/BlockUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/BlockUtils.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/ModuleUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/ModuleUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/PacketUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/PacketUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/RotationUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/RotationUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/Utils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/keystrokesmod/utility/Utils.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -256,14 +208,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1736536952705</updated>
-    </task>
-    <task id="LOCAL-00029" summary="t">
-      <option name="closed" value="true" />
-      <created>1738359088877</created>
-      <option name="number" value="00029" />
-      <option name="presentableId" value="LOCAL-00029" />
-      <option name="project" value="LOCAL" />
-      <updated>1738359088877</updated>
     </task>
     <task id="LOCAL-00030" summary="t">
       <option name="closed" value="true" />
@@ -649,7 +593,15 @@
       <option name="project" value="LOCAL" />
       <updated>1756020572214</updated>
     </task>
-    <option name="localTasksCounter" value="78" />
+    <task id="LOCAL-00078" summary="latest">
+      <option name="closed" value="true" />
+      <created>1757709853034</created>
+      <option name="number" value="00078" />
+      <option name="presentableId" value="LOCAL-00078" />
+      <option name="project" value="LOCAL" />
+      <updated>1757709853035</updated>
+    </task>
+    <option name="localTasksCounter" value="79" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -685,7 +637,8 @@
     <MESSAGE value="Test 2" />
     <MESSAGE value="Test 3" />
     <MESSAGE value="weird 00 bypass, autotool ignore chests option &amp; cleaned up some of the modules" />
-    <option name="LAST_COMMIT_MESSAGE" value="weird 00 bypass, autotool ignore chests option &amp; cleaned up some of the modules" />
+    <MESSAGE value="latest" />
+    <option name="LAST_COMMIT_MESSAGE" value="latest" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

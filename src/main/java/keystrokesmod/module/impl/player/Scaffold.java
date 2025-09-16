@@ -647,21 +647,21 @@ public class Scaffold extends Module {
             }
 
             offsetvv = 0;
-        }
 
-        if (fr == -1) {
-            if (blockRotations != null) {
-                yaw = blockRotations[0];
+            if (fr == -1) {
+                if (blockRotations != null) {
+                    yaw = blockRotations[0];
+                }
             }
-        }
-        else {
-            yaw = mc.thePlayer.rotationYaw - hardcodedYaw() - offsetvv;
+            else {
+                yaw = mc.thePlayer.rotationYaw - hardcodedYaw() - offsetvv;
+            }
         }
 
         if ((fastScaffoldKeepY || ModuleManager.tower.hasT) && jumpFacingForward.isToggled()) {
             getSmooth = (mc.thePlayer.rotationYaw - hardcodedYaw());
             float yawDifference = Utils.getAngleDifference(lastYawS, getSmooth);
-            float smoothingFactor = 0.015f;
+            float smoothingFactor = 0.01f;
             getSmooth = (lastYawS + yawDifference * smoothingFactor);
             lastYawS = getSmooth;
             smoothedYaw = getSmooth;
@@ -971,64 +971,66 @@ public class Scaffold extends Module {
             ModuleUtils.swapTick = 2;
             KeyBinding.setKeyBindState(mc.gameSettings.keyBindAttack.getKeyCode(), false);
             KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
-            if (holdingBlocks() && setSlot() && !ModuleUtils.swapped) {
-                hasSwapped = true;
-                /*if (!finishProcedure) {
-                    if (Utils.distanceToGround(mc.thePlayer) <= 3) {
-                        finishProcedure = true;
-                    }
-                    if (hasPlaced) {
-                        finishProcedure = true;
-                    }
-                }*/
-                if (!stopUpdate/* && finishProcedure*/) {
+            if (!ModuleUtils.swapped) {
+                if (holdingBlocks() && setSlot()) {
+                    hasSwapped = true;
+                    /*if (!finishProcedure) {
+                        if (Utils.distanceToGround(mc.thePlayer) <= 3) {
+                            finishProcedure = true;
+                        }
+                        if (hasPlaced) {
+                            finishProcedure = true;
+                        }
+                    }*/
+                    if (!stopUpdate/* && finishProcedure*/) {
 
-                    int mode = (int) fastScaffold.getInput();
-                    if (!ModuleManager.tower.placeExtraBlock) {
-                        if (rotation.getInput() == 0 || rotationDelay == 0) {
+                        int mode = (int) fastScaffold.getInput();
+                        if (!ModuleManager.tower.placeExtraBlock) {
+                            if (rotation.getInput() == 0 || rotationDelay == 0) {
+                                placeBlock(0, 0);
+                            }
+                        } else if ((ModuleManager.tower.ebDelay == 0 || !ModuleManager.tower.firstVTP)) {
                             placeBlock(0, 0);
                         }
-                    } else if ((ModuleManager.tower.ebDelay == 0 || !ModuleManager.tower.firstVTP)) {
-                        placeBlock(0, 0);
-                    }
-                    if (ModuleManager.tower.placeExtraBlock) {
-                        placeBlock(0, -1);
-                    }
-
-                    if (fastScaffoldKeepY && !ModuleManager.tower.canTower()) {
-                        ++keepYTicks;
-                        if ((int) mc.thePlayer.posY > (int) startYPos) {
-                            switch (mode) {
-                                case 1:
-                                    if (!firstKeepYPlace && keepYTicks == 3) {
-                                        placeBlock(1, 0);
-                                        firstKeepYPlace = true;
-                                    }
-                                    break;
-                                case 2:
-                                    if (!firstKeepYPlace && keepYTicks == 8 || keepYTicks == 11) {
-                                        placeBlock(1, 0);
-                                        firstKeepYPlace = true;
-                                    }
-                                    break;
-                                case 3:
-                                    if (!firstKeepYPlace && keepYTicks == 8 || firstKeepYPlace && keepYTicks == 7) {
-                                        placeBlock(1, 0);
-                                        firstKeepYPlace = true;
-                                    }
-                                    break;
-                                case 4:
-                                    if (!firstKeepYPlace && keepYTicks == 7) {
-                                        placeBlock(1, 0);
-                                        firstKeepYPlace = true;
-                                    }
-                                    break;
-                            }
+                        if (ModuleManager.tower.placeExtraBlock) {
+                            placeBlock(0, -1);
                         }
-                        if (mc.thePlayer.onGround) keepYTicks = 0;
-                        if ((int) mc.thePlayer.posY == (int) startYPos) firstKeepYPlace = false;
+
+                        if (fastScaffoldKeepY && !ModuleManager.tower.canTower()) {
+                            ++keepYTicks;
+                            if ((int) mc.thePlayer.posY > (int) startYPos) {
+                                switch (mode) {
+                                    case 1:
+                                        if (!firstKeepYPlace && keepYTicks == 3) {
+                                            placeBlock(1, 0);
+                                            firstKeepYPlace = true;
+                                        }
+                                        break;
+                                    case 2:
+                                        if (!firstKeepYPlace && keepYTicks == 8 || keepYTicks == 11) {
+                                            placeBlock(1, 0);
+                                            firstKeepYPlace = true;
+                                        }
+                                        break;
+                                    case 3:
+                                        if (!firstKeepYPlace && keepYTicks == 8 || firstKeepYPlace && keepYTicks == 7) {
+                                            placeBlock(1, 0);
+                                            firstKeepYPlace = true;
+                                        }
+                                        break;
+                                    case 4:
+                                        if (!firstKeepYPlace && keepYTicks == 7) {
+                                            placeBlock(1, 0);
+                                            firstKeepYPlace = true;
+                                        }
+                                        break;
+                                }
+                            }
+                            if (mc.thePlayer.onGround) keepYTicks = 0;
+                            if ((int) mc.thePlayer.posY == (int) startYPos) firstKeepYPlace = false;
+                        }
+                        handleMotion();
                     }
-                    handleMotion();
                 }
             }
         }

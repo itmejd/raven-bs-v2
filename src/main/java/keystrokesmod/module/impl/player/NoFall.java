@@ -109,7 +109,7 @@ public class NoFall extends Module {
             return;
         }
         if (e.getPacket() instanceof S08PacketPlayerPosLook) {
-            if (n > 0) n = 34;
+            //if (n > 0) n = 34;
         }
     }
 
@@ -228,9 +228,11 @@ public class NoFall extends Module {
             }
         }
         if (isFalling && mode.getInput() == 4) {
-            if (distanceFallen >= 3 && n <= 4) {
-                mc.thePlayer.motionY = 0;
+            if (distanceFallen >= 3) {
                 n++;
+            }
+            if (n > 0) {
+                mc.thePlayer.motionY = 0;
             }
         }
     }

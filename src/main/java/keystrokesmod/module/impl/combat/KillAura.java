@@ -46,6 +46,7 @@ import static net.minecraft.util.EnumFacing.UP;
 
 public class KillAura extends Module {
     private SliderSetting aps;
+    private SliderSetting abAps;
     public SliderSetting autoBlockMode;
     private SliderSetting fov;
     private SliderSetting attackRange;
@@ -69,6 +70,7 @@ public class KillAura extends Module {
     private ButtonSetting requireMouseDown;
     private ButtonSetting silentSwing;
     private ButtonSetting weaponOnly;
+    private ButtonSetting infBRange;
 
     private String[] autoBlockModes = new String[] { "Manual", "Vanilla", "Fake", "Partial", "Interact A", "Interact B", "Swap", "Hypixel A", "Hypixel B" };
     private String[] rotationModes = new String[] { "Silent", "Lock view", "None" };
@@ -119,15 +121,18 @@ public class KillAura extends Module {
     public boolean attacking;
     private int apsTicks;
     private int rotateTicks;
+    private boolean didTarget;
 
     public KillAura() {
         super("KillAura", category.combat);
         this.registerSetting(aps = new SliderSetting("APS", 16.0, 1.0, 20.0, 0.5));
         this.registerSetting(autoBlockMode = new SliderSetting("Autoblock", 0, autoBlockModes));
+        this.registerSetting(abAps = new SliderSetting("Autoblock APS", 10.0, 1.0, 20.0, 0.5));
         this.registerSetting(fov = new SliderSetting("FOV", 360.0, 30.0, 360.0, 4.0));
         this.registerSetting(attackRange = new SliderSetting("Range (attack)", 3.0, 3.0, 6.0, 0.05));
         this.registerSetting(swingRange = new SliderSetting("Range (swing)", 3.3, 3.0, 8.0, 0.05));
         this.registerSetting(blockRange = new SliderSetting("Range (block)", 6.0, 3.0, 12.0, 0.05));
+        this.registerSetting(infBRange = new ButtonSetting("Ignore block range slider", false));
         this.registerSetting(rotationMode = new SliderSetting("Rotation mode", 0, rotationModes));
         this.registerSetting(rotateMode = new SliderSetting("Rotate on", 0, rotateModes));
         this.registerSetting(rotationSmoothing = new SliderSetting("Rotation smoothing", 0, 0, 10, 1));
@@ -177,6 +182,7 @@ public class KillAura extends Module {
             swapw = false;
         }
         ubSlot = -1;
+        hasBlocked = false;
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)
@@ -215,15 +221,29 @@ public class KillAura extends Module {
         ubSlot = -1;
         if (!Utils.holdingSword()) {
             resetAutoblock(true);
+            hasBlocked = false;
         }
-        if ((manualBlock.isToggled() || autoBlockMode.getInput() == 0) && !isManualBlocking()) { // for autoblocks
+        if ((manualBlock.isToggled() || autoBlockMode.getInput() == 0) && !isManualBlocking()) { // for manual block
             resetAutoblock(true);
             srb();
         }
+        if (target == null && didTarget) {
+            didTarget = false;
+            srb();
+            if (canNb()) {
+                blockingClient = false;
+                KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), true);
+                sendUnBlock = false;
+                blink = false;
+                return;
+            }
+        }
         if (sendUnBlock) {
             sendUnBlock = false;
-            if (!canNb()) {
-                if (Utils.holdingSword()) {
+            blink = false;
+            if (Utils.holdingSword()) {
+                srb();
+                if (!canNb()) {
                     if (autoBlockMode.getInput() != 8) {
                         sendDigPacket();
                     } else {
@@ -232,16 +252,11 @@ public class KillAura extends Module {
                         ubSlot = mc.thePlayer.inventory.currentItem;
                         swapw = true;
                     }
+                    return;
                 }
-                srb();
             }
-            else if ((manualBlock.isToggled() || autoBlockMode.getInput() == 0) && isManualBlocking()) {
-                KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), true);
-            }
-            blink = false;
-            return;
         }
-        if (ModuleUtils.worldTicks <= 10) {
+        if (mc.thePlayer.ticksExisted <= 10) {
             return;
         }
         if (ModuleManager.autoBlockIn.active) {
@@ -295,11 +310,12 @@ public class KillAura extends Module {
         boolean inBlockRange = distanceToBB <= blockRange.getInput();
         KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
         KeyBinding.setKeyBindState(mc.gameSettings.keyBindAttack.getKeyCode(), false);
-        if (!autoBlockOverride() || allowAura() && !allowAB() || !inBlockRange || (!manualBlock() && (manualBlock.isToggled() || autoBlockMode.getInput() == 0))) { // regular swing & attack if autoblock isnt overriding or isnt in autoblock range
-            handleSwingAndAttack(distanceToBB, false);
+        if (!autoBlockOverride() || allowAura() && !allowAB() || !inBlockRange || !manualBlock()) { // regular swing & attack if autoblock isnt overriding or isnt in autoblock range
             resetAutoblock(true);
+            handleSwingAndAttack(distanceToBB, false);
+            interactTicks = 0;
         }
-        else if (inBlockRange && autoBlockOverride() && manualBlock()) {
+        else if (autoBlockOverride() && manualBlock()) {
             handleAutoBlock(distanceToBB);
             hb2 = true;
         }
@@ -502,9 +518,7 @@ public class KillAura extends Module {
 
     private void setTarget(Entity entity) {
         if (entity == null || !(entity instanceof EntityLivingBase)) {
-            if (autoBlockOverride()) {
-                resetAutoblock(true);
-            }
+            resetAutoblock(true);
             srb();
             interactTicks = 0;
             if (target != null) {
@@ -530,6 +544,7 @@ public class KillAura extends Module {
             }
 
             lastEntity = target;
+            didTarget = true;
         }
     }
 
@@ -587,7 +602,7 @@ public class KillAura extends Module {
             if (!(target instanceof EntityPlayer) && attackMobs.isToggled() && !isHostile((EntityCreature) target)) {
                 continue;
             }
-            if (!hitThroughBlocks.isToggled() && (!Utils.canPlayerBeSeen(target) || !inRange(target, attackRange.getInput() - attackv))) {
+            if (!hitThroughBlocks.isToggled() && !Utils.canPlayerBeSeen(target)) {
                 continue;
             }
             toClassTargets.add(new KillAuraTarget(distanceRayCasted, target.getHealth(), target.hurtTime, RotationUtils.distanceFromYaw(target, false), target.getEntityId(), (target instanceof EntityPlayer) ? Utils.isEnemy((EntityPlayer) target) : false));
@@ -682,7 +697,7 @@ public class KillAura extends Module {
         }
         boolean inAttackDistance = inRange(target, attackRange.getInput() - attackv);
         if ((distance <= swingRange.getInput() || inAttackDistance) && shouldAttack && !swung) { // swing if in swing range or needs to attack
-            if (!mc.thePlayer.isBlocking() || !disableWhileBlocking.isToggled()) {
+            if (!hasBlocked  || !disableWhileBlocking.isToggled()) {
                 swingItem();
             }
         }
@@ -693,7 +708,7 @@ public class KillAura extends Module {
                 if (!isLookingAtEntity()) {
                     return;
                 }
-                if (!mc.thePlayer.isBlocking() || !disableWhileBlocking.isToggled()) {
+                if (!hasBlocked || !disableWhileBlocking.isToggled()) {
                     mc.playerController.attackEntity(mc.thePlayer, target);
                     sAttacked = 0;
                     attacking = true;
@@ -706,7 +721,7 @@ public class KillAura extends Module {
     }
 
     private boolean canNb() {
-        return ((manualBlock.isToggled() || autoBlockMode.getInput() == 0) && isManualBlocking()) || Mouse.isButtonDown(1) && !(ModuleManager.noSlow != null && ModuleManager.noSlow.isEnabled() && NoSlow.sword.getInput() == 2 && NoSlow.cantBlock);
+        return Mouse.isButtonDown(1) && !(ModuleManager.noSlow != null && ModuleManager.noSlow.isEnabled() && NoSlow.sword.getInput() == 2 && ModuleManager.noSlow.blockingClient);
     }
 
     private boolean isHostile(EntityCreature entityCreature) {
@@ -803,7 +818,7 @@ public class KillAura extends Module {
 
     private int apsCycle;
     private double getAPSToTicks(double cap) {
-        double apsv = aps.getInput();
+        double apsv = abAps.getInput();
         if (apsv > cap) {
             apsv = cap;
         }
@@ -908,10 +923,15 @@ public class KillAura extends Module {
             }
         }
         switch ((int) autoBlockMode.getInput()) {
-            case 0:
+            case 0: // manual
                 blockingClient = true;
                 interactTicks++;
                 blink = false;
+
+                if (ModuleUtils.isBlocked && !hasBlocked) {
+                    sendDigPacket();
+                    break;
+                }
 
                 if (!hasBlocked) {
                     handleInteractAndAttack(distance, true, true, swung);
@@ -919,20 +939,21 @@ public class KillAura extends Module {
                     interactTicks = 0;
                 }
                 else {
-                    if (disableWhileBlocking.isToggled()) {
-                        break;
-                    }
                     if (interactTicks >= getAPSToTicks(20)) {
                         handleInteractAndAttack(distance, true, true, swung);
                         interactTicks = 0;
                     }
                 }
-                //1
                 break;
-            case 1:
+            case 1: // vanilla
                 blockingClient = true;
                 interactTicks++;
                 blink = false;
+
+                if (ModuleUtils.isBlocked && !hasBlocked) {
+                    sendDigPacket();
+                    break;
+                }
 
                 if (!hasBlocked) {
                     handleInteractAndAttack(distance, true, true, swung);
@@ -940,9 +961,6 @@ public class KillAura extends Module {
                     interactTicks = 0;
                 }
                 else {
-                    if (disableWhileBlocking.isToggled()) {
-                        break;
-                    }
                     if (interactTicks >= getAPSToTicks(20)) {
                         handleInteractAndAttack(distance, true, true, swung);
                         interactTicks = 0;
@@ -1079,7 +1097,7 @@ public class KillAura extends Module {
                 interactTicks++;
                 blink = true;
                 if (interactTicks == 1) {
-                    if (ModuleUtils.isBlocked || hasBlocked) {
+                    if (ModuleUtils.isBlocked) {
                         sendDigPacket();
                     }
                 }
@@ -1158,7 +1176,7 @@ public class KillAura extends Module {
     }
 
     private void srb() {
-        if (((manualBlock.isToggled() || autoBlockMode.getInput() == 0) && isManualBlocking())) {
+        if (Utils.holdingSword() && canNb()) {
             return;
         }
         if (blockingClient) {
@@ -1283,7 +1301,7 @@ public class KillAura extends Module {
     }
 
     private void swingItem() {
-        if (silentSwing.isToggled() && mc.thePlayer.isBlocking()) {
+        if (silentSwing.isToggled()) {
             mc.thePlayer.sendQueue.addToSendQueue(new C0APacketAnimation());
         }
         else {
@@ -1468,7 +1486,7 @@ public class KillAura extends Module {
     }
 
     private boolean manualBlock() {
-        return (!manualBlock.isToggled() || autoBlockMode.getInput() == 0 || Mouse.isButtonDown(1)) && Utils.holdingSword();
+        return (!manualBlock.isToggled() && autoBlockMode.getInput() != 0 || Mouse.isButtonDown(1)) && Utils.holdingSword();
     }
 
     private boolean isManualBlocking() {

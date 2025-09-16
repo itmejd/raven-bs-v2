@@ -111,7 +111,7 @@ public class BadPacketHandler {
                 e.setCanceled(true);
             }
             if (mc.thePlayer.ticksExisted == c02Tick) {
-                //Utils.sendMessage("&7bad packet detected (attack / dig)");
+                Utils.sendMessage("&7bad packet detected (attack / dig)");
                 e.setCanceled(true);
             }
             if (!e.isCanceled() && ((C07PacketPlayerDigging) p).getStatus() == C07PacketPlayerDigging.Action.RELEASE_USE_ITEM) {
